@@ -6,12 +6,16 @@ import static main.GLOBALS.*;
 public class MemoryRequest
 {
     private final int callerID;
+    private final REQUEST_TYPE requestType;
+    private final Object[] args;
     private int timer;
+    private boolean started = false;
 
-    public MemoryRequest(int callerID, int delay)
+    public MemoryRequest(int callerID, REQUEST_TYPE requestType, Object[] args)
     {
         this.callerID = callerID;
-        this.timer = delay;
+        this.requestType = requestType;
+        this.args = args;
     }
 
     public int getCallerID()
@@ -19,14 +23,32 @@ public class MemoryRequest
         return callerID;
     }
 
-    public boolean tick()
+    public void start(int delay)
     {
-        return tick(0);
+        timer = delay;
+        started = true;
     }
 
-    public boolean tick(int amount)
+    public boolean isStarted()
     {
-        timer -= amount;
+        return started;
+    }
+
+    public boolean finished()
+    {
+        return timer < 1;
+    }
+
+    public Object[] getArgs()
+    {
+        return args;
+    }
+
+    public boolean tick() throws TimerNotStartedException
+    {
+        if(!started) { throw new TimerNotStartedException(); }
+
+        timer--;
         return timer == 0;
     }
 }

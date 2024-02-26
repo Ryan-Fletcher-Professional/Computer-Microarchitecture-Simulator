@@ -19,6 +19,18 @@ public class GLOBALS
         LONG
     }
 
+    public enum RETURN_MODE
+    {
+        WORD,
+        LINE
+    }
+
+    public enum WRITE_MODE
+    {
+        BACK,
+        THROUGH
+    }
+
     public enum REQUEST_TYPE
     {
         LOAD,
