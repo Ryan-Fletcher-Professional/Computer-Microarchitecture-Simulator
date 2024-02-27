@@ -5,10 +5,10 @@ import static main.GLOBALS.*;
 
 public class MemoryRequest
 {
-    private final int callerID;
-    private final REQUEST_TYPE requestType;
-    private final Object[] args;
-    private int timer;
+    private final int callerID;                 // ID of MemoryModule making the request
+    private final REQUEST_TYPE requestType;     // LOAD/STORE
+    private final Object[] args;                // Differs between LOAD and STORE
+    private int timer;                          // Initial value controlled by callee
     private boolean started = false;
 
     public MemoryRequest(int callerID, REQUEST_TYPE requestType, Object[] args)
@@ -36,7 +36,7 @@ public class MemoryRequest
 
     public boolean finished()
     {
-        return timer < 1;
+        return timer <= 0;
     }
 
     public Object[] getArgs()
@@ -44,6 +44,7 @@ public class MemoryRequest
         return args;
     }
 
+    // Decrements timer. Returns true iff timer ran out this tick.
     public boolean tick() throws TimerNotStartedException
     {
         if(!started) { throw new TimerNotStartedException(); }
