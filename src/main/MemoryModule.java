@@ -38,13 +38,17 @@ public class MemoryModule
      */
     private void initMemory()
     {
-        memory = new int[Math.min(GET_ACTUAL_MAX_SIZE(type), columnSize * lineSize) / lineSize][lineSize][2];
+        memory = new int[Math.min(GET_ACTUAL_MAX_SIZE(type), columnSize * lineSize) / lineSize]
+                        [lineSize]
+                        [WORD_INDECES.length];
         for(int[][] line : memory)
         {
             for(int[] word : line)
             {
-                word[0] = -1;
-                word[1] = 0;
+                word[ADDRESS_INDEX] = -1;
+                word[LINE_FREQUENCY_INDEX] = 0;
+                word[WORD_FREQUENCY_INDEX] = 0;
+                word[DATA_INDEX] = 0;
             }
         }
     }
@@ -67,7 +71,7 @@ public class MemoryModule
         if(virtualAddress > columnSize) { throw new IllegalArgumentException("Virtual address too high"); }
         if(virtualAddress < 0) { throw new IllegalArgumentException("Virtual address below 0"); }
         
-        double scale = 4.0;  // This memory * scale = full virtual memory
+        double scale = 4.0;  // This memory * scale = full virtual memory. Current 4.0 is PLACEHOLDER
         return (int)((double)virtualAddress / scale);
     }
 
@@ -102,7 +106,7 @@ public class MemoryModule
         }
     }
 
-    public void load(MemoryRequest request)
+    public int load(MemoryRequest request)
     {
         // TODO : Implement
     }
@@ -129,7 +133,7 @@ public class MemoryModule
         {
             currentAccess.start(accessDelay);
         }
-        try{ currentAccess.tick(); }catch(TimerNotStartedException ignored){}
+        try{ currentAccess.tick(); }catch(TimerNotStartedException ignored){}  // Should never take exception
     }
 
     /**
@@ -142,13 +146,68 @@ public class MemoryModule
     // MAKE SURE TO WRITE ALL CACHE DATA TO LOWEST MEMORY AND THEN FLUSH CACHE WHEN SWITCHING WRITE-BACK & WRITE-THROUGH
     private void write(int localAddress, int virtualAddress, int data)
     {
-        int[] overWritten = memory[localAddress];
-        memory[localAddress] = new int[] { virtualAddress, data };
-
-        if((writeMode.equals(WRITE_MODE.BACK)) && (overWritten[0] > -1))
+        //INSERT LINE FREQUENCY MODULATION
+        int[][] line = memory[localAddress];
+        boolean placed = false;
+        for(int[] word : line)
         {
-            accessNext(REQUEST_TYPE.STORE, new Object[] { virtualAddress, data, false });
+            if(word[ADDRESS_INDEX] == -1)
+            {
+                insertData(word, virtualAddress, data);
+                placed = true;
+                break;
+            }
         }
+        int[] overWritten = new int[] { -1, 0, 0 };  // Should never be passed down memory.
+        if(!placed)
+        {
+            int leastFrequented = 0;
+            for(int i = 1; i < line.length; i++)
+            {
+                if(line[i][WORD_FREQUENCY_INDEX] < line[leastFrequented][WORD_FREQUENCY_INDEX])
+                {
+                    leastFrequented = i;
+                }
+            }
+            overWritten = line[leastFrequented].clone();
+            insertData(line[leastFrequented], virtualAddress, data);
+        }
+
+        if((writeMode.equals(WRITE_MODE.BACK)) && !placed)
+        {
+            accessNext(REQUEST_TYPE.STORE, new Object[] { overWritten[ADDRESS_INDEX], overWritten[DATA_INDEX], false });
+        }
+    }
+
+    private static void insertData(int[] word, int virtualAddress, int data)
+    {
+        word[ADDRESS_INDEX] = virtualAddress;
+        word[WORD_FREQUENCY_INDEX] = 0;
+        word[DATA_INDEX] = data;
+    }
+
+    /**
+     * Performs read operation in this level of memory. If data is not found, accesses from the next level of memory,
+     * writes that data to this level, and returns it.
+     * If data is found, increments the access frequency and returns it.
+     * CURRENTLY ONLY SUPPORTS SINGLE-WORD READ! (TODO)
+     * @param virtualAddress Virtual memory address from which the data should be read.
+     * @return int Data contained in the given virtual address.
+     */
+    private int read(int virtualAddress)
+    {
+        int[][] line = memory[map(virtualAddress)];
+        for(int[] word : line)
+        {
+            if(word[ADDRESS_INDEX] == virtualAddress)
+            {
+                word[WORD_FREQUENCY_INDEX] = Math.min(MAX_ACCESS_FREQUENCY, ++word[WORD_FREQUENCY_INDEX]);
+                return word[DATA_INDEX];
+            }
+        }
+        int data = accessNext(REQUEST_TYPE.LOAD, new Object[] { virtualAddress });
+        write(map(virtualAddress), virtualAddress, data);
+        return data;
     }
 
     /**
@@ -156,12 +215,25 @@ public class MemoryModule
      * @param requestType STORE/LOAD
      * @param args Appropriate arguments for request type.
      */
-    private void accessNext(REQUEST_TYPE requestType, Object[] args)
+    private int accessNext(REQUEST_TYPE requestType, Object[] args)
     {
-        if(next == null) {return;}
+        if(next == null) {return -1;}
 
         MemoryRequest nextRequest = new MemoryRequest(id, requestType, args);
         blocks.add(nextRequest);
-        next.store(nextRequest);
+        if(requestType.equals(REQUEST_TYPE.STORE))
+        {
+            next.store(nextRequest);
+        }
+        else if(requestType.equals(REQUEST_TYPE.LOAD))
+        {
+            return next.load(nextRequest);
+        }
+        else
+        {
+            blocks.remove(nextRequest);
+            throw new IllegalArgumentException("Invalid request type.");
+        }
+        return -1;
     }
 }

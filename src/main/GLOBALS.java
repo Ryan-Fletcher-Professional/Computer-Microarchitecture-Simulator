@@ -37,6 +37,14 @@ public class GLOBALS
         STORE
     }
 
+    public static int ADDRESS_INDEX = 0;
+    public static int LINE_FREQUENCY_INDEX = 1;
+    public static int WORD_FREQUENCY_INDEX = 2;
+    public static int DATA_INDEX = 3;
+    public static int[] WORD_INDECES = new int[] { ADDRESS_INDEX, LINE_FREQUENCY_INDEX, WORD_FREQUENCY_INDEX, DATA_INDEX };
+
+    public static int MAX_ACCESS_FREQUENCY = 7;  // 3 bits
+
     public static int GET_ID()
     {
         return currentId++;
