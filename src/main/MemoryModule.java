@@ -8,23 +8,25 @@ public class MemoryModule
     private final int id;                   // ID of this MemoryModule
     private final MEMORY_TYPE type;         // STORAGE/INSTRUCTION
     private final MemoryModule next;        // Pointer to memory one level down
-    private final int size;                 // In words
+    private final int columnSize;           // Number of lines
+    private final int lineSize;             // Number of words per line
     private final int accessDelay;          // For timing simulation; how long to wait until clearing requests
     private final RETURN_MODE returnMode;   // Word or line (TODO)
     private WRITE_MODE writeMode;           // BACK/THROUGH (dynamic)
 
     // The underlying memory array. Remember to use >>> instead of >> for unsigned right shift
-    private int[][] memory;
+    private int[][][] memory;
 
     Queue<MemoryRequest> accesses;  // Requests from higher-level memory
     List<MemoryRequest> blocks;     // Requests to lower-level memory
 
-    public MemoryModule(int id, GLOBALS.MEMORY_TYPE type, MemoryModule next, int size, int accessDelay, RETURN_MODE returnMode)
+    public MemoryModule(int id, GLOBALS.MEMORY_TYPE type, MemoryModule next, int columnSize, int lineSize, int accessDelay, RETURN_MODE returnMode)
     {
         this.id = id;
         this.type = type;
         this.next = next;
-        this.size = size;
+        this.columnSize = columnSize;
+        this.lineSize = lineSize;
         this.accessDelay = accessDelay;
         this.returnMode = returnMode;
 
@@ -36,11 +38,14 @@ public class MemoryModule
      */
     private void initMemory()
     {
-        memory = new int[Math.min(GET_ACTUAL_MAX_SIZE(this.type), this.size)][2];
-        for(int[] word : memory)
+        memory = new int[Math.min(GET_ACTUAL_MAX_SIZE(type), columnSize * lineSize) / lineSize][lineSize][2];
+        for(int[][] line : memory)
         {
-            word[0] = -1;
-            word[1] = 0;
+            for(int[] word : line)
+            {
+                word[0] = -1;
+                word[1] = 0;
+            }
         }
     }
 
@@ -59,7 +64,7 @@ public class MemoryModule
     // TODO : Finish implementing. Add mapping mode/scale to this and constructor
     public int map(int virtualAddress)
     {
-        if(virtualAddress > size) { throw new IllegalArgumentException("Virtual address too high"); }
+        if(virtualAddress > columnSize) { throw new IllegalArgumentException("Virtual address too high"); }
         if(virtualAddress < 0) { throw new IllegalArgumentException("Virtual address below 0"); }
         
         double scale = 4.0;  // This memory * scale = full virtual memory
