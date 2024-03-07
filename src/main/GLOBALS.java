@@ -6,7 +6,6 @@ public class GLOBALS
 
     public enum MEMORY_KIND
     {
-        REGISTER_FILE,
         CACHE,
         RAM
     }
@@ -17,10 +16,9 @@ public class GLOBALS
         INSTRUCTION
     }
 
-    final static int SHORT_WORD_MAX_ADDRESS = (int)Math.pow(2, 25) - 1;
-    final static int LONG_WORD_MAX_ADDRESS = (int)Math.pow(2, 24) - 1;
-    final static int DATA_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);      // 4MB
-    final static int INSTRUCTION_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);  // 4MB
+    final static int MAX_ADDRESS = (int)Math.pow(2, 25) - 1;
+    final static int DATA_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);            // 4MB
+    final static int INSTRUCTION_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);     // 4MB
 
     public enum WORD_LENGTH
     {
