@@ -4,14 +4,23 @@ public class GLOBALS
 {
     static int currentId = 0;
 
+    public enum MEMORY_KIND
+    {
+        REGISTER_FILE,
+        CACHE,
+        RAM
+    }
+
     public enum MEMORY_TYPE
     {
-        STORAGE,
+        DATA,
         INSTRUCTION
     }
 
-    static int STORAGE_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);      // 4MB
-    static int INSTRUCTION_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);  // 4MB
+    final static int SHORT_WORD_MAX_ADDRESS = (int)Math.pow(2, 25) - 1;
+    final static int LONG_WORD_MAX_ADDRESS = (int)Math.pow(2, 24) - 1;
+    final static int DATA_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);      // 4MB
+    final static int INSTRUCTION_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);  // 4MB
 
     public enum WORD_LENGTH
     {
@@ -19,16 +28,11 @@ public class GLOBALS
         LONG
     }
 
-    public enum RETURN_MODE
-    {
-        WORD,
-        LINE
-    }
-
     public enum WRITE_MODE
     {
         BACK,
-        THROUGH
+        THROUGH_NO_ALLOCATE,
+        THROUGH_ALLOCATE
     }
 
     public enum REQUEST_TYPE
@@ -37,13 +41,11 @@ public class GLOBALS
         STORE
     }
 
-    public static int ADDRESS_INDEX = 0;
-    public static int LINE_FREQUENCY_INDEX = 1;
-    public static int WORD_FREQUENCY_INDEX = 2;
-    public static int DATA_INDEX = 3;
-    public static int[] WORD_INDECES = new int[] { ADDRESS_INDEX, LINE_FREQUENCY_INDEX, WORD_FREQUENCY_INDEX, DATA_INDEX };
-
-    public static int MAX_ACCESS_FREQUENCY = 7;  // 3 bits
+    public static int VALID_INDEX = 0;
+    public static int DIRTY_INDEX = 1;
+    public static int ADDRESS_INDEX = 2;
+    public static int FIRST_WORD_INDEX = 3;
+    public static int[] WORD_INDECES = new int[] { VALID_INDEX, DIRTY_INDEX, ADDRESS_INDEX, FIRST_WORD_INDEX };
 
     public static int GET_ID()
     {
@@ -59,8 +61,8 @@ public class GLOBALS
     {
         switch(type)
         {
-            case MEMORY_TYPE.STORAGE:
-                return STORAGE_MEMORY_ACTUAL_MAX_SIZE;
+            case MEMORY_TYPE.DATA:
+                return DATA_MEMORY_ACTUAL_MAX_SIZE;
             case MEMORY_TYPE.INSTRUCTION:
                 switch(wordLength)
                 {
