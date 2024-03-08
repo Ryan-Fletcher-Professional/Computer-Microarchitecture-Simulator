@@ -13,7 +13,9 @@ public class BasicMemoryManipulator extends JFrame
     private int width, height;
 
     private JTextField addressField, valueField, columnSizeField, lineSizeField, returnField;
-    private JRadioButton cacheRadio, ramRadio, dataRadio, instructionRadio, shortWordsRadio, longWordsRadio, wordRadio, lineRadio;
+    private JTextArea displayText;
+    private JRadioButton cacheRadio, ramRadio, dataRadio, instructionRadio, shortWordsRadio, longWordsRadio,
+                         wordRadio, lineRadio, addressBinRadio, addressIntRadio, valueBinRadio, valueIntRadio;
     private JList<MemoryModule> instructionCachesList, dataCachesList, unifiedMemoryList;
     private DefaultListModel<MemoryModule> instructionCachesModel, dataCachesModel, unifiedMemoryModel;
     private MemoryModule currentlySelected;
@@ -56,13 +58,33 @@ public class BasicMemoryManipulator extends JFrame
         // Memory manipulation
         JPanel memoryOperationsPanel = new JPanel(new GridLayout(0, 1));  // 0 rows means "as many as needed"
 
-        JPanel entryPanel = new JPanel( new GridLayout(2, 2));
+        JPanel entryPanel = new JPanel( new GridLayout(3, 2));
         addressField = new JTextField(1);
         valueField = new JTextField(1);
+        JPanel addressRadioPanel = new JPanel(new GridLayout(1, 2));
+        addressBinRadio = new JRadioButton("Binary");
+        addressIntRadio = new JRadioButton("Integer");
+        ButtonGroup addressGroup = new ButtonGroup();
+        addressGroup.add(addressBinRadio);
+        addressGroup.add(addressIntRadio);
+        addressBinRadio.setSelected(true);
+        addressRadioPanel.add(addressBinRadio);
+        addressRadioPanel.add(addressIntRadio);
+        JPanel valueRadioPanel = new JPanel(new GridLayout(1, 2));
+        valueBinRadio = new JRadioButton("Binary");
+        valueIntRadio = new JRadioButton("Integer");
+        ButtonGroup valueGroup = new ButtonGroup();
+        valueGroup.add(valueBinRadio);
+        valueGroup.add(valueIntRadio);
+        valueBinRadio.setSelected(true);
+        valueRadioPanel.add(valueBinRadio);
+        valueRadioPanel.add(valueIntRadio);
         entryPanel.add(new JLabel("Address"));
         entryPanel.add(new JLabel("Value"));
         entryPanel.add(addressField);
         entryPanel.add(valueField);
+        entryPanel.add(addressRadioPanel);
+        entryPanel.add(valueRadioPanel);
 
         JPanel wordPanel = new JPanel(new GridLayout(1, 2));
         wordRadio = new JRadioButton("Word");
@@ -142,16 +164,33 @@ public class BasicMemoryManipulator extends JFrame
         instructionCachesList = new JList<>(instructionCachesModel);
         dataCachesList = new JList<>(dataCachesModel);
 
-        rightPanel.add(createListPanel("Instruction Caches", instructionCachesList, new JList[] {dataCachesList, unifiedMemoryList}));
+        rightPanel.add(createListPanel("Unified Memory", unifiedMemoryList, new JList[] {instructionCachesList, dataCachesList}));
         JPanel cachesPanel = new JPanel(new GridLayout(1, 2));
+        cachesPanel.add(createListPanel("Instruction Caches", instructionCachesList, new JList[] {dataCachesList, unifiedMemoryList}));
         cachesPanel.add(createListPanel("Data Caches", dataCachesList, new JList[] {instructionCachesList, unifiedMemoryList}));
-        cachesPanel.add(createListPanel("Unified Memory", unifiedMemoryList, new JList[] {instructionCachesList, dataCachesList}));
         rightPanel.add(cachesPanel);
 
         // Bottom
-        JPanel bottomPanel = new JPanel();
-        returnField = new JTextField(32);
-        bottomPanel.add(returnField);
+        JPanel bottomPanel = new JPanel(new GridBagLayout());
+        returnField = new JTextField();
+        returnField.setHorizontalAlignment(JTextField.CENTER);
+        returnField.setPreferredSize(new Dimension(500, 30));
+        returnField.setEditable(false);
+        displayText = new JTextArea();
+        displayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        displayText.setEditable(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.NORTH;
+        bottomPanel.add(returnField, gbc);
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridy = 1;
+        gbc.weighty = 1.0;
+        JScrollPane displayPane = new JScrollPane(displayText);
+        bottomPanel.add(displayPane, gbc);
 
         // Finish arranging window
         leftRightPane.setLeftComponent(leftPanel);
@@ -181,11 +220,11 @@ public class BasicMemoryManipulator extends JFrame
             if(!e.getValueIsAdjusting() && (list.getSelectedValue() != null))
             {
                 currentlySelected = list.getSelectedValue();
-                System.out.println(currentlySelected);
                 for(JList other : otherLists)
                 {
                     other.clearSelection();
                 }
+                displayText.setText(currentlySelected.getMemoryDisplay());
             }
         });
 
@@ -213,13 +252,22 @@ public class BasicMemoryManipulator extends JFrame
         catch(NumberFormatException e) {}  // Don't do anything, just don't accept inputs
     }
 
+    private int getAddress()
+    {
+        return Integer.parseInt(addressField.getText(), addressBinRadio.isSelected() ? 2 : 10);
+    }
+
+    private int getValue()
+    {
+        return Integer.parseInt(valueField.getText(), valueBinRadio.isSelected() ? 2 : 10);
+    }
+
     private void storeCurrentMemoryModule()
     {
         try
         {
             currentlySelected.store(new MemoryRequest(-1, REQUEST_TYPE.STORE,
-                                                      new Object[] { Integer.parseInt(addressField.getText()),
-                                                                     Integer.parseInt(valueField.getText()) }));
+                                                      new Object[] { getAddress(), getValue() }));
         }
         catch(NumberFormatException e) {}  // Don't do anything, just don't accept inputs
     }
@@ -229,14 +277,13 @@ public class BasicMemoryManipulator extends JFrame
         try
         {
             int[] line = currentlySelected.load(new MemoryRequest(-1, REQUEST_TYPE.LOAD,
-                                                new Object[] { Integer.parseInt(addressField.getText()),
-                                                               lineRadio.isSelected() }));
+                                                new Object[] { getAddress(), lineRadio.isSelected() }));
             returnField.setText("");
             StringBuilder newText = new StringBuilder();
             for(int word : line)
             {
                 newText.append(word);
-                newText.append('\n');
+                newText.append('\t');
             }
             newText.deleteCharAt(newText.length() - 1);
             returnField.setText(newText.toString());

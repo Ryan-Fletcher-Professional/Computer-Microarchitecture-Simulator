@@ -52,12 +52,41 @@ public class MemoryModule
         this.columnSize = columnSize;
         this.accessDelay = accessDelay;
 
+        accesses = new LinkedList<>();
+        blocks = new ArrayList<>();
+
         initMemory();
     }
 
     public String toString()
     {
         return Integer.toString(id);
+    }
+
+    public String getMemoryDisplay()
+    {
+        StringBuilder ret = new StringBuilder();
+        int greatestAddressLength = Integer.toString(MAX_ADDRESS >>> numOffsetBits, 2).length();
+        String addressLabel = "Line Address";
+        int addressFillTotal = Math.max(0, greatestAddressLength - addressLabel.length());
+        ret.append(" Dirty | Valid | ").append(" ".repeat((addressFillTotal + 1) / 2)).append(addressLabel).append(" ".repeat(addressFillTotal / 2)).append(" |                000               |                001               |                010               |                011               |                100               |                101               |                110               |                111              \n");
+        ret.append("-".repeat(ret.toString().length() - 1)).append('\n');
+        for(int[] line : memory)
+        {
+            ret.append("   ").append(isDirty(line) ? 1 : 0).append("   |   ").append(isValid(line) ? 1 : 0).append("   | ");
+            String address = Integer.toString(getFirstAddress(line) >>> numOffsetBits, 2);
+            ret.append("0".repeat(greatestAddressLength - address.length()));
+            ret.append(address);
+            for(int i = FIRST_WORD_INDEX; i < line.length; i++)
+            {
+                ret.append(" | ");
+                String value = Integer.toString(line[i], 2);
+                ret.append("0".repeat(32 - value.length()));
+                ret.append(value);
+            }
+            ret.append('\n');
+        }
+        return ret.toString();
     }
 
     /**
