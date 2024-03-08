@@ -2,7 +2,7 @@ package simulator;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+
 import static main.GLOBALS.*;
 import memory.MemoryModule;
 import memory.MemoryRequest;
@@ -99,7 +99,7 @@ public class BasicMemoryManipulator extends JFrame
         JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
         JButton storeButton = new JButton("Store");
         JButton loadButton = new JButton("Load");
-        storeButton.addActionListener(e -> storeCurrentMemoryModule());
+        storeButton.addActionListener(e -> storeWordInCurrentMemoryModule());
         loadButton.addActionListener(e -> loadCurrentMemoryModule());
         buttonPanel.add(storeButton);
         buttonPanel.add(loadButton);
@@ -241,6 +241,7 @@ public class BasicMemoryManipulator extends JFrame
                                          cacheRadio.isSelected() ? MEMORY_KIND.CACHE : MEMORY_KIND.RAM,
                                          dataRadio.isSelected() ? MEMORY_TYPE.DATA : MEMORY_TYPE.INSTRUCTION,
                                          shortWordsRadio.isSelected() ? WORD_LENGTH.SHORT : WORD_LENGTH.LONG,
+                                         WRITE_MODE.THROUGH_ALLOCATE,
                                          model.getSize() > 0 ? model.getElementAt(model.getSize() - 1) :
                                                  (unifiedMemoryModel.getSize() > 0 ?
                                                   unifiedMemoryModel.getElementAt(unifiedMemoryModel.getSize() - 1) :
@@ -249,7 +250,10 @@ public class BasicMemoryManipulator extends JFrame
                                          Integer.parseInt(lineSizeField.getText()));
             model.addElement(newModule);
         }
-        catch(NumberFormatException e) {}  // Don't do anything, just don't accept inputs
+        catch(NumberFormatException e)
+        {
+            System.out.println("WARNING!\tMemory interface received invalid device parameters.");
+        }
     }
 
     private int getAddress()
@@ -262,14 +266,27 @@ public class BasicMemoryManipulator extends JFrame
         return Integer.parseInt(valueField.getText(), valueBinRadio.isSelected() ? 2 : 10);
     }
 
-    private void storeCurrentMemoryModule()
+    private void storeWordInCurrentMemoryModule()  // TODO : Add second value word field when 64-bit cache is selected
     {
         try
         {
+            int[] newValueS = new int[] { getValue() };
+            if(lineRadio.isSelected())
+            {
+                newValueS = new int[currentlySelected.getLineSize()];
+                for(int i = 0; i < newValueS.length; i++)
+                {
+                    newValueS[i] = getValue();
+                }
+            }
             currentlySelected.store(new MemoryRequest(-1, REQUEST_TYPE.STORE,
-                                                      new Object[] { getAddress(), getValue() }));
+                                                      new Object[] { getAddress(), newValueS }));
         }
-        catch(NumberFormatException e) {}  // Don't do anything, just don't accept inputs
+        catch(NumberFormatException e)
+        {
+            System.out.println("WARNING!\tMemory interface received invalid store parameters.");
+        }
+        displayText.setText(currentlySelected.getMemoryDisplay());
     }
 
     private void loadCurrentMemoryModule()
@@ -288,6 +305,10 @@ public class BasicMemoryManipulator extends JFrame
             newText.deleteCharAt(newText.length() - 1);
             returnField.setText(newText.toString());
         }
-        catch(NumberFormatException e) {}  // Don't do anything, just don't accept inputs
+        catch(NumberFormatException e)
+        {
+            System.out.println("WARNING!\tMemory interface received invalid load parameters.");
+        }
+        displayText.setText(currentlySelected.getMemoryDisplay());
     }
 }

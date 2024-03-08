@@ -37,8 +37,8 @@ public class MemoryModule
      * @param columnSize Number of lines in this MemoryModule
      * @param accessDelay Minimum access time penalty for storing to or loading from this MemoryModule
      */
-    public MemoryModule(int id, MEMORY_KIND kind, MEMORY_TYPE type, WORD_LENGTH wordLength, MemoryModule next,
-                        int columnSize, int accessDelay)
+    public MemoryModule(int id, MEMORY_KIND kind, MEMORY_TYPE type, WORD_LENGTH wordLength, WRITE_MODE writeMode,
+                        MemoryModule next, int columnSize, int accessDelay)
     {
         if(columnSize < 1) { throw new IllegalArgumentException("Column size cannot be below 0"); }
 
@@ -46,9 +46,10 @@ public class MemoryModule
         this.kind = kind;
         this.type = type;
         this.wordLength = wordLength;
+        this.writeMode = writeMode;
         this.next = next;
         numOffsetBits = (int)(Math.log(lineSize) / Math.log(2));
-        offsetMask = numOffsetBits > 0 ? 1 << numOffsetBits - 1 : 0;
+        offsetMask = numOffsetBits > 0 ? lineSize - 1 : 0;
         this.columnSize = columnSize;
         this.accessDelay = accessDelay;
 
@@ -63,6 +64,11 @@ public class MemoryModule
         return Integer.toString(id);
     }
 
+    public int getLineSize()
+    {
+        return lineSize;
+    }
+
     public String getMemoryDisplay()
     {
         StringBuilder ret = new StringBuilder();
@@ -75,7 +81,7 @@ public class MemoryModule
         {
             ret.append("   ").append(isDirty(line) ? 1 : 0).append("   |   ").append(isValid(line) ? 1 : 0).append("   | ");
             String address = Integer.toString(getFirstAddress(line) >>> numOffsetBits, 2);
-            ret.append("0".repeat(greatestAddressLength - address.length()));
+            ret.append(ADDRESS_FILLER.repeat(greatestAddressLength - address.length()));
             ret.append(address);
             for(int i = FIRST_WORD_INDEX; i < line.length; i++)
             {
@@ -213,7 +219,15 @@ public class MemoryModule
             {
                 if(isDirty(line) && isValid(line))
                 {
-                    accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line));
+                    if(next != null)
+                    {
+                        accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line));
+                    }
+                    else
+                    {
+                        System.out.println("WARNING!\tMemoryModule.load() encountered unexpected behavior: " +
+                                           "Lowest level of memory had dirty data in storage.");
+                    }
                     setDirty(line, false);
                 }
             }
@@ -296,6 +310,8 @@ public class MemoryModule
         }
         catch(ClassCastException e)
         {
+            System.out.println(args[0]);
+            System.out.println(args[1]);
             throw new IllegalArgumentException("Store request had an invalid argument");
         }
 
@@ -306,31 +322,59 @@ public class MemoryModule
         {
             if(sameLine(getFirstAddress(line), virtualAddress))
                 { setValid(line, false); }
-            accessNext(REQUEST_TYPE.STORE, args);
-        }
-        else if(writeMode.equals(WRITE_MODE.BACK))
-        {
-            if(isDirty(line) && isValid(line)) { accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line)); }
-            int[] newWords = words;
-            if(words.length < lineSize)
+            if(next != null)
             {
-                int[] oldWords = accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true));
-                System.arraycopy(words, 0, oldWords, virtualAddress & offsetMask, words.length);
-                newWords = oldWords;
+                accessNext(REQUEST_TYPE.STORE, args);
             }
-            write(true, virtualAddress, newWords);
+            else
+            {
+                writeData(false, virtualAddress, words);
+            }
+        }
+        else if(writeMode.equals(WRITE_MODE.BACK))  // TODO : Currently, write-back mode will allow instruction memory to be written in a DATA cache, and thus outdated in unified memory, but not marked as dirty there. Prevent writing to instruction memory through data memory.
+        {
+            if(!sameLine(getFirstAddress(line), virtualAddress) && isDirty(line) && isValid(line))
+            {
+                if(next != null)
+                {
+                    accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line));
+                }
+                else
+                {
+                    System.out.println("WARNING!\tMemoryModule.load() encountered unexpected behavior: " +
+                                       "Lowest level of memory had dirty data or did not have requested address.");
+                }
+                int[] newWords = words;
+                if(words.length < lineSize)
+                {
+                    int[] oldWords = (next != null) ? accessNext(REQUEST_TYPE.LOAD,
+                                                                 generateLoadArgsFromValues(virtualAddress, true))
+                                                    : readData(line, getFirstAddress(line), true);
+                    System.arraycopy(words, 0, oldWords, virtualAddress & offsetMask, words.length);
+                    newWords = oldWords;
+                }
+                writeData(true, virtualAddress, newWords);
+            }
+            else
+            {
+                int[] oldWords = readData(line, getFirstAddress(line), true);
+                System.arraycopy(words, 0, oldWords, virtualAddress & offsetMask, words.length);
+                writeData(true, virtualAddress, oldWords);
+            }
         }
         else if(writeMode.equals(WRITE_MODE.THROUGH_ALLOCATE))
         {
             int[] newWords = words;
             if(words.length < lineSize)
             {
-                int[] oldWords = accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true));
+                int[] oldWords = ((next != null) && !sameLine(getFirstAddress(line), virtualAddress))
+                                 ? accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true))
+                                 : readData(line, getFirstAddress(line), true);
                 System.arraycopy(words, 0, oldWords, virtualAddress & offsetMask, words.length);
                 newWords = oldWords;
             }
-            write(false, virtualAddress, newWords);
-            accessNext(REQUEST_TYPE.STORE, args);
+            writeData(false, virtualAddress, newWords);
+            if(next != null) { accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromValues(virtualAddress, newWords)); }
         }
     }
 
@@ -339,7 +383,7 @@ public class MemoryModule
      * @param virtualAddress Virtual address of a word being written.
      * @param words Line of words to be written.
      */
-    private void write(boolean dirty, int virtualAddress, int[] words)
+    private void writeData(boolean dirty, int virtualAddress, int[] words)
     {
         int[] line = memory[map(virtualAddress)];
         setValid(line);
@@ -393,22 +437,51 @@ public class MemoryModule
         {
             if(sameLine(getFirstAddress(line), virtualAddress))
             {
-                return read(line, virtualAddress, wholeLine);
+                return readData(line, virtualAddress, wholeLine);
             }
             else
             {
-                int[] newLine = accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true));
+                int[] newLine = new int[lineSize];
+                if(next != null)
+                {
+                    newLine = accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true));
+                }
+                else
+                {
+                    System.out.println("WARNING!\tMemoryModule.load() encountered unexpected behavior: " +
+                                       "Lowest level of memory did not have requested virtual address in storage.");
+                }
                 if(writeMode.equals(WRITE_MODE.BACK) && isDirty(line))
-                    { accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line)); }
-                write(false, virtualAddress, newLine);
-                return read(newLine, virtualAddress, wholeLine);
+                {
+                    if(next != null)
+                    {
+                        accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line));
+                    }
+                    else
+                    {
+                        System.out.println("WARNING!\tMemoryModule.load() encountered unexpected behavior: " +
+                                           "Lowest level of memory had dirty data in storage.");
+                    }
+                }
+                writeData(false, virtualAddress, newLine);
+                return readData(newLine, virtualAddress, wholeLine);
             }
         }
         else
         {
-            int[] newLine = accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true));
-            write(false, virtualAddress, newLine);
-            return read(newLine, virtualAddress, wholeLine);
+            int[] newLine = new int[lineSize];
+
+            if(next != null)
+            {
+                accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true));
+            }
+            else
+            {
+                System.out.println("WARNING!\tMemoryModule.load() encountered unexpected behavior: " +
+                                   "Lowest level of memory did not have requested virtual address in storage.");
+            }
+            writeData(false, virtualAddress, newLine);
+            return readData(newLine, virtualAddress, wholeLine);
         }
     }
 
@@ -420,13 +493,13 @@ public class MemoryModule
      * @return Length 1 (wordLength SHORT) or 2 (wordLength LONG) int array if wholeLine is false.
      *         Length lineSize array otherwise.
      */
-    private int[] read(int[] line, int virtualAddress, boolean wholeLine)
+    private int[] readData(int[] line, int virtualAddress, boolean wholeLine)
     {
         int[] ret;
         if(wholeLine)
         {
             ret = new int[lineSize];
-            System.arraycopy(line, FIRST_WORD_INDEX, ret, 0, ret.length);
+            System.arraycopy(line, FIRST_WORD_INDEX, ret, 0, lineSize);
         }
         else
         {

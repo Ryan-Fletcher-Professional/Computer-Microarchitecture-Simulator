@@ -42,11 +42,13 @@ public class GLOBALS
         STORE
     }
 
-    public static int VALID_INDEX = 0;
-    public static int DIRTY_INDEX = 1;
-    public static int ADDRESS_INDEX = 2;
-    public static int FIRST_WORD_INDEX = 3;
+    public static final int VALID_INDEX = 0;
+    public static final int DIRTY_INDEX = 1;
+    public static final int ADDRESS_INDEX = 2;
+    public static final int FIRST_WORD_INDEX = 3;
     public static int[] WORD_INDECES = new int[] { VALID_INDEX, DIRTY_INDEX, ADDRESS_INDEX, FIRST_WORD_INDEX };
+
+    public static final String ADDRESS_FILLER = " ";  //"0"
 
     public static int GET_ID()
     {
