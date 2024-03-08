@@ -61,7 +61,8 @@ public class MemoryModule
 
     public String toString()
     {
-        return Integer.toString(id);
+        return "ID:    " + id + "                        Write Mode:    " + writeMode +
+               "                        Lines:    " + columnSize + "                        Line Size:    " + lineSize;
     }
 
     public int getLineSize()
