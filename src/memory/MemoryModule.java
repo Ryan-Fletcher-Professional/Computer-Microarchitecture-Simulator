@@ -1,10 +1,13 @@
 package memory;
 
 import java.util.*;
+import java.util.logging.*;
 import static main.GLOBALS.*;
 
 public class MemoryModule
 {
+    private static final Logger logger = Logger.getLogger(MemoryModule.class.getName());
+
     private final int id;                       // ID of this MemoryModule
     private final MEMORY_KIND kind;             // CACHE/RAM    TODO : Make register file module
     private final MEMORY_TYPE type;             // DATA/INSTRUCTION
@@ -226,8 +229,7 @@ public class MemoryModule
                     }
                     else
                     {
-                        System.out.println("WARNING!\tMemoryModule.load() encountered unexpected behavior: " +
-                                           "Lowest level of memory had dirty data in storage.");
+                        WARN("Unexpected behavior: Lowest level of memory had dirty data in storage.");
                     }
                     setDirty(line, false);
                 }
@@ -342,8 +344,7 @@ public class MemoryModule
                 }
                 else
                 {
-                    System.out.println("WARNING!\tMemoryModule.load() encountered unexpected behavior: " +
-                                       "Lowest level of memory had dirty data or did not have requested address.");
+                    WARN("Unexpected behavior: Lowest level of memory had dirty data or did not have requested address.");
                 }
                 int[] newWords = words;
                 if(words.length < lineSize)
@@ -449,8 +450,7 @@ public class MemoryModule
                 }
                 else
                 {
-                    System.out.println("WARNING!\tMemoryModule.load() encountered unexpected behavior: " +
-                                       "Lowest level of memory did not have requested virtual address in storage.");
+                    WARN("Unexpected behavior: Lowest level of memory did not have requested virtual address in storage.");
                 }
                 if(writeMode.equals(WRITE_MODE.BACK) && isDirty(line))
                 {
@@ -460,8 +460,7 @@ public class MemoryModule
                     }
                     else
                     {
-                        System.out.println("WARNING!\tMemoryModule.load() encountered unexpected behavior: " +
-                                           "Lowest level of memory had dirty data in storage.");
+                        WARN("Unexpected behavior: Lowest level of memory had dirty data in storage.");
                     }
                 }
                 writeData(false, virtualAddress, newLine);
@@ -478,8 +477,7 @@ public class MemoryModule
             }
             else
             {
-                System.out.println("WARNING!\tMemoryModule.load() encountered unexpected behavior: " +
-                                   "Lowest level of memory did not have requested virtual address in storage.");
+                WARN("Unexpected behavior: Lowest level of memory did not have requested virtual address in storage.");
             }
             writeData(false, virtualAddress, newLine);
             return readData(newLine, virtualAddress, wholeLine);
@@ -567,5 +565,20 @@ public class MemoryModule
             currentAccess.start(accessDelay);
         }                            // Should never take exception
         try{ currentAccess.tick(); } catch(MemoryRequestTimerNotStartedException _ignored_){}
+    }
+
+    private static String GET_TRACE_LINE()
+    {
+        return GET_TRACE_LINE(1);
+    }
+
+    private static String GET_TRACE_LINE(int offset)
+    {
+        return "(MemoryModule:" + Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
+    }
+
+    private static void WARN(String message)
+    {
+        logger.log(Level.WARNING, GET_TRACE_LINE(1) + " " + message);
     }
 }

@@ -2,6 +2,8 @@ package simulator;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static main.GLOBALS.*;
 import memory.MemoryModule;
@@ -9,6 +11,8 @@ import memory.MemoryRequest;
 
 public class BasicMemoryManipulator extends JFrame
 {
+    private static final Logger logger = Logger.getLogger(BasicMemoryManipulator.class.getName());
+
     private final int id;
     private int width, height;
 
@@ -252,7 +256,7 @@ public class BasicMemoryManipulator extends JFrame
         }
         catch(NumberFormatException e)
         {
-            System.out.println("WARNING!\tMemory interface received invalid device parameters.");
+            WARN("Memory interface received invalid device parameters.");
         }
     }
 
@@ -284,7 +288,7 @@ public class BasicMemoryManipulator extends JFrame
         }
         catch(NumberFormatException e)
         {
-            System.out.println("WARNING!\tMemory interface received invalid store parameters.");
+            WARN("Memory interface received invalid store parameters.");
         }
         displayText.setText(currentlySelected.getMemoryDisplay());
     }
@@ -307,8 +311,23 @@ public class BasicMemoryManipulator extends JFrame
         }
         catch(NumberFormatException e)
         {
-            System.out.println("WARNING!\tMemory interface received invalid load parameters.");
+            WARN("Memory interface received invalid load parameters.");
         }
         displayText.setText(currentlySelected.getMemoryDisplay());
+    }
+
+    private static String GET_TRACE_LINE()
+    {
+        return GET_TRACE_LINE(1);
+    }
+
+    private static String GET_TRACE_LINE(int offset)
+    {
+        return "(BasicMemoryManipulator:" + Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
+    }
+
+    private static void WARN(String message)
+    {
+        logger.log(Level.WARNING, GET_TRACE_LINE(1) + " " + message);
     }
 }
