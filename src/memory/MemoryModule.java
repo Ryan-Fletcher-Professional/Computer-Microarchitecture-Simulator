@@ -13,7 +13,7 @@ public class MemoryModule
     private final MEMORY_TYPE type;             // DATA/INSTRUCTION
     private final WORD_LENGTH wordLength;       // SHORT/LONG
     private final MemoryModule next;            // Pointer to memory one level down
-    private static final int lineSize = 8;      // Number of words per line
+    private final int lineSize;                 // Number of words per line
     private final int numOffsetBits;            // Number of bits needed to distinguish between all words in a line
     private final int offsetMask;               // AND mask to retrieve offset of a given virtual address
     private final int columnSize;               // Number of lines
@@ -41,7 +41,7 @@ public class MemoryModule
      * @param accessDelay Minimum access time penalty for storing to or loading from this MemoryModule
      */
     public MemoryModule(int id, MEMORY_KIND kind, MEMORY_TYPE type, WORD_LENGTH wordLength, WRITE_MODE writeMode,
-                        MemoryModule next, int columnSize, int accessDelay)
+                        MemoryModule next, int columnSize, int lineSize, int accessDelay)
     {
         if(columnSize < 1) { throw new IllegalArgumentException("Column size cannot be below 0"); }
 
@@ -51,9 +51,10 @@ public class MemoryModule
         this.wordLength = wordLength;
         this.writeMode = writeMode;
         this.next = next;
+        this.columnSize = columnSize;
+        this.lineSize = lineSize;
         numOffsetBits = (int)(Math.log(lineSize) / Math.log(2));
         offsetMask = numOffsetBits > 0 ? lineSize - 1 : 0;
-        this.columnSize = columnSize;
         this.accessDelay = accessDelay;
 
         accesses = new LinkedList<>();
@@ -79,22 +80,41 @@ public class MemoryModule
         int greatestAddressLength = Integer.toString(MAX_ADDRESS >>> numOffsetBits, 2).length();
         String addressLabel = "Line Address";
         int addressFillTotal = Math.max(0, greatestAddressLength - addressLabel.length());
-        ret.append(" Dirty | Valid | ").append(" ".repeat((addressFillTotal + 1) / 2)).append(addressLabel).append(" ".repeat(addressFillTotal / 2)).append(" |                000               |                001               |                010               |                011               |                100               |                101               |                110               |                111              \n");
-        ret.append("-".repeat(ret.toString().length() - 1)).append('\n');
+        ret.append(" Dirty | Valid | ")
+           .append(" ".repeat((addressFillTotal + 1) / 2))
+           .append(addressLabel)
+           .append(" ".repeat(addressFillTotal / 2));
+        int indexFillTotal = Math.max(0, 32 - numOffsetBits);
+        for(int i = 0; i < lineSize; i++)
+        {
+            String index = Integer.toString(i, 2);
+            ret.append(" | ")
+               .append(" ".repeat((indexFillTotal + 1) / 2))
+               .append("0".repeat(numOffsetBits - index.length()))
+               .append(index)
+               .append(" ".repeat(indexFillTotal / 2));
+        }
+        ret.append('\n')
+           .append("-".repeat(ret.toString().length() - 1))
+           .append('\n');
         for(int[] line : memory)
         {
-            ret.append("   ").append(isDirty(line) ? 1 : 0).append("   |   ").append(isValid(line) ? 1 : 0).append("   | ");
             String address = Integer.toString(getFirstAddress(line) >>> numOffsetBits, 2);
-            ret.append(ADDRESS_FILLER.repeat(greatestAddressLength - address.length()));
-            ret.append(address);
+            ret.append("   ")
+               .append(isDirty(line) ? 1 : 0)
+               .append("   |   ")
+               .append(isValid(line) ? 1 : 0)
+               .append("   | ")
+               .append(ADDRESS_FILLER.repeat(greatestAddressLength - address.length()))
+               .append(address);
             for(int i = FIRST_WORD_INDEX; i < line.length; i++)
             {
-                ret.append(" | ");
                 String value = Integer.toString(line[i], 2);
-                ret.append("0".repeat(32 - value.length()));
-                ret.append(value);
+                ret.append(" | ")
+                   .append("0".repeat(32 - value.length()))
+                   .append(value);
             }
-            ret.append('\n');
+            ret.append("   \n");
         }
         return ret.toString();
     }
@@ -539,7 +559,7 @@ public class MemoryModule
             blocks.remove(nextRequest);
             throw new IllegalArgumentException("Invalid request type.");
         }
-        return new int[8];
+        return new int[lineSize];
     }
 
     /**

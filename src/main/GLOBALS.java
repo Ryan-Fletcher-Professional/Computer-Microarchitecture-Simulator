@@ -37,6 +37,8 @@ public class GLOBALS
     }
 
     public static final WRITE_MODE DEFAULT_WRITE_MODE = WRITE_MODE.BACK;
+    public static final int DEFAULT_CACHE_ACCESS_DELAY = 10;
+    public static final int DEFAULT_RAM_ACCESS_DELAY = 100;
 
     public enum REQUEST_TYPE
     {

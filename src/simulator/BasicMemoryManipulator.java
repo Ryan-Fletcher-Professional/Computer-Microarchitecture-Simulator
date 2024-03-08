@@ -251,7 +251,8 @@ public class BasicMemoryManipulator extends JFrame
                                                   unifiedMemoryModel.getElementAt(unifiedMemoryModel.getSize() - 1) :
                                                   null),
                                          Integer.parseInt(columnSizeField.getText()),
-                                         Integer.parseInt(lineSizeField.getText()));
+                                         Integer.parseInt(lineSizeField.getText()),
+                                         cacheRadio.isSelected() ? DEFAULT_CACHE_ACCESS_DELAY : DEFAULT_RAM_ACCESS_DELAY);
             model.addElement(newModule);
         }
         catch(NumberFormatException e)
