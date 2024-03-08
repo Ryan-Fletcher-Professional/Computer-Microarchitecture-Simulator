@@ -2,6 +2,7 @@ package simulator;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.invoke.MethodHandles;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,6 +23,7 @@ public class BasicMemoryManipulator extends JFrame
     private JRadioButton cacheRadio, ramRadio, dataRadio, instructionRadio, shortWordsRadio, longWordsRadio,
                          wordRadio, lineRadio, addressBinRadio, addressIntRadio, valueBinRadio, valueIntRadio;
     private JList<MemoryModule> instructionCachesList, dataCachesList, unifiedMemoryList;
+    private JList<MemoryModule>[] memoryLists;
     private DefaultListModel<MemoryModule> instructionCachesModel, dataCachesModel, unifiedMemoryModel;
     private MemoryModule currentlySelected;
 
@@ -169,17 +171,16 @@ public class BasicMemoryManipulator extends JFrame
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
 
         unifiedMemoryModel = new DefaultListModel<>();
-        instructionCachesModel = new DefaultListModel<>();
         dataCachesModel = new DefaultListModel<>();
+        instructionCachesModel = new DefaultListModel<>();
         unifiedMemoryList = new JList<>(unifiedMemoryModel);
-        instructionCachesList = new JList<>(instructionCachesModel);
         dataCachesList = new JList<>(dataCachesModel);
+        instructionCachesList = new JList<>(instructionCachesModel);
+        memoryLists = new JList[] { unifiedMemoryList, dataCachesList, instructionCachesList };
 
         rightPanel.add(createListPanel("Unified Memory", unifiedMemoryList, new JList[] {instructionCachesList, dataCachesList}));
-        JPanel cachesPanel = new JPanel(new GridLayout(1, 2));
-        cachesPanel.add(createListPanel("Instruction Caches", instructionCachesList, new JList[] {dataCachesList, unifiedMemoryList}));
-        cachesPanel.add(createListPanel("Data Caches", dataCachesList, new JList[] {instructionCachesList, unifiedMemoryList}));
-        rightPanel.add(cachesPanel);
+        rightPanel.add(createListPanel("Data Caches", dataCachesList, new JList[] {instructionCachesList, unifiedMemoryList}));
+        rightPanel.add(createListPanel("Instruction Caches", instructionCachesList, new JList[] {dataCachesList, unifiedMemoryList}));
 
         // Bottom
         JPanel bottomPanel = new JPanel(new GridBagLayout());
@@ -243,6 +244,13 @@ public class BasicMemoryManipulator extends JFrame
         SwingUtilities.invokeLater(() -> {
             vBar.setValue(y);
             hBar.setValue(x);
+            for(JList<MemoryModule> list : memoryLists)
+            {
+                if(list.getModel().getSize() > 0)
+                {
+                    ((DefaultListModel<MemoryModule>)list.getModel()).setElementAt(list.getModel().getElementAt(0), 0);
+                }
+            }
         });
     }
 
@@ -361,16 +369,17 @@ public class BasicMemoryManipulator extends JFrame
 
     private static String GET_TRACE_LINE()
     {
-        return GET_TRACE_LINE(1);
+        return GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1);
     }
 
-    private static String GET_TRACE_LINE(int offset)
+    private static String GET_TRACE_LINE(String invoker, int offset)
     {
-        return "(BasicMemoryManipulator:" + Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
+        String className = MethodHandles.lookup().lookupClass().getName();
+        return "\tat " + className + "." + invoker + "(" + className + ".java:" + Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
     }
 
     private static void WARN(String message)
     {
-        logger.log(Level.WARNING, GET_TRACE_LINE(1) + " " + message);
+        logger.log(Level.WARNING, GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1) + " " + message);
     }
 }

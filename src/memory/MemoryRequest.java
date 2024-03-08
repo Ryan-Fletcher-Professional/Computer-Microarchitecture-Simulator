@@ -33,6 +33,12 @@ public class MemoryRequest
         return started;
     }
 
+    public int getTimeRemaining() throws MemoryRequestTimerNotStartedException
+    {
+        if(!started) { throw new MemoryRequestTimerNotStartedException(); }
+        return timer;
+    }
+
     public boolean finished()
     {
         return timer <= 0;

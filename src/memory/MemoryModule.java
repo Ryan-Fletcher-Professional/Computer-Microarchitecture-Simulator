@@ -1,5 +1,8 @@
 package memory;
 
+import simulator.BasicMemoryManipulator;
+
+import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.logging.*;
 import static main.GLOBALS.*;
@@ -67,8 +70,40 @@ public class MemoryModule
 
     public String toString()
     {
-        return "ID:    " + id + "                        Write Mode:    " + writeMode +
-               "                        Lines:    " + columnSize + "                        Line Size:    " + lineSize;
+        String itemDelim = "                        ";
+        String itemGap = "    ";
+        StringBuilder ret = new StringBuilder();
+        ret.append("ID:")
+            .append(itemGap)
+            .append(id)
+            .append(itemDelim)
+            .append("Write Mode:")
+            .append(itemGap)
+            .append(writeMode)
+            .append(itemDelim)
+            .append("Lines:")
+            .append(itemGap)
+            .append(columnSize)
+            .append(itemDelim)
+            .append("Line Size:")
+            .append(itemGap)
+            .append(lineSize)
+            .append(itemDelim);
+        if(!blocks.isEmpty()) { ret.append("BLOCKED"); }
+        else
+        {
+            try
+            {
+                MemoryRequest firstAccess = accesses.peek();
+                ret.append(firstAccess != null ? "Operating:" + itemGap + firstAccess.getTimeRemaining() : "AVAILABLE");
+            }
+            catch(MemoryRequestTimerNotStartedException e)
+            {
+                ret.append("Operating:" + itemGap + accessDelay);
+            }
+        }
+
+        return ret.toString();
     }
 
     public int getLineSize()
@@ -603,16 +638,17 @@ public class MemoryModule
 
     private static String GET_TRACE_LINE()
     {
-        return GET_TRACE_LINE(1);
+        return GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1);
     }
 
-    private static String GET_TRACE_LINE(int offset)
+    private static String GET_TRACE_LINE(String invoker, int offset)
     {
-        return "(MemoryModule:" + Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
+        String className = MethodHandles.lookup().lookupClass().getName();
+        return "\tat " + className + "." + invoker + "(" + className + ".java:" + Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
     }
 
     private static void WARN(String message)
     {
-        logger.log(Level.WARNING, GET_TRACE_LINE(1) + " " + message);
+        logger.log(Level.WARNING, GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1) + " " + message);
     }
 }
