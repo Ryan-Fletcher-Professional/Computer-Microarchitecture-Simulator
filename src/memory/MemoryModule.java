@@ -78,21 +78,33 @@ public class MemoryModule
 
     public String getMemoryDisplay()
     {
+        return getMemoryDisplay(2, 2);
+    }
+
+    public String getMemoryDisplay(int addressRadix, int valueRadix)
+    {
         StringBuilder ret = new StringBuilder();
-        int greatestAddressLength = Integer.toString(MAX_ADDRESS >>> numOffsetBits, 2).length();
+        int greatestAddressLength = Integer.toString(MAX_ADDRESS >>> numOffsetBits, addressRadix).length();
         String addressLabel = "Line Address";
         int addressFillTotal = Math.max(0, greatestAddressLength - addressLabel.length());
         ret.append(" Dirty | Valid | ")
            .append(" ".repeat((addressFillTotal + 1) / 2))
            .append(addressLabel)
            .append(" ".repeat(addressFillTotal / 2));
-        int indexFillTotal = Math.max(0, 32 - numOffsetBits);
+        int indexFillTotal = Math.max(0, Integer.toString(Integer.MAX_VALUE, valueRadix).length() - (addressRadix < 3 ? numOffsetBits : 1));
+        String previousIndexFill = "";
         for(int i = 0; i < lineSize; i++)
         {
-            String index = lineSize > 1 ? Integer.toString(i, 2) : "";
+            String index = lineSize > 1 ? Integer.toString(i, addressRadix) : "";
+            String indexFill = "0".repeat(Math.max(0, addressRadix < 3 ? (numOffsetBits - index.length()) : 0));
+            if((i > 0) && ((indexFill + Integer.toString(i, addressRadix)).length() > (previousIndexFill + Integer.toString(i - 1, addressRadix)).length()))
+            {
+                indexFillTotal -= 1;
+            }
+            previousIndexFill = indexFill;
             ret.append(" | ")
                .append(" ".repeat((indexFillTotal + 1) / 2))
-               .append("0".repeat(Math.max(0, numOffsetBits - index.length())))
+               .append(indexFill)
                .append(index)
                .append(" ".repeat(indexFillTotal / 2));
         }
@@ -101,19 +113,19 @@ public class MemoryModule
            .append('\n');
         for(int[] line : memory)
         {
-            String address = columnSize > 1 ? Integer.toString(getFirstAddress(line) >>> numOffsetBits, 2) : "";
+            String address = columnSize > 1 ? Integer.toString(getFirstAddress(line) >>> numOffsetBits, addressRadix) : "";
             ret.append("   ")
                .append(isDirty(line) ? 1 : 0)
                .append("   |   ")
                .append(isValid(line) ? 1 : 0)
                .append("   | ")
-               .append(ADDRESS_FILLER.repeat(greatestAddressLength - address.length()))
+               .append(ADDRESS_FILLER.repeat(Math.max(addressLabel.length(), greatestAddressLength) - address.length()))
                .append(address);
             for(int i = FIRST_WORD_INDEX; i < line.length; i++)
             {
-                String value = Integer.toString(line[i], 2);
+                String value = Integer.toString(line[i], valueRadix);
                 ret.append(" | ")
-                   .append("0".repeat(32 - value.length()))
+                   .append((valueRadix < 3 ? "0" : " ").repeat(Integer.toString(Integer.MAX_VALUE, valueRadix).length() - value.length()))
                    .append(value);
             }
             ret.append("   \n");

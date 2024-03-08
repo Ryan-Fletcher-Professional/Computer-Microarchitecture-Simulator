@@ -17,6 +17,7 @@ public class BasicMemoryManipulator extends JFrame
     private int width, height;
 
     private JTextField addressField, valueField, columnSizeField, lineSizeField, returnField;
+    private JScrollPane displayPane;
     private JTextArea displayText;
     private JRadioButton cacheRadio, ramRadio, dataRadio, instructionRadio, shortWordsRadio, longWordsRadio,
                          wordRadio, lineRadio, addressBinRadio, addressIntRadio, valueBinRadio, valueIntRadio;
@@ -72,6 +73,8 @@ public class BasicMemoryManipulator extends JFrame
         addressGroup.add(addressBinRadio);
         addressGroup.add(addressIntRadio);
         addressBinRadio.setSelected(true);
+        addressBinRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
+        addressIntRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
         addressRadioPanel.add(addressBinRadio);
         addressRadioPanel.add(addressIntRadio);
         JPanel valueRadioPanel = new JPanel(new GridLayout(1, 2));
@@ -81,6 +84,8 @@ public class BasicMemoryManipulator extends JFrame
         valueGroup.add(valueBinRadio);
         valueGroup.add(valueIntRadio);
         valueBinRadio.setSelected(true);
+        valueBinRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
+        valueIntRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
         valueRadioPanel.add(valueBinRadio);
         valueRadioPanel.add(valueIntRadio);
         entryPanel.add(new JLabel("Address"));
@@ -195,7 +200,7 @@ public class BasicMemoryManipulator extends JFrame
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridy = 1;
         gbc.weighty = 1.0;
-        JScrollPane displayPane = new JScrollPane(displayText);
+        displayPane = new JScrollPane(displayText);
         bottomPanel.add(displayPane, gbc);
 
         // Finish arranging window
@@ -226,6 +231,21 @@ public class BasicMemoryManipulator extends JFrame
         }
     }
 
+    private void updateDisplay()
+    {
+        JScrollBar vBar = displayPane.getVerticalScrollBar();
+        int y = vBar.getValue();
+        JScrollBar hBar = displayPane.getHorizontalScrollBar();
+        int x = hBar.getValue();
+
+        displayText.setText(currentlySelected.getMemoryDisplay(getRadices()[0], getRadices()[1]));
+
+        SwingUtilities.invokeLater(() -> {
+            vBar.setValue(y);
+            hBar.setValue(x);
+        });
+    }
+
     private JPanel createListPanel(String title, JList<MemoryModule> list, JList[] otherLists) {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
@@ -245,7 +265,7 @@ public class BasicMemoryManipulator extends JFrame
                 {
                     other.clearSelection();
                 }
-                displayText.setText(currentlySelected.getMemoryDisplay());
+                updateDisplay();
             }
         });
 
@@ -288,6 +308,11 @@ public class BasicMemoryManipulator extends JFrame
         return Integer.parseInt(valueField.getText(), valueBinRadio.isSelected() ? 2 : 10);
     }
 
+    private int[] getRadices()
+    {
+        return new int[] { addressBinRadio.isSelected() ? 2 : 10, valueBinRadio.isSelected() ? 2 : 10 };
+    }
+
     private void storeWordInCurrentMemoryModule()  // TODO : Add second value word field when 64-bit cache is selected
     {
         try
@@ -308,7 +333,7 @@ public class BasicMemoryManipulator extends JFrame
         {
             WARN("Memory interface received invalid store parameters.");
         }
-        displayText.setText(currentlySelected.getMemoryDisplay());
+        updateDisplay();
     }
 
     private void loadCurrentMemoryModule()
@@ -331,7 +356,7 @@ public class BasicMemoryManipulator extends JFrame
         {
             WARN("Memory interface received invalid load parameters.");
         }
-        displayText.setText(currentlySelected.getMemoryDisplay());
+        updateDisplay();
     }
 
     private static String GET_TRACE_LINE()
