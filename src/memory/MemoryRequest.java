@@ -1,6 +1,5 @@
-package main;
+package memory;
 
-import main.GLOBALS.*;
 import static main.GLOBALS.*;
 
 public class MemoryRequest
@@ -45,9 +44,9 @@ public class MemoryRequest
     }
 
     // Decrements timer. Returns true iff timer ran out this tick.
-    public boolean tick() throws TimerNotStartedException
+    public boolean tick() throws MemoryRequestTimerNotStartedException
     {
-        if(!started) { throw new TimerNotStartedException(); }
+        if(!started) { throw new MemoryRequestTimerNotStartedException(); }
 
         timer--;
         return timer == 0;

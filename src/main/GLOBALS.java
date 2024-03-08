@@ -2,7 +2,10 @@ package main;
 
 public class GLOBALS
 {
-    static int currentId = 0;
+    public static int currentId = 0;
+
+    public static final int DEFAULT_UI_WIDTH  = 1500;
+    public static final int DEFAULT_UI_HEIGHT = 1000;
 
     public enum MEMORY_KIND
     {
@@ -16,9 +19,9 @@ public class GLOBALS
         INSTRUCTION
     }
 
-    final static int MAX_ADDRESS = (int)Math.pow(2, 25) - 1;
-    final static int DATA_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);            // 4MB
-    final static int INSTRUCTION_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);     // 4MB
+    public static final int MAX_ADDRESS = (int)Math.pow(2, 25) - 1;
+    public static final int DATA_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);            // 4MB
+    public static final int INSTRUCTION_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);     // 4MB
 
     public enum WORD_LENGTH
     {

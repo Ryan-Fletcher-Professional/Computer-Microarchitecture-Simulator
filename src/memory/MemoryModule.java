@@ -1,4 +1,4 @@
-package main;
+package memory;
 
 import java.util.*;
 import static main.GLOBALS.*;
@@ -53,6 +53,11 @@ public class MemoryModule
         this.accessDelay = accessDelay;
 
         initMemory();
+    }
+
+    public String toString()
+    {
+        return Integer.toString(id);
     }
 
     /**
@@ -458,6 +463,6 @@ public class MemoryModule
         {
             currentAccess.start(accessDelay);
         }                            // Should never take exception
-        try{ currentAccess.tick(); } catch(TimerNotStartedException _ignored_){}
+        try{ currentAccess.tick(); } catch(MemoryRequestTimerNotStartedException _ignored_){}
     }
 }
