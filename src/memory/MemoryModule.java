@@ -43,7 +43,9 @@ public class MemoryModule
     public MemoryModule(int id, MEMORY_KIND kind, MEMORY_TYPE type, WORD_LENGTH wordLength, WRITE_MODE writeMode,
                         MemoryModule next, int columnSize, int lineSize, int accessDelay)
     {
-        if(columnSize < 1) { throw new IllegalArgumentException("Column size cannot be below 0"); }
+        if(columnSize < 1) { throw new IllegalArgumentException("Column size cannot be below 1"); }
+        if(lineSize < 1) { throw new IllegalArgumentException("Line size cannot be below 1"); }
+        if(wordLength.equals(WORD_LENGTH.LONG) && (lineSize < 2)) { throw new IllegalArgumentException("Line size cannot be below 2 with 64-bit words"); }
 
         this.id = id;
         this.kind = kind;
@@ -87,10 +89,10 @@ public class MemoryModule
         int indexFillTotal = Math.max(0, 32 - numOffsetBits);
         for(int i = 0; i < lineSize; i++)
         {
-            String index = Integer.toString(i, 2);
+            String index = lineSize > 1 ? Integer.toString(i, 2) : "";
             ret.append(" | ")
                .append(" ".repeat((indexFillTotal + 1) / 2))
-               .append("0".repeat(numOffsetBits - index.length()))
+               .append("0".repeat(Math.max(0, numOffsetBits - index.length())))
                .append(index)
                .append(" ".repeat(indexFillTotal / 2));
         }
@@ -99,7 +101,7 @@ public class MemoryModule
            .append('\n');
         for(int[] line : memory)
         {
-            String address = Integer.toString(getFirstAddress(line) >>> numOffsetBits, 2);
+            String address = columnSize > 1 ? Integer.toString(getFirstAddress(line) >>> numOffsetBits, 2) : "";
             ret.append("   ")
                .append(isDirty(line) ? 1 : 0)
                .append("   |   ")

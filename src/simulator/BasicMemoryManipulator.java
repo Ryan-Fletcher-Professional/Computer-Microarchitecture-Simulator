@@ -154,6 +154,8 @@ public class BasicMemoryManipulator extends JFrame
         memoryCreationPanel.add(shortWordsRadio);
         memoryCreationPanel.add(longWordsRadio);
 
+        recurBackgroundColor(memoryCreationPanel, new Color(200, 200, 200));
+
         leftPanel.add(memoryOperationsPanel);
         leftPanel.add(memoryCreationPanel);
 
@@ -207,6 +209,21 @@ public class BasicMemoryManipulator extends JFrame
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
+    }
+
+    private static void recurBackgroundColor(Component current, Color color)
+    {
+        current.setBackground(color);
+        if(current instanceof Container)
+        {
+            for(Component child : ((Container)current).getComponents())
+            {
+                if(!(child instanceof JTextField) && !(child instanceof JTextArea))
+                {
+                    recurBackgroundColor(child, color);
+                }
+            }
+        }
     }
 
     private JPanel createListPanel(String title, JList<MemoryModule> list, JList[] otherLists) {
