@@ -36,6 +36,8 @@ public class GLOBALS
         THROUGH_ALLOCATE
     }
 
+    public static final WRITE_MODE DEFAULT_WRITE_MODE = WRITE_MODE.BACK;
+
     public enum REQUEST_TYPE
     {
         LOAD,

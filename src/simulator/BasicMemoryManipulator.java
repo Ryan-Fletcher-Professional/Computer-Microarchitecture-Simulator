@@ -241,7 +241,7 @@ public class BasicMemoryManipulator extends JFrame
                                          cacheRadio.isSelected() ? MEMORY_KIND.CACHE : MEMORY_KIND.RAM,
                                          dataRadio.isSelected() ? MEMORY_TYPE.DATA : MEMORY_TYPE.INSTRUCTION,
                                          shortWordsRadio.isSelected() ? WORD_LENGTH.SHORT : WORD_LENGTH.LONG,
-                                         WRITE_MODE.THROUGH_ALLOCATE,
+                                         DEFAULT_WRITE_MODE,
                                          model.getSize() > 0 ? model.getElementAt(model.getSize() - 1) :
                                                  (unifiedMemoryModel.getSize() > 0 ?
                                                   unifiedMemoryModel.getElementAt(unifiedMemoryModel.getSize() - 1) :
