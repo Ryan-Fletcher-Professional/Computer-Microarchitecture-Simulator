@@ -21,7 +21,7 @@ public class BasicMemoryManipulator extends JFrame
     private JScrollPane displayPane;
     private JTextArea displayText;
     private JRadioButton cacheRadio, ramRadio, dataRadio, instructionRadio, shortWordsRadio, longWordsRadio,
-                         wordRadio, lineRadio, addressBinRadio, addressIntRadio, valueBinRadio, valueIntRadio;
+                         wordRadio, lineRadio, addressBinRadio, addressDecRadio, valueBinRadio, valueDecRadio;
     private JList<MemoryModule> instructionCachesList, dataCachesList, unifiedMemoryList;
     private JList<MemoryModule>[] memoryLists;
     private DefaultListModel<MemoryModule> instructionCachesModel, dataCachesModel, unifiedMemoryModel;
@@ -47,10 +47,27 @@ public class BasicMemoryManipulator extends JFrame
 
         // Toolbar at the top
         JToolBar toolBar = new JToolBar();
-        JButton dummyButton1 = new JButton("TBI");
-        JButton dummyButton2 = new JButton("TBI");
-        toolBar.add(dummyButton1);
-        toolBar.add(dummyButton2);
+        JButton tickButton = new JButton("Cycle Clock");
+        JTextField tickField = new JTextField(1);
+        tickField.setMaximumSize(new Dimension(100, 30));
+        tickButton.addActionListener(e -> {
+            int numTicks = 1;
+            try{ numTicks = Integer.parseInt(tickField.getText()); }
+            catch(NumberFormatException _ignored_) {}
+            for(int i = 0; i < numTicks; i++)
+            {
+                for(JList<MemoryModule> list : memoryLists)
+                {
+                    for(int j = 0; j < list.getModel().getSize(); j++)
+                    {
+                        list.getModel().getElementAt(j).tick();
+                    }
+                }
+            }
+            updateDisplay();
+        });
+        toolBar.add(tickButton);
+        toolBar.add(tickField);
         add(toolBar, BorderLayout.NORTH);
 
         // Top left for control, top right for cache configuration view, bottom for state view
@@ -60,7 +77,7 @@ public class BasicMemoryManipulator extends JFrame
         leftRightPane.setDividerLocation(width / 2);
 
         // Left
-        JPanel leftPanel = new JPanel(new GridLayout(2, 1));
+        JPanel leftPanel = new JPanel(new GridLayout(0, 1));
 
         // Memory manipulation
         JPanel memoryOperationsPanel = new JPanel(new GridLayout(0, 1));  // 0 rows means "as many as needed"
@@ -70,26 +87,26 @@ public class BasicMemoryManipulator extends JFrame
         valueField = new JTextField(1);
         JPanel addressRadioPanel = new JPanel(new GridLayout(1, 2));
         addressBinRadio = new JRadioButton("Binary");
-        addressIntRadio = new JRadioButton("Integer");
+        addressDecRadio = new JRadioButton("Decimal");
         ButtonGroup addressGroup = new ButtonGroup();
         addressGroup.add(addressBinRadio);
-        addressGroup.add(addressIntRadio);
+        addressGroup.add(addressDecRadio);
         addressBinRadio.setSelected(true);
         addressBinRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
-        addressIntRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
+        addressDecRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
         addressRadioPanel.add(addressBinRadio);
-        addressRadioPanel.add(addressIntRadio);
+        addressRadioPanel.add(addressDecRadio);
         JPanel valueRadioPanel = new JPanel(new GridLayout(1, 2));
         valueBinRadio = new JRadioButton("Binary");
-        valueIntRadio = new JRadioButton("Integer");
+        valueDecRadio = new JRadioButton("Decimal");
         ButtonGroup valueGroup = new ButtonGroup();
         valueGroup.add(valueBinRadio);
-        valueGroup.add(valueIntRadio);
+        valueGroup.add(valueDecRadio);
         valueBinRadio.setSelected(true);
         valueBinRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
-        valueIntRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
+        valueDecRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
         valueRadioPanel.add(valueBinRadio);
-        valueRadioPanel.add(valueIntRadio);
+        valueRadioPanel.add(valueDecRadio);
         entryPanel.add(new JLabel("Address"));
         entryPanel.add(new JLabel("Value"));
         entryPanel.add(addressField);
@@ -178,9 +195,39 @@ public class BasicMemoryManipulator extends JFrame
         instructionCachesList = new JList<>(instructionCachesModel);
         memoryLists = new JList[] { unifiedMemoryList, dataCachesList, instructionCachesList };
 
+        JPanel memoryModificationPanel = new JPanel(new GridLayout(1, 0));
+        JButton throughNoAllocateButton = new JButton("Set Write-Through No Allocate");
+        JButton throughAllocateButton = new JButton("Set Write-Through Allocate");
+        JButton writeBackButton = new JButton("Set Write-Back");
+        throughNoAllocateButton.addActionListener(e -> {
+                if(currentlySelected != null)
+                {
+                    currentlySelected.setWriteMode(WRITE_MODE.THROUGH_NO_ALLOCATE);
+                    updateDisplay();
+                }
+            });
+        throughAllocateButton.addActionListener(e -> {
+                if(currentlySelected != null)
+                {
+                    currentlySelected.setWriteMode(WRITE_MODE.THROUGH_ALLOCATE);
+                    updateDisplay();
+                }
+            });
+        writeBackButton.addActionListener(e -> {
+                if(currentlySelected != null)
+                {
+                    currentlySelected.setWriteMode(WRITE_MODE.BACK);
+                    updateDisplay();
+                }
+            });
+        memoryModificationPanel.add(throughNoAllocateButton);
+        memoryModificationPanel.add(throughAllocateButton);
+        memoryModificationPanel.add(writeBackButton);
+
         rightPanel.add(createListPanel("Unified Memory", unifiedMemoryList, new JList[] {instructionCachesList, dataCachesList}));
         rightPanel.add(createListPanel("Data Caches", dataCachesList, new JList[] {instructionCachesList, unifiedMemoryList}));
         rightPanel.add(createListPanel("Instruction Caches", instructionCachesList, new JList[] {dataCachesList, unifiedMemoryList}));
+        rightPanel.add(memoryModificationPanel);
 
         // Bottom
         JPanel bottomPanel = new JPanel(new GridBagLayout());
@@ -206,7 +253,7 @@ public class BasicMemoryManipulator extends JFrame
 
         // Finish arranging window
         leftRightPane.setLeftComponent(leftPanel);
-        leftRightPane.setRightComponent(new JScrollPane(rightPanel));
+        leftRightPane.setRightComponent(rightPanel);
 
         topBottomPane.setTopComponent(leftRightPane);
         topBottomPane.setBottomComponent(bottomPanel);

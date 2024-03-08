@@ -70,14 +70,14 @@ public class MemoryModule
 
     public String toString()
     {
-        String itemDelim = "                        ";
-        String itemGap = "    ";
+        String itemDelim = "      |      ";
+        String itemGap = "  ";
         StringBuilder ret = new StringBuilder();
         ret.append("ID:")
             .append(itemGap)
             .append(id)
             .append(itemDelim)
-            .append("Write Mode:")
+            .append("Mode:")
             .append(itemGap)
             .append(writeMode)
             .append(itemDelim)
@@ -122,7 +122,7 @@ public class MemoryModule
         int greatestAddressLength = Integer.toString(MAX_ADDRESS >>> numOffsetBits, addressRadix).length();
         String addressLabel = "Line Address";
         int addressFillTotal = Math.max(0, greatestAddressLength - addressLabel.length());
-        ret.append(" Dirty | Valid | ")
+        ret.append(" Dirty  |  Valid  |  ")
            .append(" ".repeat((addressFillTotal + 1) / 2))
            .append(addressLabel)
            .append(" ".repeat(addressFillTotal / 2));
@@ -137,7 +137,7 @@ public class MemoryModule
                 indexFillTotal -= 1;
             }
             previousIndexFill = indexFill;
-            ret.append(" | ")
+            ret.append("  |  ")
                .append(" ".repeat((indexFillTotal + 1) / 2))
                .append(indexFill)
                .append(index)
@@ -151,19 +151,19 @@ public class MemoryModule
             String address = columnSize > 1 ? Integer.toString(getFirstAddress(line) >>> numOffsetBits, addressRadix) : "";
             ret.append("   ")
                .append(isDirty(line) ? 1 : 0)
-               .append("   |   ")
+               .append("    |    ")
                .append(isValid(line) ? 1 : 0)
-               .append("   | ")
+               .append("    |  ")
                .append(ADDRESS_FILLER.repeat(Math.max(addressLabel.length(), greatestAddressLength) - address.length()))
                .append(address);
             for(int i = FIRST_WORD_INDEX; i < line.length; i++)
             {
                 String value = Integer.toString(line[i], valueRadix);
-                ret.append(" | ")
+                ret.append("  |  ")
                    .append((valueRadix < 3 ? "0" : " ").repeat(Integer.toString(Integer.MAX_VALUE, valueRadix).length() - value.length()))
                    .append(value);
             }
-            ret.append("   \n");
+            ret.append("    \n");
         }
         return ret.toString();
     }
@@ -632,8 +632,11 @@ public class MemoryModule
         if(!currentAccess.isStarted())
         {
             currentAccess.start(accessDelay);
-        }                            // Should never take exception
-        try{ currentAccess.tick(); } catch(MemoryRequestTimerNotStartedException _ignored_){}
+        }
+                try{
+        boolean finished = currentAccess.tick();    // Should never take exception
+        if(finished) { accesses.remove(); }
+                } catch(MemoryRequestTimerNotStartedException _ignored_){}
     }
 
     private static String GET_TRACE_LINE()
