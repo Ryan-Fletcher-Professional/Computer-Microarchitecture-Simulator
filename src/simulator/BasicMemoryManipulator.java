@@ -2,6 +2,8 @@ package simulator;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.lang.invoke.MethodHandles;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,9 +17,9 @@ public class BasicMemoryManipulator extends JFrame
     private static final Logger logger = Logger.getLogger(BasicMemoryManipulator.class.getName());
 
     private final int id;
-    private int width, height;
+    private int frameWidth, frameHeight;
 
-    private JTextField addressField, valueField, columnSizeField, lineSizeField, returnField;
+    private JTextField addressField, valueField, columnSizeField, lineSizeField, returnField, cacheField, ramField;
     private JScrollPane displayPane;
     private JTextArea displayText;
     private JRadioButton cacheRadio, ramRadio, dataRadio, instructionRadio, shortWordsRadio, longWordsRadio,
@@ -36,8 +38,8 @@ public class BasicMemoryManipulator extends JFrame
     public BasicMemoryManipulator(int id, int width, int height)
     {
         this.id = id;
-        this.width = width;
-        this.height = height;
+        this.frameWidth = width;
+        this.frameHeight = height;
 
         setTitle("Basic Memory Manipulator");
         setSize(width, height);
@@ -48,7 +50,10 @@ public class BasicMemoryManipulator extends JFrame
         // Toolbar at the top
         JToolBar toolBar = new JToolBar();
         JButton tickButton = new JButton("Cycle Clock");
+        tickButton.setMinimumSize(new Dimension(100, 30));
+        tickButton.setMaximumSize(new Dimension(100, 30));
         JTextField tickField = new JTextField(1);
+        tickField.setMinimumSize(new Dimension(100, 30));
         tickField.setMaximumSize(new Dimension(100, 30));
         tickButton.addActionListener(e -> {
             int numTicks = 1;
@@ -66,8 +71,21 @@ public class BasicMemoryManipulator extends JFrame
             }
             updateDisplay();
         });
+        JButton resetButton = new JButton("RESET");
+        resetButton.setMinimumSize(new Dimension(100, 30));
+        resetButton.setMaximumSize(new Dimension(100, 30));
+        resetButton.addActionListener(e -> {
+            setVisible(false);
+            new BasicMemoryManipulator(GET_ID());
+        });
         toolBar.add(tickButton);
         toolBar.add(tickField);
+        JPanel blankPanel = new JPanel();
+        Dimension fill = new Dimension(width - 300, 30);
+        blankPanel.setMinimumSize(fill);
+        blankPanel.setMaximumSize(fill);
+        toolBar.add(blankPanel);
+        toolBar.add(resetButton, BorderLayout.EAST);
         add(toolBar, BorderLayout.NORTH);
 
         // Top left for control, top right for cache configuration view, bottom for state view
@@ -139,8 +157,16 @@ public class BasicMemoryManipulator extends JFrame
         // MemoryModule creation
         JPanel memoryCreationPanel = new JPanel(new GridLayout(0, 2));
 
+        JPanel cachePanel = new JPanel(new GridLayout(1, 2));
         cacheRadio = new JRadioButton("Cache");
+        cacheField = new JTextField();
+        cachePanel.add(cacheField);
+        cachePanel.add(cacheRadio);
+        JPanel ramPanel = new JPanel(new GridLayout(1, 2));
         ramRadio = new JRadioButton("RAM");
+        ramField = new JTextField();
+        ramPanel.add(ramField);
+        ramPanel.add(ramRadio);
         ButtonGroup memoryKindSelection = new ButtonGroup();
         memoryKindSelection.add(cacheRadio);
         memoryKindSelection.add(ramRadio);
@@ -169,8 +195,8 @@ public class BasicMemoryManipulator extends JFrame
         wordSizeSelection.add(longWordsRadio);
         shortWordsRadio.setSelected(true);
 
-        memoryCreationPanel.add(cacheRadio);
-        memoryCreationPanel.add(ramRadio);
+        memoryCreationPanel.add(cachePanel);
+        memoryCreationPanel.add(ramPanel);
         memoryCreationPanel.add(dataRadio);
         memoryCreationPanel.add(instructionRadio);
         memoryCreationPanel.add(columnSizePanel);
@@ -260,6 +286,24 @@ public class BasicMemoryManipulator extends JFrame
 
         this.add(topBottomPane, BorderLayout.CENTER);
 
+        addComponentListener(new ComponentListener() {
+            public void componentResized(ComponentEvent evt) {
+                Component c = (Component)evt.getSource();
+                Dimension newSize = c.getSize();
+                frameWidth = newSize.width;
+                frameHeight = newSize.height;
+                Dimension fill = new Dimension(frameWidth - 300, 30);
+                blankPanel.setMinimumSize(fill);
+                blankPanel.setMaximumSize(fill);
+            }
+            @Override
+            public void componentMoved(ComponentEvent e) {}
+            @Override
+            public void componentShown(ComponentEvent e) {}
+            @Override
+            public void componentHidden(ComponentEvent e) {}
+        });
+
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
     }
@@ -331,6 +375,11 @@ public class BasicMemoryManipulator extends JFrame
     {
         DefaultListModel<MemoryModule> model = (DefaultListModel<MemoryModule>)list.getModel();
         MemoryModule newModule;
+        int cacheDelay = DEFAULT_CACHE_ACCESS_DELAY;
+        int ramDelay = DEFAULT_RAM_ACCESS_DELAY;
+        try { cacheDelay = Integer.parseInt(cacheField.getText()); } catch(NumberFormatException _ignored_) {}
+        try { ramDelay = Integer.parseInt(ramField.getText()); } catch(NumberFormatException _ignored_) {}
+
         try
         {
             newModule = new MemoryModule(GET_ID(),
@@ -344,7 +393,7 @@ public class BasicMemoryManipulator extends JFrame
                                                   null),
                                          Integer.parseInt(columnSizeField.getText()),
                                          Integer.parseInt(lineSizeField.getText()),
-                                         cacheRadio.isSelected() ? DEFAULT_CACHE_ACCESS_DELAY : DEFAULT_RAM_ACCESS_DELAY);
+                                         cacheRadio.isSelected() ? cacheDelay : ramDelay);
             model.addElement(newModule);
         }
         catch(NumberFormatException e)
@@ -355,12 +404,12 @@ public class BasicMemoryManipulator extends JFrame
 
     private int getAddress()
     {
-        return Integer.parseInt(addressField.getText(), addressBinRadio.isSelected() ? 2 : 10);
+        return (int)Long.parseLong(addressField.getText(), addressBinRadio.isSelected() ? 2 : 10);  // Must parse as long so that 32-character inputs are accepted
     }
 
     private int getValue()
     {
-        return Integer.parseInt(valueField.getText(), valueBinRadio.isSelected() ? 2 : 10);
+        return (int)Long.parseLong(valueField.getText(), valueBinRadio.isSelected() ? 2 : 10);
     }
 
     private int[] getRadices()

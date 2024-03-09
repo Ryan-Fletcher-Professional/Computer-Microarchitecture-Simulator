@@ -126,7 +126,7 @@ public class MemoryModule
            .append(" ".repeat((addressFillTotal + 1) / 2))
            .append(addressLabel)
            .append(" ".repeat(addressFillTotal / 2));
-        int indexFillTotal = Math.max(0, Integer.toString(Integer.MAX_VALUE, valueRadix).length() - (addressRadix < 3 ? numOffsetBits : 1));
+        int indexFillTotal = Math.max(0, Integer.toString(Integer.MAX_VALUE, valueRadix).length() + 1 - (addressRadix < 3 ? numOffsetBits : 1));
         String previousIndexFill = "";
         for(int i = 0; i < lineSize; i++)
         {
@@ -158,10 +158,9 @@ public class MemoryModule
                .append(address);
             for(int i = FIRST_WORD_INDEX; i < line.length; i++)
             {
-                String value = Integer.toString(line[i], valueRadix);
+                String value = valueRadix > 2 ? Integer.toString(line[i], valueRadix) : Integer.toBinaryString(line[i]);
                 ret.append("  |  ")
-                   .append((valueRadix < 3 ? "0" : " ").repeat(Integer.toString(Integer.MAX_VALUE, valueRadix).length() - value.length()))
-                   .append(value);
+                   .append(String.format("%" + (Integer.toString(Integer.MAX_VALUE, valueRadix).length() + 1) + "s", value).replace(' ', valueRadix > 2 ? ' ' : '0'));
             }
             ret.append("    \n");
         }
