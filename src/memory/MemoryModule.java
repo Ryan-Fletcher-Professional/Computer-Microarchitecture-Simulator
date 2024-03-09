@@ -604,18 +604,17 @@ public class MemoryModule
         if(next == null) { throw new UnsupportedOperationException("The lowest level of memory cannot accessNext()"); }
 
         MemoryRequest nextRequest = new MemoryRequest(id, requestType, args);
-        blocks.add(nextRequest);
         if(requestType.equals(REQUEST_TYPE.STORE))
         {
-            next.store(nextRequest);
+            next.store(nextRequest);  // TODO : Currently assumes a write buffer of sufficient size to prevent STORE requests from blocking invoker. DOUBLE-CHECK THIS!
         }
         else if(requestType.equals(REQUEST_TYPE.LOAD))
         {
+            blocks.add(nextRequest);
             return next.load(nextRequest);
         }
         else
         {
-            blocks.remove(nextRequest);
             throw new IllegalArgumentException("Invalid request type.");
         }
         return new int[lineSize];
