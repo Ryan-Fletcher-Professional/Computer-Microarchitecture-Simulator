@@ -92,17 +92,28 @@ public class MemoryModule
         if(!blocks.isEmpty()) { ret.append("BLOCKED"); }
         else
         {
+            ret.append(accesses.peek() != null ? "Operating:" + itemGap + getAccessTimeStrings() : "AVAILABLE");
+        }
+
+        return ret.toString();
+    }
+
+    private String getAccessTimeStrings()
+    {
+        StringBuilder ret = new StringBuilder();
+        for(MemoryRequest request : accesses)
+        {
             try
             {
-                MemoryRequest firstAccess = accesses.peek();
-                ret.append(firstAccess != null ? "Operating:" + itemGap + firstAccess.getTimeRemaining() : "AVAILABLE");
+                ret.append(request.getTimeRemaining() + ", ");
             }
             catch(MemoryRequestTimerNotStartedException e)
             {
-                ret.append("Operating:" + itemGap + accessDelay);
+                ret.append(accessDelay + ", ");
             }
         }
-
+        ret.deleteCharAt(ret.length() - 1);
+        ret.deleteCharAt(ret.length() - 1);
         return ret.toString();
     }
 
