@@ -5,23 +5,26 @@ import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.lang.invoke.MethodHandles;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static main.GLOBALS.*;
 import memory.MemoryModule;
 import memory.MemoryRequest;
+import memory.RegisterBankForTesting;
 
 public class BasicMemoryManipulator extends JFrame
 {
     private static final Logger logger = Logger.getLogger(BasicMemoryManipulator.class.getName());
 
     private final int id;
+    private RegisterBankForTesting[] registerBanks;
     private int frameWidth, frameHeight;
 
-    private JTextField addressField, valueField, columnSizeField, lineSizeField, returnField, cacheField, ramField;
-    private JScrollPane displayPane;
-    private JTextArea displayText;
+    private JTextField addressField, valueField, columnSizeField, lineSizeField, cacheField, ramField;
+    private JScrollPane memoryDisplayPane, registerDisplayPane, reversalDisplayPane;
+    private JTextArea memoryDisplayText, registerDisplayText, reversalDisplayText;
     private JRadioButton cacheRadio, ramRadio, dataRadio, instructionRadio, shortWordsRadio, longWordsRadio,
                          wordRadio, lineRadio, addressBinRadio, addressDecRadio, valueBinRadio, valueDecRadio;
     private JList<MemoryModule> instructionCachesList, dataCachesList, unifiedMemoryList;
@@ -29,22 +32,22 @@ public class BasicMemoryManipulator extends JFrame
     private DefaultListModel<MemoryModule> instructionCachesModel, dataCachesModel, unifiedMemoryModel;
     private MemoryModule currentlySelected;
 
-    public BasicMemoryManipulator(int id)
+    public BasicMemoryManipulator(int id, RegisterBankForTesting[] registerBanks)
     {
         this.id = id;
-        new BasicMemoryManipulator(id, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT);
+        new BasicMemoryManipulator(id, registerBanks, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT);
     }
 
-    public BasicMemoryManipulator(int id, int width, int height)
+    public BasicMemoryManipulator(int id, RegisterBankForTesting[] registerBanks, int width, int height)
     {
         this.id = id;
+        this.registerBanks = registerBanks;
         this.frameWidth = width;
         this.frameHeight = height;
 
         setTitle("Basic Memory Manipulator");
         setSize(width, height);
         setLayout(new BorderLayout());
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setLocation((screenSize.width - width) / 2, (screenSize.height - height) / 2);
 
         // Toolbar at the top
@@ -76,7 +79,11 @@ public class BasicMemoryManipulator extends JFrame
         resetButton.setMaximumSize(new Dimension(100, 30));
         resetButton.addActionListener(e -> {
             setVisible(false);
-            new BasicMemoryManipulator(GET_ID());
+            new BasicMemoryManipulator(GET_ID(), registerBanks);
+            for(RegisterBankForTesting bank : registerBanks)
+            {
+                bank.reset();
+            }
         });
         toolBar.add(tickButton);
         toolBar.add(tickField);
@@ -126,7 +133,7 @@ public class BasicMemoryManipulator extends JFrame
         valueRadioPanel.add(valueBinRadio);
         valueRadioPanel.add(valueDecRadio);
         entryPanel.add(new JLabel("Address"));
-        entryPanel.add(new JLabel("Value"));
+        entryPanel.add(new JLabel("Argument"));
         entryPanel.add(addressField);
         entryPanel.add(valueField);
         entryPanel.add(addressRadioPanel);
@@ -145,8 +152,8 @@ public class BasicMemoryManipulator extends JFrame
         JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
         JButton storeButton = new JButton("Store");
         JButton loadButton = new JButton("Load");
-        storeButton.addActionListener(e -> storeWordInCurrentMemoryModule());
-        loadButton.addActionListener(e -> loadCurrentMemoryModule());
+        storeButton.addActionListener(e -> storeInCurrentMemoryModule());
+        loadButton.addActionListener(e -> loadFromCurrentMemoryModule());
         buttonPanel.add(storeButton);
         buttonPanel.add(loadButton);
 
@@ -170,7 +177,7 @@ public class BasicMemoryManipulator extends JFrame
         ButtonGroup memoryKindSelection = new ButtonGroup();
         memoryKindSelection.add(cacheRadio);
         memoryKindSelection.add(ramRadio);
-        cacheRadio.setSelected(true);
+        ramRadio.setSelected(true);
 
         dataRadio = new JRadioButton("Data Memory");
         instructionRadio = new JRadioButton("Instruction Memory");
@@ -256,26 +263,21 @@ public class BasicMemoryManipulator extends JFrame
         rightPanel.add(memoryModificationPanel);
 
         // Bottom
-        JPanel bottomPanel = new JPanel(new GridBagLayout());
-        returnField = new JTextField();
-        returnField.setHorizontalAlignment(JTextField.CENTER);
-        returnField.setPreferredSize(new Dimension(500, 30));
-        returnField.setEditable(false);
-        displayText = new JTextArea();
-        displayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        displayText.setEditable(false);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.anchor = GridBagConstraints.NORTH;
-        bottomPanel.add(returnField, gbc);
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.gridy = 1;
-        gbc.weighty = 1.0;
-        displayPane = new JScrollPane(displayText);
-        bottomPanel.add(displayPane, gbc);
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        registerDisplayText = new JTextArea();
+        registerDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
+//        registerDisplayText.setPreferredSize(new Dimension(frameWidth, 90));
+        registerDisplayText.setMinimumSize(new Dimension(0, 90));
+        registerDisplayText.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+        registerDisplayText.setEditable(false);
+        memoryDisplayText = new JTextArea();
+        memoryDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        memoryDisplayText.setEditable(false);
+        registerDisplayPane = new JScrollPane(registerDisplayText);
+        registerDisplayPane.setPreferredSize(new Dimension(frameWidth, 90));
+        bottomPanel.add(registerDisplayPane, BorderLayout.NORTH);
+        memoryDisplayPane = new JScrollPane(memoryDisplayText);
+        bottomPanel.add(memoryDisplayPane, BorderLayout.CENTER);
 
         // Finish arranging window
         leftRightPane.setLeftComponent(leftPanel);
@@ -306,6 +308,8 @@ public class BasicMemoryManipulator extends JFrame
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
+
+        updateDisplay();
     }
 
     private static void recurBackgroundColor(Component current, Color color)
@@ -325,21 +329,29 @@ public class BasicMemoryManipulator extends JFrame
 
     private void updateDisplay()
     {
-        JScrollBar vBar = displayPane.getVerticalScrollBar();
-        int y = vBar.getValue();
-        JScrollBar hBar = displayPane.getHorizontalScrollBar();
-        int x = hBar.getValue();
+        JScrollBar hBarReg = registerDisplayPane.getHorizontalScrollBar();
+        int xR = hBarReg.getValue();
+        JScrollBar vBarReg = registerDisplayPane.getVerticalScrollBar();
+        int yR = vBarReg.getValue();
+        JScrollBar hBarMem = memoryDisplayPane.getHorizontalScrollBar();
+        int xM = hBarMem.getValue();
+        JScrollBar vBarMem = memoryDisplayPane.getVerticalScrollBar();
+        int yM = vBarMem.getValue();
 
-        displayText.setText(currentlySelected.getMemoryDisplay(getRadices()[0], getRadices()[1]));
+        registerDisplayText.setText(registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(8));
+        if(currentlySelected != null)
+            { memoryDisplayText.setText(currentlySelected.getMemoryDisplay(getRadices()[0], getRadices()[1])); }
 
         SwingUtilities.invokeLater(() -> {
-            vBar.setValue(y);
-            hBar.setValue(x);
+            hBarReg.setValue(xR);
+            vBarReg.setValue(yR);
+            hBarMem.setValue(xM);
+            vBarMem.setValue(yM);
             for(JList<MemoryModule> list : memoryLists)
             {
                 if(list.getModel().getSize() > 0)
                 {
-                    ((DefaultListModel<MemoryModule>)list.getModel()).setElementAt(list.getModel().getElementAt(0), 0);
+                    ((DefaultListModel<MemoryModule>)list.getModel()).setElementAt(list.getModel().getElementAt(0), 0);  // Forces JLists to update item names
                 }
             }
         });
@@ -382,11 +394,12 @@ public class BasicMemoryManipulator extends JFrame
 
         try
         {
+            MEMORY_KIND kind = cacheRadio.isSelected() ? MEMORY_KIND.CACHE : MEMORY_KIND.RAM;
             newModule = new MemoryModule(GET_ID(),
-                                         cacheRadio.isSelected() ? MEMORY_KIND.CACHE : MEMORY_KIND.RAM,
+                                         kind,
                                          dataRadio.isSelected() ? MEMORY_TYPE.DATA : MEMORY_TYPE.INSTRUCTION,
                                          shortWordsRadio.isSelected() ? WORD_LENGTH.SHORT : WORD_LENGTH.LONG,
-                                         DEFAULT_WRITE_MODE,
+                                         kind.equals(MEMORY_KIND.CACHE) ? DEFAULT_CACHE_WRITE_MODE : DEFAULT_RAM_WRITE_MODE,
                                          model.getSize() > 0 ? model.getElementAt(model.getSize() - 1) :
                                                  (unifiedMemoryModel.getSize() > 0 ?
                                                   unifiedMemoryModel.getElementAt(unifiedMemoryModel.getSize() - 1) :
@@ -407,9 +420,43 @@ public class BasicMemoryManipulator extends JFrame
         return (int)Long.parseLong(addressField.getText(), addressBinRadio.isSelected() ? 2 : 10);  // Must parse as long so that 32-character inputs are accepted
     }
 
+    private boolean valueIsGeneralRegister()
+    {
+        return valueField.getText().charAt(0) == 'R';
+    }
+
+    private boolean valueIsInternalRegister()
+    {
+        return Arrays.asList(INTERNAL_REGISTER_NAMES).contains(valueField.getText());
+    }
+
+    private boolean valueIsRegister()
+    {
+        return valueIsGeneralRegister() || valueIsInternalRegister();
+    }
+
     private int getValue()
     {
-        return (int)Long.parseLong(valueField.getText(), valueBinRadio.isSelected() ? 2 : 10);
+        String text = valueField.getText();
+        int radix = 10;
+        try
+        {
+            if(valueIsGeneralRegister())
+            {
+                text = text.substring(1);
+            }
+            else if(valueIsInternalRegister())
+            {
+                return Arrays.asList(INTERNAL_REGISTER_NAMES).indexOf(text);
+            }
+            else if(valueBinRadio.isSelected())
+            {
+                radix = 2;
+            }
+        }
+        catch(StringIndexOutOfBoundsException e) { throw new NumberFormatException(); }
+
+        return (int)Long.parseLong(text, radix);
     }
 
     private int[] getRadices()
@@ -417,20 +464,31 @@ public class BasicMemoryManipulator extends JFrame
         return new int[] { addressBinRadio.isSelected() ? 2 : 10, valueBinRadio.isSelected() ? 2 : 10 };
     }
 
-    private void storeWordInCurrentMemoryModule()  // TODO : Add second value word field when 64-bit cache is selected
+    private void storeInCurrentMemoryModule()  // TODO : Add second value word field when 64-bit cache is selected
     {
         try
         {
+            if(currentlySelected == null) { throw new NumberFormatException(); }
+
             int[] newValueS = new int[] { getValue() };
-            if(lineRadio.isSelected())
+
+            RegisterBankForTesting bank = registerBanks[INDEXABLE_BANK_INDEX];
+            if(valueIsRegister())
             {
-                newValueS = new int[currentlySelected.getLineSize()];
+                int register = newValueS[0];
+                if(newValueS[0] > 15)
+                {
+                    bank = registerBanks[INTERNAL_BANK_INDEX];
+                    newValueS[0] -= 15;
+                }
+                if(lineRadio.isSelected()) { newValueS = new int[currentlySelected.getLineSize()]; }
                 for(int i = 0; i < newValueS.length; i++)
                 {
-                    newValueS[i] = getValue();
+                    newValueS[i] = (int)bank.load(register + i);
                 }
             }
-            currentlySelected.store(new MemoryRequest(-1, REQUEST_TYPE.STORE,
+
+            currentlySelected.store(new MemoryRequest(valueIsRegister() ? bank.getID() : -1, REQUEST_TYPE.STORE,
                                                       new Object[] { getAddress(), newValueS }));
         }
         catch(NumberFormatException e)
@@ -440,26 +498,35 @@ public class BasicMemoryManipulator extends JFrame
         updateDisplay();
     }
 
-    private void loadCurrentMemoryModule()
+    private void loadFromCurrentMemoryModule()
     {
         try
         {
-            int[] line = currentlySelected.load(new MemoryRequest(-1, REQUEST_TYPE.LOAD,
-                                                new Object[] { getAddress(), lineRadio.isSelected() }));
-            returnField.setText("");
-            StringBuilder newText = new StringBuilder();
-            for(int word : line)
+            if(currentlySelected == null) { throw new NumberFormatException(); }
+
+            int register = getValue();
+            RegisterBankForTesting bank = registerBanks[INDEXABLE_BANK_INDEX];
+            if(register > 15)
             {
-                newText.append(word);
-                newText.append('\t');
+                bank = registerBanks[INTERNAL_BANK_INDEX];
+                register -= 15;
             }
-            newText.deleteCharAt(newText.length() - 1);
-            returnField.setText(newText.toString());
+
+            int[] line = currentlySelected.load(new MemoryRequest(bank.getID(), REQUEST_TYPE.LOAD,
+                                                            new Object[]{getAddress(), lineRadio.isSelected()}));
+
+            for(int i = 0; i < line.length; i++)
+            {
+                bank.store(register + i, line[i]);
+            }
+
+            registerDisplayText.setText(bank.getDisplayText(8));
         }
         catch(NumberFormatException e)
         {
             WARN("Memory interface received invalid load parameters.");
         }
+
         updateDisplay();
     }
 

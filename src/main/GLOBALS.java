@@ -1,12 +1,20 @@
 package main;
 
+import java.awt.*;
+
 public class GLOBALS
 {
     public static int currentId = 0;
 
-    public static final int DEFAULT_UI_WIDTH  = 1500;
-    public static final int DEFAULT_UI_HEIGHT = 1000;
+    public static final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    public static final int DEFAULT_UI_WIDTH  = screenSize.width - 20;
+    public static final int DEFAULT_UI_HEIGHT = screenSize.height - 100;
 
+    public static final int INDEXABLE_BANK_INDEX = 0;
+    public static final int INTERNAL_BANK_INDEX = 1;
+    public static final int REVERSAL_BANK_INDEX = 2;
+    public static final int[] REGISTER_BANK_INDECES = new int[] { INDEXABLE_BANK_INDEX, INTERNAL_BANK_INDEX, REVERSAL_BANK_INDEX };
+    public static final String[] INTERNAL_REGISTER_NAMES = new String[] { "C0", "PC", "CC", "PRED 1", "PRED 2", "CALL", "REV" };
     public enum MEMORY_KIND
     {
         CACHE,
@@ -36,7 +44,8 @@ public class GLOBALS
         THROUGH_ALLOCATE
     }
 
-    public static final WRITE_MODE DEFAULT_WRITE_MODE = WRITE_MODE.BACK;
+    public static final WRITE_MODE DEFAULT_CACHE_WRITE_MODE = WRITE_MODE.BACK;
+    public static final WRITE_MODE DEFAULT_RAM_WRITE_MODE = WRITE_MODE.THROUGH_ALLOCATE;
     public static final int DEFAULT_CACHE_ACCESS_DELAY = 10;
     public static final int DEFAULT_RAM_ACCESS_DELAY = 100;
 

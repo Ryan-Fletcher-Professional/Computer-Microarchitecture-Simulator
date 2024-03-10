@@ -12,7 +12,7 @@ public class MemoryModule
     private static final Logger logger = Logger.getLogger(MemoryModule.class.getName());
 
     private final int id;                       // ID of this MemoryModule
-    private final MEMORY_KIND kind;             // CACHE/RAM    TODO : Make register file module
+    private final MEMORY_KIND kind;             // CACHE/RAM
     private final MEMORY_TYPE type;             // DATA/INSTRUCTION
     private final WORD_LENGTH wordLength;       // SHORT/LONG
     private final MemoryModule next;            // Pointer to memory one level down
@@ -516,11 +516,7 @@ public class MemoryModule
         int[] line = memory[localAddress];
         if(isValid(line))
         {
-            if(sameLine(getFirstAddress(line), virtualAddress))
-            {
-                return readData(line, virtualAddress, wholeLine);
-            }
-            else
+            if(!sameLine(getFirstAddress(line), virtualAddress))
             {
                 int[] newLine = new int[lineSize];
                 if(next != null)
@@ -543,7 +539,6 @@ public class MemoryModule
                     }
                 }
                 writeData(false, virtualAddress, newLine);
-                return readData(newLine, virtualAddress, wholeLine);
             }
         }
         else
@@ -552,15 +547,15 @@ public class MemoryModule
 
             if(next != null)
             {
-                accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true));
+                newLine = accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true));
             }
             else
             {
                 WARN("Unexpected behavior: Lowest level of memory did not have requested virtual address in storage.");
             }
             writeData(false, virtualAddress, newLine);
-            return readData(newLine, virtualAddress, wholeLine);
         }
+        return readData(line, virtualAddress, wholeLine);
     }
 
     /**
