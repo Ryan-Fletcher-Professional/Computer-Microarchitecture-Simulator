@@ -1,7 +1,5 @@
 package memory;
 
-import simulator.BasicMemoryManipulator;
-
 import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.logging.*;
@@ -30,8 +28,7 @@ public class MemoryModule
     // Remember to use >>> instead of >> for logical right shift
     private int[][] memory;
 
-    Queue<MemoryRequest> accesses;  // Requests from higher-level memory
-    List<MemoryRequest> blocks;     // Requests to lower-level memory
+    LinkedList<LinkedList<MemoryRequest>> accesses;  // Memory request chains running through this device.
 
     /**
      *
@@ -63,9 +60,13 @@ public class MemoryModule
         this.accessDelay = accessDelay;
 
         accesses = new LinkedList<>();
-        blocks = new ArrayList<>();
 
         initMemory();
+    }
+
+    private boolean waitingOnThis(LinkedList<MemoryRequest> access)
+    {
+        return !access.isEmpty() && (access.getLast().getTargetID() == id);
     }
 
     public String toString()
@@ -89,7 +90,7 @@ public class MemoryModule
             .append(itemGap)
             .append(lineSize)
             .append(itemDelim);
-        if(!blocks.isEmpty()) { ret.append("BLOCKED"); }
+        if(!accesses.isEmpty() && !waitingOnThis(accesses.getFirst())) { ret.append("BLOCKED"); }
         else
         {
             ret.append(accesses.peek() != null ? "Operating:" + itemGap + getAccessTimeStrings() : "AVAILABLE");
@@ -101,15 +102,17 @@ public class MemoryModule
     private String getAccessTimeStrings()
     {
         StringBuilder ret = new StringBuilder();
-        for(MemoryRequest request : accesses)
+        for(LinkedList<MemoryRequest> request : accesses)
         {
             try
             {
-                ret.append(request.getTimeRemaining() + ", ");
+                ret.append(request.isEmpty() ? "-" : request.getLast().getTimeRemaining())
+                   .append(", ");
             }
             catch(MemoryRequestTimerNotStartedException e)
             {
-                ret.append(accessDelay + ", ");
+                ret.append(accessDelay)
+                   .append(", ");
             }
         }
         ret.deleteCharAt(ret.length() - 1);
@@ -120,6 +123,11 @@ public class MemoryModule
     public int getLineSize()
     {
         return lineSize;
+    }
+
+    public int getID()
+    {
+        return id;
     }
 
     public String getMemoryDisplay()
@@ -236,6 +244,11 @@ public class MemoryModule
         line[DIRTY_INDEX] = dirty ? 1 : 0;
     }
 
+    public MEMORY_TYPE getType()
+    {
+        return type;
+    }
+
     /**
      * Centralized method for getting the starting virtual address of a memory line.
      * @param line The line to be read
@@ -304,7 +317,7 @@ public class MemoryModule
                 {
                     if(next != null)
                     {
-                        accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line));
+                        accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line), new LinkedList<>());
                     }
                     else
                     {
@@ -377,14 +390,14 @@ public class MemoryModule
      * @param request Must be instantiated. Should not be started. If request arg words has length less than line size,
      *                request arg virtualAddress must be the exact word address of the first word in that array.
      */
-    public void store(MemoryRequest request)
+    public void store(LinkedList<MemoryRequest> request)
     {
         accesses.add(request);
 
         int virtualAddress;
         int[] words;
 
-        Object[] args = request.getArgs();  // [ int virtualAddress, int[] words ]
+        Object[] args = request.getLast().getArgs();  // [ int virtualAddress, int[] words ]
         try
         {
             virtualAddress = (int)args[0];
@@ -406,7 +419,7 @@ public class MemoryModule
                 { setValid(line, false); }
             if(next != null)
             {
-                accessNext(REQUEST_TYPE.STORE, args);
+                accessNext(REQUEST_TYPE.STORE, args, request);
             }
             else
             {
@@ -419,7 +432,7 @@ public class MemoryModule
             {
                 if(next != null)
                 {
-                    accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line));
+                    accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line), request);
                 }
                 else
                 {
@@ -429,7 +442,7 @@ public class MemoryModule
                 if(words.length < lineSize)
                 {
                     int[] oldWords = (next != null) ? accessNext(REQUEST_TYPE.LOAD,
-                                                                 generateLoadArgsFromValues(virtualAddress, true))
+                                                                 generateLoadArgsFromValues(virtualAddress, true), request)
                                                     : readData(line, getFirstAddress(line), true);
                     System.arraycopy(words, 0, oldWords, virtualAddress & offsetMask, words.length);
                     newWords = oldWords;
@@ -449,13 +462,13 @@ public class MemoryModule
             if(words.length < lineSize)
             {
                 int[] oldWords = ((next != null) && !sameLine(getFirstAddress(line), virtualAddress))
-                                 ? accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true))
+                                 ? accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true), request)
                                  : readData(line, getFirstAddress(line), true);
                 System.arraycopy(words, 0, oldWords, virtualAddress & offsetMask, words.length);
                 newWords = oldWords;
             }
             writeData(false, virtualAddress, newWords);
-            if(next != null) { accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromValues(virtualAddress, newWords)); }
+            if(next != null) { accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromValues(virtualAddress, newWords), request); }
         }
     }
 
@@ -490,18 +503,18 @@ public class MemoryModule
      *  request to the next level of memory to write the dirty line.
      * TODO: MAKE SURE THAT CODE FROM PIPELINE FOR INSTRUCTION MEMORY ACCESSES DOUBLES THE ADDRESSES DURING 64-BIT MODE!
      *       MemoryModule does not translate such addresses!
-     * @param request LOAD request from the previous MemoryModule
+     * @param chain LOAD request from the previous MemoryModule
      * @return Length 1 (wordLength SHORT) or 2 (wordLength LONG) int array if request arg wholeLine is false.
      *         Length lineSize array otherwise.
      */
-    public int[] load(MemoryRequest request)
+    public int[] load(LinkedList<MemoryRequest> chain)
     {
-        accesses.add(request);
+        accesses.add(chain);
 
         int virtualAddress;
         boolean wholeLine;  // Should only ever be false in the very highest-level cache
 
-        Object[] args = request.getArgs();  // [ int virtualAddress, boolean wholeLine ]
+        Object[] args = chain.getLast().getArgs();  // [ int virtualAddress, boolean wholeLine ]
         try
         {
             virtualAddress = (int)args[0];
@@ -521,7 +534,7 @@ public class MemoryModule
                 int[] newLine = new int[lineSize];
                 if(next != null)
                 {
-                    newLine = accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true));
+                    newLine = accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true), chain);
                 }
                 else
                 {
@@ -531,7 +544,7 @@ public class MemoryModule
                 {
                     if(next != null)
                     {
-                        accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line));
+                        accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line), chain);
                     }
                     else
                     {
@@ -547,7 +560,7 @@ public class MemoryModule
 
             if(next != null)
             {
-                newLine = accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true));
+                newLine = accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true), chain);
             }
             else
             {
@@ -594,19 +607,19 @@ public class MemoryModule
      * @param requestType STORE/LOAD
      * @param args Appropriate arguments for request type. (See comments near top of store() and load())
      */
-    private int[] accessNext(REQUEST_TYPE requestType, Object[] args)
+    private int[] accessNext(REQUEST_TYPE requestType, Object[] args, LinkedList<MemoryRequest> chain)
     {
         if(next == null) { throw new UnsupportedOperationException("The lowest level of memory cannot accessNext()"); }
 
-        MemoryRequest nextRequest = new MemoryRequest(id, requestType, args);
+        MemoryRequest nextRequest = new MemoryRequest(id, next.getID(), type, requestType, args);
+        chain.add(nextRequest);
         if(requestType.equals(REQUEST_TYPE.STORE))
         {
-            next.store(nextRequest);  // TODO : Currently assumes a write buffer of sufficient size to prevent STORE requests from blocking invoker. DOUBLE-CHECK THIS!
+            next.store(chain);  // TODO : Currently assumes a write buffer of sufficient size to prevent STORE requests from blocking invoker. DOUBLE-CHECK THIS!
         }
         else if(requestType.equals(REQUEST_TYPE.LOAD))
         {
-            blocks.add(nextRequest);
-            return next.load(nextRequest);
+            return next.load(chain);
         }
         else
         {
@@ -622,25 +635,24 @@ public class MemoryModule
      */
     public void tick()
     {
-        for(int i = 0; i < blocks.size(); i++)
+        for(int i = 0; i < accesses.size(); i++)
         {
-            if(blocks.get(i).finished())
-            {
-                blocks.remove(i--);
-            }
+            if(accesses.get(i).isEmpty()) { accesses.remove(i--); }
         }
 
-        if(!blocks.isEmpty() || accesses.isEmpty()) {return;}
+        if(accesses.isEmpty() || !waitingOnThis(accesses.getFirst())) { return; }  // TODO : Add extra logic for RAM handling requests from two different pipelines
 
-        MemoryRequest currentAccess = accesses.peek();
-        if(!currentAccess.isStarted())
+        MemoryRequest last = accesses.getFirst().getLast();
+        if(!last.isStarted())
         {
-            currentAccess.start(accessDelay);
+            last.start(accessDelay);
         }
-                try{
-        boolean finished = currentAccess.tick();    // Should never take exception
-        if(finished) { accesses.remove(); }
-                } catch(MemoryRequestTimerNotStartedException _ignored_){}
+                        try{
+        last.tick();    // Should never take exception
+                        }catch(MemoryRequestTimerNotStartedException _ignored_){}
+        if(last.isFinished()) { accesses.getFirst().removeLast(); }
+
+        if(accesses.getFirst().isEmpty()) { accesses.removeFirst(); }
     }
 
     private static String GET_TRACE_LINE()

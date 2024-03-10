@@ -5,14 +5,18 @@ import static main.GLOBALS.*;
 public class MemoryRequest
 {
     private final int callerID;                 // ID of MemoryModule making the request
+    private final int targetID;                 // ID of MemoryModule handling this request
+    private final MEMORY_TYPE type;             // Which memory hierarchy this request works through
     private final REQUEST_TYPE requestType;     // LOAD/STORE
     private final Object[] args;                // Differs between LOAD and STORE
     private int timer;                          // Initial value controlled by callee
     private boolean started = false;
 
-    public MemoryRequest(int callerID, REQUEST_TYPE requestType, Object[] args)
+    public MemoryRequest(int callerID, int targetID, MEMORY_TYPE type, REQUEST_TYPE requestType, Object[] args)
     {
         this.callerID = callerID;
+        this.targetID = targetID;
+        this.type = type;
         this.requestType = requestType;
         this.args = args;
     }
@@ -21,6 +25,8 @@ public class MemoryRequest
     {
         return callerID;
     }
+
+    public int getTargetID() { return targetID; }
 
     public void start(int delay)
     {
@@ -39,9 +45,14 @@ public class MemoryRequest
         return timer;
     }
 
-    public boolean finished()
+    public boolean isFinished()
     {
         return timer <= 0;
+    }
+
+    public MEMORY_TYPE getType()
+    {
+        return type;
     }
 
     public Object[] getArgs()

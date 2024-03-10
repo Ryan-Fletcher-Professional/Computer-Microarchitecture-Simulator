@@ -6,6 +6,8 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -82,7 +84,7 @@ public class BasicMemoryManipulator extends JFrame
             new BasicMemoryManipulator(GET_ID(), registerBanks);
             for(RegisterBankForTesting bank : registerBanks)
             {
-                bank.reset();
+                if(bank != null) { bank.reset(); }
             }
         });
         toolBar.add(tickButton);
@@ -488,8 +490,9 @@ public class BasicMemoryManipulator extends JFrame
                 }
             }
 
-            currentlySelected.store(new MemoryRequest(valueIsRegister() ? bank.getID() : -1, REQUEST_TYPE.STORE,
-                                                      new Object[] { getAddress(), newValueS }));
+            LinkedList<MemoryRequest> request = new LinkedList<>(List.of(new MemoryRequest(valueIsRegister() ? bank.getID() : -1, currentlySelected.getID(), dataRadio.isSelected() ? MEMORY_TYPE.DATA : MEMORY_TYPE.INSTRUCTION, REQUEST_TYPE.STORE,
+                                                                                           new Object[]{getAddress(), newValueS})));
+            currentlySelected.store(request);
         }
         catch(NumberFormatException e)
         {
@@ -512,8 +515,9 @@ public class BasicMemoryManipulator extends JFrame
                 register -= 15;
             }
 
-            int[] line = currentlySelected.load(new MemoryRequest(bank.getID(), REQUEST_TYPE.LOAD,
-                                                            new Object[]{getAddress(), lineRadio.isSelected()}));
+            LinkedList<MemoryRequest> request = new LinkedList<>(List.of(new MemoryRequest(bank.getID(), currentlySelected.getID(), currentlySelected.getType(), REQUEST_TYPE.LOAD,
+                                                                                           new Object[]{getAddress(), lineRadio.isSelected()})));
+            int[] line = currentlySelected.load(request);
 
             for(int i = 0; i < line.length; i++)
             {
