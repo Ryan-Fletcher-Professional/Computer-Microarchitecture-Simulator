@@ -635,12 +635,36 @@ public class MemoryModule
      */
     public void tick()
     {
+        // Clear out finished chains from previous cycle
         for(int i = 0; i < accesses.size(); i++)
         {
             if(accesses.get(i).isEmpty()) { accesses.remove(i--); }
         }
 
-        if(accesses.isEmpty() || !waitingOnThis(accesses.getFirst())) { return; }  // TODO : Add extra logic for RAM handling requests from two different pipelines
+        // Exit if nothing to do
+        if(accesses.isEmpty()) { return; }
+
+        // If this device had only one access and is no longer involved,
+        // or this device is done with its first active access and the second one came from a different device,
+        // then remove it from this device's active access list.
+        boolean partOfFirst = false;
+        LinkedList<MemoryRequest> first = accesses.getFirst();
+        for(MemoryRequest request : first)
+        {
+            if((request.getTargetID() == id) || (request.getCallerID() == id))
+            {
+                partOfFirst = true;
+                break;
+            }
+        }
+        if(!partOfFirst &&
+           ((accesses.size() < 2) || !first.getLast().getType().equals( accesses.get(1).getLast().getType() )))
+        {
+            accesses.removeFirst();
+        }
+
+        // Exit if nothing to do
+        if(accesses.isEmpty() || !waitingOnThis(accesses.getFirst())) { return; }
 
         MemoryRequest last = accesses.getFirst().getLast();
         if(!last.isStarted())
