@@ -135,7 +135,7 @@ public class MemoryModule
                         break;
                     }
                 }
-                if(!hit)
+                if(!hit && !chain.isEmpty())
                 {
                     ret.append('-')
                        .append(chain.getLast().getTimeRemaining());
@@ -694,38 +694,6 @@ public class MemoryModule
         }
 
         // Exit if nothing to do
-        if(accesses.isEmpty()) { return; }
-
-        // If this device had only one access and is no longer involved, or
-        // this device is done with its first active access and the second one came from a different device and
-        //  this device isn't trying to drop more than one active chain from the same cache line,
-        // then remove it from this device's active access list.
-        boolean partOfFirst = false;
-        LinkedList<MemoryRequest> first = accesses.getFirst();
-        for(MemoryRequest request : first)
-        {
-            if((request.getTargetID() == id) || (request.getCallerID() == id))
-            {
-                partOfFirst = true;
-                break;
-            }
-        }
-        MEMORY_TYPE firstRequestType = first.getLast().getType();
-        if(!partOfFirst && ((accesses.size() < 2) || !firstRequestType.equals( accesses.get(1).getLast().getType() )))
-        {
-            if(firstRequestType.equals(MEMORY_TYPE.DATA) && (lastParallelizedDataRequest < LAST_FINISHED_DATA_REQUEST))
-            {
-                accesses.removeFirst();
-                lastParallelizedDataRequest = CURRENT_TICK;
-            }
-            else if(firstRequestType.equals(MEMORY_TYPE.INSTRUCTION) && (lastParallelizedInstructionRequest < LAST_FINISHED_INSTRUCTION_REQUEST))
-            {
-                accesses.removeFirst();
-                lastParallelizedInstructionRequest = CURRENT_TICK;
-            }
-        }
-
-        // Exit if nothing to do
         if(accesses.isEmpty() || !waitingOnThis(accesses.getFirst())) { return; }
 
         MemoryRequest last = accesses.getFirst().getLast();
@@ -737,12 +705,6 @@ public class MemoryModule
         last.tick();    // Should never take exception
                         }catch(MemoryRequestTimerNotStartedException _ignored_){}
         if(last.isFinished()) { accesses.getFirst().removeLast(); }
-
-        if(accesses.getFirst().isEmpty())
-        {
-            if(last.getType().equals(MEMORY_TYPE.DATA)) { LAST_FINISHED_DATA_REQUEST = CURRENT_TICK; }
-            else if(last.getType().equals(MEMORY_TYPE.INSTRUCTION)) { LAST_FINISHED_INSTRUCTION_REQUEST = CURRENT_TICK; }
-        }
     }
 
     /**
