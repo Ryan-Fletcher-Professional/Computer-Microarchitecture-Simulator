@@ -26,6 +26,9 @@ public class GLOBALS
         DATA,
         INSTRUCTION
     }
+    public static int CURRENT_TICK = 0;
+    public static int LAST_FINISHED_DATA_REQUEST = 0;
+    public static int LAST_FINISHED_INSTRUCTION_REQUEST = 0;
 
     public static final int MAX_ADDRESS = (int)Math.pow(2, 25) - 1;
     public static final int DATA_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);            // 4MB
