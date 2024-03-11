@@ -54,6 +54,9 @@ public class BasicMemoryManipulator extends JFrame
 
         // Toolbar at the top
         JToolBar toolBar = new JToolBar();
+        JLabel countLabel = new JLabel("Cycles: 0");
+        countLabel.setMinimumSize(new Dimension(200, 30));
+        countLabel.setMaximumSize(new Dimension(200, 30));
         JButton tickButton = new JButton("Cycle Clock");
         tickButton.setMinimumSize(new Dimension(100, 30));
         tickButton.setMaximumSize(new Dimension(100, 30));
@@ -66,6 +69,7 @@ public class BasicMemoryManipulator extends JFrame
             catch(NumberFormatException _ignored_) {}
             for(int i = 0; i < numTicks; i++)
             {
+                CURRENT_TICK += 1;
                 for(JList<MemoryModule> list : memoryLists)
                 {
                     for(int j = 0; j < list.getModel().getSize(); j++)
@@ -74,6 +78,7 @@ public class BasicMemoryManipulator extends JFrame
                     }
                 }
             }
+            countLabel.setText("Cycles: " + CURRENT_TICK);
             updateDisplay();
         });
         JButton resetButton = new JButton("RESET");
@@ -87,6 +92,7 @@ public class BasicMemoryManipulator extends JFrame
                 if(bank != null) { bank.reset(); }
             }
         });
+        toolBar.add(countLabel);
         toolBar.add(tickButton);
         toolBar.add(tickField);
         JPanel blankPanel = new JPanel();
@@ -298,7 +304,7 @@ public class BasicMemoryManipulator extends JFrame
                 Dimension newSize = c.getSize();
                 frameWidth = newSize.width;
                 frameHeight = newSize.height;
-                Dimension fill = new Dimension(frameWidth - 300, 30);
+                Dimension fill = new Dimension(frameWidth - 500, 30);
                 blankPanel.setMinimumSize(fill);
                 blankPanel.setMaximumSize(fill);
             }
