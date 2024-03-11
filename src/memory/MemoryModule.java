@@ -90,10 +90,13 @@ public class MemoryModule
             .append(itemGap)
             .append(lineSize)
             .append(itemDelim);
-        if(!accesses.isEmpty() && !waitingOnThis(accesses.getFirst())) { ret.append("BLOCKED"); }
+
+        if(accesses.peek() == null) { ret.append("AVAILABLE"); }
         else
         {
-            ret.append(accesses.peek() != null ? "Operating:" + itemGap + getAccessTimeStrings() : "AVAILABLE");
+            ret.append(!waitingOnThis(accesses.getFirst()) ? "BLOCKED: " : "OPERATING: ")
+               .append(itemGap)
+               .append(getAccessTimeStrings());
         }
 
         return ret.toString();
@@ -102,21 +105,33 @@ public class MemoryModule
     private String getAccessTimeStrings()
     {
         StringBuilder ret = new StringBuilder();
-        for(LinkedList<MemoryRequest> request : accesses)
+        for(LinkedList<MemoryRequest> chain : accesses)
         {
             try
             {
-                ret.append(request.isEmpty() ? "-" : request.getLast().getTimeRemaining())
-                   .append(", ");
+                boolean hit = false;
+                for(MemoryRequest request : chain)
+                {
+                    if(request.getTargetID() == id)
+                    {
+                        ret.append(request.getTimeRemaining());
+                        hit = true;
+                        break;
+                    }
+                }
+                if(!hit)
+                {
+                    ret.append('-')
+                       .append(chain.getLast().getTimeRemaining());
+                }
             }
             catch(MemoryRequestTimerNotStartedException e)
             {
-                ret.append(accessDelay)
-                   .append(", ");
+                ret.append(accessDelay);
             }
+            ret.append(", ");
         }
-        ret.deleteCharAt(ret.length() - 1);
-        ret.deleteCharAt(ret.length() - 1);
+        if(ret.length() >= ", ".length()) { ret.delete(ret.length() - ", ".length(), ret.length()); }
         return ret.toString();
     }
 
