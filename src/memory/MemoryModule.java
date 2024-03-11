@@ -64,11 +64,21 @@ public class MemoryModule
         initMemory();
     }
 
+    /**
+     * Checks a memory request chain to see if the lowest-level request targets this device.
+     * @param access The reference to a MemoryRequest chain that was previously logged asn access to this device.
+     * @return true iff the most recent request in the chain was made to this device.
+     */
     private boolean waitingOnThis(LinkedList<MemoryRequest> access)
     {
         return !access.isEmpty() && (access.getLast().getTargetID() == id);
     }
 
+    /**
+     * Stringification of some important info about this device.
+     * @return Contains ID, write mode, number of lines, line size, available/blocked/operating, time remaining in the
+     *  active level of the oldest active memory request chain that passed through this device.
+     */
     public String toString()
     {
         String itemDelim = "      |      ";
@@ -102,6 +112,10 @@ public class MemoryModule
         return ret.toString();
     }
 
+    /**
+     * Helper method for toString()
+     * @return time, time, ...
+     */
     private String getAccessTimeStrings()
     {
         StringBuilder ret = new StringBuilder();
@@ -135,21 +149,38 @@ public class MemoryModule
         return ret.toString();
     }
 
+    /**
+     * @return Number of 32-bit words per line.
+     */
     public int getLineSize()
     {
         return lineSize;
     }
 
+    /**
+     * @return Unique internal system ID of this device.
+     */
     public int getID()
     {
         return id;
     }
 
+    /**
+     * getMemoryDisplay(2, 2);
+     * @return The result of the above call.
+     */
     public String getMemoryDisplay()
     {
         return getMemoryDisplay(2, 2);
     }
 
+    /**
+     * Formats memory in this device into a readable string.
+     * @param addressRadix Numerical base in which to display memory addresses.
+     * @param valueRadix Numerical base in which to display memory values.
+     * @return Formatted-String table labeled with line and word addresses, containing stored memory values. Table also
+     *  has valid and dirty bits.
+     */
     public String getMemoryDisplay(int addressRadix, int valueRadix)
     {
         StringBuilder ret = new StringBuilder();
@@ -402,17 +433,18 @@ public class MemoryModule
      * If currently in write-through allocate mode, writes the line here and creates a store request to the next level
      *  of memory.
      * REQUESTS MUST BE MADE IN INTENDED ORDER OF EXECUTION!
-     * @param request Must be instantiated. Should not be started. If request arg words has length less than line size,
-     *                request arg virtualAddress must be the exact word address of the first word in that array.
+     * @param chain Chain of STORE MemoryRequests, last of which targets this device. That request must be instantiated
+     *              but not started. If that request's 'words' arg has length less than line size, request arg
+     *              virtualAddress must be the exact word address of the first word in that array.
      */
-    public void store(LinkedList<MemoryRequest> request)
+    public void store(LinkedList<MemoryRequest> chain)
     {
-        accesses.add(request);
+        accesses.add(chain);
 
         int virtualAddress;
         int[] words;
 
-        Object[] args = request.getLast().getArgs();  // [ int virtualAddress, int[] words ]
+        Object[] args = chain.getLast().getArgs();  // [ int virtualAddress, int[] words ]
         try
         {
             virtualAddress = (int)args[0];
@@ -434,7 +466,7 @@ public class MemoryModule
                 { setValid(line, false); }
             if(next != null)
             {
-                accessNext(REQUEST_TYPE.STORE, args, request);
+                accessNext(REQUEST_TYPE.STORE, args, chain);
             }
             else
             {
@@ -447,7 +479,7 @@ public class MemoryModule
             {
                 if(next != null)
                 {
-                    accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line), request);
+                    accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromFullLine(line), chain);
                 }
                 else
                 {
@@ -457,7 +489,7 @@ public class MemoryModule
                 if(words.length < lineSize)
                 {
                     int[] oldWords = (next != null) ? accessNext(REQUEST_TYPE.LOAD,
-                                                                 generateLoadArgsFromValues(virtualAddress, true), request)
+                                                                 generateLoadArgsFromValues(virtualAddress, true), chain)
                                                     : readData(line, getFirstAddress(line), true);
                     System.arraycopy(words, 0, oldWords, virtualAddress & offsetMask, words.length);
                     newWords = oldWords;
@@ -477,13 +509,13 @@ public class MemoryModule
             if(words.length < lineSize)
             {
                 int[] oldWords = ((next != null) && !sameLine(getFirstAddress(line), virtualAddress))
-                                 ? accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true), request)
+                                 ? accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true), chain)
                                  : readData(line, getFirstAddress(line), true);
                 System.arraycopy(words, 0, oldWords, virtualAddress & offsetMask, words.length);
                 newWords = oldWords;
             }
             writeData(false, virtualAddress, newWords);
-            if(next != null) { accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromValues(virtualAddress, newWords), request); }
+            if(next != null) { accessNext(REQUEST_TYPE.STORE, generateStoreArgsFromValues(virtualAddress, newWords), chain); }
         }
     }
 
@@ -518,7 +550,8 @@ public class MemoryModule
      *  request to the next level of memory to write the dirty line.
      * TODO: MAKE SURE THAT CODE FROM PIPELINE FOR INSTRUCTION MEMORY ACCESSES DOUBLES THE ADDRESSES DURING 64-BIT MODE!
      *       MemoryModule does not translate such addresses!
-     * @param chain LOAD request from the previous MemoryModule
+     * @param chain Chain of LOAD MemoryRequests, last of which targets this device. That request must be instantiated
+     *              but not started.
      * @return Length 1 (wordLength SHORT) or 2 (wordLength LONG) int array if request arg wholeLine is false.
      *         Length lineSize array otherwise.
      */
@@ -621,6 +654,8 @@ public class MemoryModule
      * Creates access request to next level of memory. If there is no next level, this method throws an error.
      * @param requestType STORE/LOAD
      * @param args Appropriate arguments for request type. (See comments near top of store() and load())
+     * @param chain Chain of requestType MemoryRequests, either empty or ending with one which targets this device. New
+     *              request will be appended to the chain before it's passed to the next device.
      */
     private int[] accessNext(REQUEST_TYPE requestType, Object[] args, LinkedList<MemoryRequest> chain)
     {
@@ -645,7 +680,7 @@ public class MemoryModule
 
     /**
      * Simulates one clock cycle internally.
-     * Checks to see if any requests to lower levels of memory are blocking this level.
+     * Checks to see if any requests are blocking this level.
      * If not, decrements timer of oldest request to this level.
      */
     public void tick()
@@ -694,19 +729,35 @@ public class MemoryModule
         if(accesses.getFirst().isEmpty()) { accesses.removeFirst(); }
     }
 
+    /**
+     * @return GET_TRACE_LINE(String invoker, int offset) invoked by the method below this one on the stack.
+     */
     private static String GET_TRACE_LINE()
     {
         return GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1);
     }
 
+    /**
+     * @param invoker The name of the method containing the line in question.
+     * @param offset N - 1, where N is the number of method calls between this and invoker.
+     * @return {tab}at className.invoker(className.java:lineNumber)
+     */
     private static String GET_TRACE_LINE(String invoker, int offset)
     {
         String className = MethodHandles.lookup().lookupClass().getName();
-        return "\tat " + className + "." + invoker + "(" + className + ".java:" + Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
+        return "\tat " + className + "." + invoker + "(" + className + ".java:" +
+               Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
     }
 
+    /**
+     * Prints a red warning message to the console, like an Exception but it doesn't cause terminal and can't be caught.
+     * {tab}at className.invoker(className.java:lineNumber) message
+     * @param message The message to follow the logistical info in the warning.
+     */
     private static void WARN(String message)
     {
-        logger.log(Level.WARNING, GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1) + " " + message);
+        logger.log(Level.WARNING,
+                  GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1) +
+                       " " + message);
     }
 }

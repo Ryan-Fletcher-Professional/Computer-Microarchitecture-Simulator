@@ -259,16 +259,18 @@ public class BasicMemoryManipulator extends JFrame
         memoryModificationPanel.add(throughAllocateButton);
         memoryModificationPanel.add(writeBackButton);
 
-        rightPanel.add(createListPanel("Unified Memory", unifiedMemoryList, new JList[] {instructionCachesList, dataCachesList}));
-        rightPanel.add(createListPanel("Data Caches", dataCachesList, new JList[] {instructionCachesList, unifiedMemoryList}));
-        rightPanel.add(createListPanel("Instruction Caches", instructionCachesList, new JList[] {dataCachesList, unifiedMemoryList}));
+        rightPanel.add(createListPanel("Unified Memory", unifiedMemoryList,
+                                                              new JList[] {instructionCachesList, dataCachesList}));
+        rightPanel.add(createListPanel("Data Caches", dataCachesList,
+                                                           new JList[] {instructionCachesList, unifiedMemoryList}));
+        rightPanel.add(createListPanel("Instruction Caches", instructionCachesList,
+                                                                  new JList[] {dataCachesList, unifiedMemoryList}));
         rightPanel.add(memoryModificationPanel);
 
         // Bottom
         JPanel bottomPanel = new JPanel(new BorderLayout());
         registerDisplayText = new JTextArea();
         registerDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
-//        registerDisplayText.setPreferredSize(new Dimension(frameWidth, 90));
         registerDisplayText.setMinimumSize(new Dimension(0, 90));
         registerDisplayText.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
         registerDisplayText.setEditable(false);
@@ -314,6 +316,12 @@ public class BasicMemoryManipulator extends JFrame
         updateDisplay();
     }
 
+    /**
+     * Helper method to recursively set the background color of current and all its component elements except text areas
+     *  and fields.
+     * @param current The topmost component to have its background color set.
+     * @param color The new background color.
+     */
     private static void recurBackgroundColor(Component current, Color color)
     {
         current.setBackground(color);
@@ -329,6 +337,9 @@ public class BasicMemoryManipulator extends JFrame
         }
     }
 
+    /**
+     * Forces various components to retrieve most recent display info.
+     */
     private void updateDisplay()
     {
         JScrollBar hBarReg = registerDisplayPane.getHorizontalScrollBar();
@@ -352,13 +363,21 @@ public class BasicMemoryManipulator extends JFrame
             for(JList<MemoryModule> list : memoryLists)
             {
                 if(list.getModel().getSize() > 0)
-                {
-                    ((DefaultListModel<MemoryModule>)list.getModel()).setElementAt(list.getModel().getElementAt(0), 0);  // Forces JLists to update item names
+                {                                                     // Forces JLists to update item names
+                    ((DefaultListModel<MemoryModule>)list.getModel()).setElementAt(
+                                                     list.getModel().getElementAt(0), 0);
                 }
             }
         });
     }
 
+    /**
+     * For creating the memory device lists.
+     * @param title Unified/Data/Instruction
+     * @param list This one.
+     * @param otherLists The other lists. Needed for reference storage.
+     * @return JPanel containing the list named, a button to trigger adding items to the list, and the list display.
+     */
     private JPanel createListPanel(String title, JList<MemoryModule> list, JList[] otherLists) {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
@@ -385,6 +404,10 @@ public class BasicMemoryManipulator extends JFrame
         return panel;
     }
 
+    /**
+     * Helper method for createListPanel.
+     * @param list The list to which the new MemoryModule will be appended.
+     */
     private void createNewMemoryModule(JList<MemoryModule> list)
     {
         DefaultListModel<MemoryModule> model = (DefaultListModel<MemoryModule>)list.getModel();
@@ -417,26 +440,43 @@ public class BasicMemoryManipulator extends JFrame
         }
     }
 
+    /**
+     * @return Numerical content of address text field.
+     */
     private int getAddress()
     {
-        return (int)Long.parseLong(addressField.getText(), addressBinRadio.isSelected() ? 2 : 10);  // Must parse as long so that 32-character inputs are accepted
+                    // Must parse as long so that 32-character inputs are accepted
+        return (int)Long.parseLong(addressField.getText(), addressBinRadio.isSelected() ? 2 : 10);
     }
 
+    /**
+     * @return true iff the contents of the argument text field represent a numbered register rather than a value.
+     */
     private boolean valueIsGeneralRegister()
     {
         return valueField.getText().charAt(0) == 'R';
     }
 
+    /**
+     * @return true iff the contents of the argument text field represent a named register rather than a value.
+     */
     private boolean valueIsInternalRegister()
     {
         return Arrays.asList(INTERNAL_REGISTER_NAMES).contains(valueField.getText());
     }
 
+    /**
+     * @return true iff the contents of the argument text field represent a register rather than a value.
+     */
     private boolean valueIsRegister()
     {
         return valueIsGeneralRegister() || valueIsInternalRegister();
     }
 
+    /**
+     * @return Numerical content of the argument text field.
+     *         If it's a register, returns that register's index in its respective bank.
+     */
     private int getValue()
     {
         String text = valueField.getText();
@@ -461,11 +501,17 @@ public class BasicMemoryManipulator extends JFrame
         return (int)Long.parseLong(text, radix);
     }
 
+    /**
+     * @return [ Selected numerical base for addresses, Selected numerical base for arguments ]
+     */
     private int[] getRadices()
     {
         return new int[] { addressBinRadio.isSelected() ? 2 : 10, valueBinRadio.isSelected() ? 2 : 10 };
     }
 
+    /**
+     * Stores value in argument text field or corresponding register to given address in selected MemoryModule.
+     */
     private void storeInCurrentMemoryModule()  // TODO : Add second value word field when 64-bit cache is selected
     {
         try
@@ -490,8 +536,12 @@ public class BasicMemoryManipulator extends JFrame
                 }
             }
 
-            LinkedList<MemoryRequest> request = new LinkedList<>(List.of(new MemoryRequest(valueIsRegister() ? bank.getID() : -1, currentlySelected.getID(), dataRadio.isSelected() ? MEMORY_TYPE.DATA : MEMORY_TYPE.INSTRUCTION, REQUEST_TYPE.STORE,
-                                                                                           new Object[]{getAddress(), newValueS})));
+            LinkedList<MemoryRequest> request = new LinkedList<>(List.of(
+                                                new MemoryRequest(valueIsRegister() ? bank.getID() : -1,
+                                                                  currentlySelected.getID(),
+                                                                  dataRadio.isSelected() ? MEMORY_TYPE.DATA : MEMORY_TYPE.INSTRUCTION,
+                                                                  REQUEST_TYPE.STORE,
+                                                                  new Object[]{getAddress(), newValueS})));
             currentlySelected.store(request);
         }
         catch(NumberFormatException e)
@@ -501,6 +551,9 @@ public class BasicMemoryManipulator extends JFrame
         updateDisplay();
     }
 
+    /**
+     * Loads value from selected MemoryModule into register in argument text field.
+     */
     private void loadFromCurrentMemoryModule()
     {
         try
@@ -515,8 +568,10 @@ public class BasicMemoryManipulator extends JFrame
                 register -= 15;
             }
 
-            LinkedList<MemoryRequest> request = new LinkedList<>(List.of(new MemoryRequest(bank.getID(), currentlySelected.getID(), currentlySelected.getType(), REQUEST_TYPE.LOAD,
-                                                                                           new Object[]{getAddress(), lineRadio.isSelected()})));
+            LinkedList<MemoryRequest> request = new LinkedList<>(List.of(
+                                                new MemoryRequest(bank.getID(), currentlySelected.getID(),
+                                                                  currentlySelected.getType(), REQUEST_TYPE.LOAD,
+                                                                  new Object[]{getAddress(), lineRadio.isSelected()})));
             int[] line = currentlySelected.load(request);
 
             for(int i = 0; i < line.length; i++)
@@ -534,19 +589,35 @@ public class BasicMemoryManipulator extends JFrame
         updateDisplay();
     }
 
+    /**
+     * @return GET_TRACE_LINE(String invoker, int offset) invoked by the method below this one on the stack.
+     */
     private static String GET_TRACE_LINE()
     {
         return GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1);
     }
 
+    /**
+     * @param invoker The name of the method containing the line in question.
+     * @param offset N - 1, where N is the number of method calls between this and invoker.
+     * @return {tab}at className.invoker(className.java:lineNumber)
+     */
     private static String GET_TRACE_LINE(String invoker, int offset)
     {
         String className = MethodHandles.lookup().lookupClass().getName();
-        return "\tat " + className + "." + invoker + "(" + className + ".java:" + Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
+        return "\tat " + className + "." + invoker + "(" + className + ".java:" +
+               Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
     }
 
+    /**
+     * Prints a red warning message to the console, like an Exception but it doesn't cause terminal and can't be caught.
+     * {tab}at className.invoker(className.java:lineNumber) message
+     * @param message The message to follow the logistical info in the warning.
+     */
     private static void WARN(String message)
     {
-        logger.log(Level.WARNING, GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1) + " " + message);
+        logger.log(Level.WARNING,
+                  GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1) +
+                      " " + message);
     }
 }
