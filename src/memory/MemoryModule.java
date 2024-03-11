@@ -12,6 +12,8 @@ public class MemoryModule
     private final int id;                       // ID of this MemoryModule
     private final MEMORY_KIND kind;             // CACHE/RAM
     private final MEMORY_TYPE type;             // DATA/INSTRUCTION
+    private int lastParallelizedDataRequest = -1;  // For use dropping stale requests from lowest level of memory
+    private int lastParallelizedInstructionRequest = -1;  // For use dropping stale requests from lowest level of memory
     private final WORD_LENGTH wordLength;       // SHORT/LONG
     private final MemoryModule next;            // Pointer to memory one level down
     private final int lineSize;                 // Number of words per line
@@ -694,8 +696,9 @@ public class MemoryModule
         // Exit if nothing to do
         if(accesses.isEmpty()) { return; }
 
-        // If this device had only one access and is no longer involved,
-        // or this device is done with its first active access and the second one came from a different device,
+        // If this device had only one access and is no longer involved, or
+        // this device is done with its first active access and the second one came from a different device and
+        //  this device isn't trying to drop more than one active chain from the same cache line,
         // then remove it from this device's active access list.
         boolean partOfFirst = false;
         LinkedList<MemoryRequest> first = accesses.getFirst();
@@ -707,10 +710,19 @@ public class MemoryModule
                 break;
             }
         }
-        if(!partOfFirst &&
-           ((accesses.size() < 2) || !first.getLast().getType().equals( accesses.get(1).getLast().getType() )))
+        MEMORY_TYPE firstRequestType = first.getLast().getType();
+        if(!partOfFirst && ((accesses.size() < 2) || !firstRequestType.equals( accesses.get(1).getLast().getType() )))
         {
-            accesses.removeFirst();
+            if(firstRequestType.equals(MEMORY_TYPE.DATA) && (lastParallelizedDataRequest < LAST_FINISHED_DATA_REQUEST))
+            {
+                accesses.removeFirst();
+                lastParallelizedDataRequest = CURRENT_TICK;
+            }
+            else if(firstRequestType.equals(MEMORY_TYPE.INSTRUCTION) && (lastParallelizedInstructionRequest < LAST_FINISHED_INSTRUCTION_REQUEST))
+            {
+                accesses.removeFirst();
+                lastParallelizedInstructionRequest = CURRENT_TICK;
+            }
         }
 
         // Exit if nothing to do
@@ -726,7 +738,11 @@ public class MemoryModule
                         }catch(MemoryRequestTimerNotStartedException _ignored_){}
         if(last.isFinished()) { accesses.getFirst().removeLast(); }
 
-        if(accesses.getFirst().isEmpty()) { accesses.removeFirst(); }
+        if(accesses.getFirst().isEmpty())
+        {
+            if(last.getType().equals(MEMORY_TYPE.DATA)) { LAST_FINISHED_DATA_REQUEST = CURRENT_TICK; }
+            else if(last.getType().equals(MEMORY_TYPE.INSTRUCTION)) { LAST_FINISHED_INSTRUCTION_REQUEST = CURRENT_TICK; }
+        }
     }
 
     /**
