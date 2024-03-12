@@ -64,7 +64,7 @@ public class BasicMemoryManipulator extends JFrame
         tickField.setMinimumSize(new Dimension(100, 30));
         tickField.setMaximumSize(new Dimension(100, 30));
         tickButton.addActionListener(e -> {
-            int numTicks = 1;
+            double numTicks = Double.POSITIVE_INFINITY;
             try{ numTicks = Integer.parseInt(tickField.getText()); }
             catch(NumberFormatException _ignored_) {}
             for(int i = 0; i < numTicks; i++)
@@ -77,6 +77,7 @@ public class BasicMemoryManipulator extends JFrame
                         list.getModel().getElementAt(j).tick();
                     }
                 }
+                if((numTicks == Double.POSITIVE_INFINITY) && allAccessesAreEmpty()) { break; }
             }
             countLabel.setText("Cycles: " + CURRENT_TICK);
             updateDisplay();
@@ -320,6 +321,18 @@ public class BasicMemoryManipulator extends JFrame
         setVisible(true);
 
         updateDisplay();
+    }
+
+    private boolean allAccessesAreEmpty()
+    {
+        for(JList<MemoryModule> list : memoryLists)
+        {
+            for(int i = 0; i < list.getModel().getSize(); i++)
+            {
+                if(list.getModel().getElementAt(i).getNumActiveAccesses() > 0) { return false; }
+            }
+        }
+        return true;
     }
 
     /**

@@ -12,8 +12,6 @@ public class MemoryModule
     private final int id;                       // ID of this MemoryModule
     private final MEMORY_KIND kind;             // CACHE/RAM
     private final MEMORY_TYPE type;             // DATA/INSTRUCTION
-    private int lastParallelizedDataRequest = -1;  // For use dropping stale requests from lowest level of memory
-    private int lastParallelizedInstructionRequest = -1;  // For use dropping stale requests from lowest level of memory
     private final WORD_LENGTH wordLength;       // SHORT/LONG
     private final MemoryModule next;            // Pointer to memory one level down
     private final int lineSize;                 // Number of words per line
@@ -378,6 +376,11 @@ public class MemoryModule
         writeMode = mode;
     }
 
+    public int getNumActiveAccesses()
+    {
+        return accesses.size();
+    }
+
     /**
      * Direct-maps virtual address to local address. Does so as follows:
      *  virtualWordAddress is checked to make sure it is within the correct maximum range. Throws
@@ -398,9 +401,10 @@ public class MemoryModule
 
         // Rightshift virtual word address to turn it into a virtual line address
         int lineAddress = virtualWordAddress >>> numOffsetBits;
-                 // Modulate virtual line address into simulated address space if this is lowest level of memory and RAM
+                           // Modulate virtual line address into simulated address space if this is lowest level of memory and RAM
         return lineAddress % (next == null && kind.equals(MEMORY_KIND.RAM) ? memory.length : lineAddress + 1)
-               % columnSize;  // Modulate line address by the number of lines in this MemoryModule for direct-map
+               % columnSize;
+               // Modulate line address by the number of lines in this MemoryModule for direct-map
     }
 
     /**
@@ -459,8 +463,7 @@ public class MemoryModule
             throw new IllegalArgumentException("Store request had an invalid argument");
         }
 
-        int localAddress = map(virtualAddress);
-        int[] line = memory[localAddress];
+        int[] line = memory[map(virtualAddress)];
 
         if(writeMode.equals(WRITE_MODE.THROUGH_NO_ALLOCATE))
         {
@@ -490,6 +493,7 @@ public class MemoryModule
                 int[] newWords = words;
                 if(words.length < lineSize)
                 {
+                    accesses.remove(chain);
                     int[] oldWords = (next != null) ? accessNext(REQUEST_TYPE.LOAD,
                                                                  generateLoadArgsFromValues(virtualAddress, true), chain)
                                                     : readData(line, getFirstAddress(line), true);
