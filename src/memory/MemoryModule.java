@@ -176,6 +176,11 @@ public class MemoryModule
         return getMemoryDisplay(2, 2);
     }
 
+    private static String smartToString(int i, int radix)
+    {
+        return radix == 10 ? Integer.toString(i, 10) : Integer.toUnsignedString(i, radix);
+    }
+
     /**
      * Formats memory in this device into a readable string.
      * @param addressRadix Numerical base in which to display memory addresses.
@@ -186,20 +191,20 @@ public class MemoryModule
     public String getMemoryDisplay(int addressRadix, int valueRadix)
     {
         StringBuilder ret = new StringBuilder();
-        int greatestAddressLength = Integer.toString(MAX_ADDRESS >>> numOffsetBits, addressRadix).length();
+        int greatestAddressLength = smartToString(MAX_ADDRESS >>> numOffsetBits, addressRadix).length();
         String addressLabel = "Line Address";
         int addressFillTotal = Math.max(0, greatestAddressLength - addressLabel.length());
         ret.append(" Dirty  |  Valid  |  ")
            .append(" ".repeat((addressFillTotal + 1) / 2))
            .append(addressLabel)
            .append(" ".repeat(addressFillTotal / 2));
-        int indexFillTotal = Math.max(0, Integer.toString(Integer.MAX_VALUE, valueRadix).length() + 1 - (addressRadix < 3 ? numOffsetBits : 1));
+        int indexFillTotal = Math.max(0, smartToString(Integer.MAX_VALUE, valueRadix).length() + 1 - (addressRadix < 3 ? numOffsetBits : 1));
         String previousIndexFill = "";
         for(int i = 0; i < lineSize; i++)
         {
-            String index = lineSize > 1 ? Integer.toString(i, addressRadix) : "";
+            String index = lineSize > 1 ? smartToString(i, addressRadix) : "";
             String indexFill = "0".repeat(Math.max(0, addressRadix < 3 ? (numOffsetBits - index.length()) : 0));
-            if((i > 0) && ((indexFill + Integer.toString(i, addressRadix)).length() > (previousIndexFill + Integer.toString(i - 1, addressRadix)).length()))
+            if((i > 0) && ((indexFill + smartToString(i, addressRadix)).length() > (previousIndexFill + smartToString(i - 1, addressRadix)).length()))
             {
                 indexFillTotal -= 1;
             }
@@ -215,7 +220,7 @@ public class MemoryModule
            .append('\n');
         for(int[] line : memory)
         {
-            String address = columnSize > 1 ? Integer.toString(getFirstAddress(line) >>> numOffsetBits, addressRadix) : "";
+            String address = columnSize > 1 ? smartToString(getFirstAddress(line) >>> numOffsetBits, addressRadix) : "";
             ret.append("   ")
                .append(isDirty(line) ? 1 : 0)
                .append("    |    ")
@@ -225,9 +230,9 @@ public class MemoryModule
                .append(address);
             for(int i = FIRST_WORD_INDEX; i < line.length; i++)
             {
-                String value = valueRadix > 2 ? Integer.toString(line[i], valueRadix) : Integer.toBinaryString(line[i]);
+                String value = valueRadix > 2 ? smartToString(line[i], valueRadix) : Integer.toBinaryString(line[i]);
                 ret.append("  |  ")
-                   .append(String.format("%" + (Integer.toString(Integer.MAX_VALUE, valueRadix).length() + 1) + "s", value).replace(' ', valueRadix > 2 ? ' ' : '0'));
+                   .append(String.format("%" + (smartToString(Integer.MAX_VALUE, valueRadix).length() + 1) + "s", value).replace(' ', valueRadix > 2 ? ' ' : '0'));
             }
             ret.append("    \n");
         }

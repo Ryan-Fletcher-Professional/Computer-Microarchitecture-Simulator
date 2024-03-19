@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -14,31 +15,35 @@ import memory.MemoryModule;
 import memory.MemoryRequest;
 import memory.RegisterFileModule;
 
-public class BasicMemoryManipulator extends JFrame
+public class Simulator extends JFrame
 {
-    private static final Logger logger = Logger.getLogger(BasicMemoryManipulator.class.getName());
+    private static final Logger logger = Logger.getLogger(Simulator.class.getName());
 
     private final int id;
     private RegisterFileModule[] registerBanks;
     private int frameWidth, frameHeight;
 
     private JTextField addressField, valueField, columnSizeField, lineSizeField, cacheField, ramField;
-    private JScrollPane memoryDisplayPane, registerDisplayPane, reversalDisplayPane;
-    private JTextArea memoryDisplayText, registerDisplayText, reversalDisplayText;
+    private JScrollPane memoryDisplayPane, indexableDisplayPane, internalDisplayPane, callDisplayPane, reversalDisplayPane,
+                        currentlyVisibleBank, currentlyInvisibleBank, currentlyVisibleStack, currentlyInvisibleStack;
+    private JScrollPane[] panes;
+    private JTextArea memoryDisplayText, indexableBankDisplayText, internalBankDisplayText,
+                      callStackDisplayText, reversalStackDisplayText;
     private JRadioButton cacheRadio, ramRadio, dataRadio, instructionRadio, shortWordsRadio, longWordsRadio,
                          wordRadio, lineRadio, addressBinRadio, addressDecRadio, addressHexRadio, valueBinRadio, valueDecRadio, valueHexRadio;
     private JList<MemoryModule> instructionCachesList, dataCachesList, unifiedMemoryList;
     private JList<MemoryModule>[] memoryLists;
     private DefaultListModel<MemoryModule> instructionCachesModel, dataCachesModel, unifiedMemoryModel;
     private MemoryModule currentlySelected;
+    private JPanel currentlyVisibleControls, currentlyInvisibleControls, stackPanel;
 
-    public BasicMemoryManipulator(int id, RegisterFileModule[] registerBanks)
+    public Simulator(int id, RegisterFileModule[] registerBanks)
     {
         this.id = id;
-        new BasicMemoryManipulator(id, registerBanks, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT);
+        new Simulator(id, registerBanks, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT);
     }
 
-    public BasicMemoryManipulator(int id, RegisterFileModule[] registerBanks, int width, int height)
+    public Simulator(int id, RegisterFileModule[] registerBanks, int width, int height)
     {
         this.id = id;
         this.registerBanks = registerBanks;
@@ -80,12 +85,49 @@ public class BasicMemoryManipulator extends JFrame
             countLabel.setText("Cycles: " + CURRENT_TICK);
             updateDisplay();
         });
+
+        stackPanel = new JPanel();
+        JButton stackToggle = new JButton("Toggle Stack View");
+        stackToggle.setMinimumSize(new Dimension(300, 30));
+        stackToggle.setMaximumSize(new Dimension(300, 30));
+        stackToggle.addActionListener(e -> {
+            stackPanel.remove(currentlyVisibleStack);
+            stackPanel.add(currentlyInvisibleStack);
+            JScrollPane temp = currentlyVisibleStack;
+            currentlyVisibleStack = currentlyInvisibleStack;
+            currentlyInvisibleStack = temp;
+            updateDisplay();
+        });
+        JPanel memoryPanel = new JPanel(new GridLayout(0, 1));
+        JButton controlsToggle = new JButton("Toggle Controls View");
+        controlsToggle.setMinimumSize(new Dimension(300, 30));
+        controlsToggle.setMaximumSize(new Dimension(300, 30));
+        controlsToggle.addActionListener(e -> {
+            memoryPanel.remove(currentlyVisibleControls);
+            memoryPanel.add(currentlyInvisibleControls);
+            JPanel temp = currentlyVisibleControls;
+            currentlyVisibleControls = currentlyInvisibleControls;
+            currentlyInvisibleControls = temp;
+            updateDisplay();
+        });
+        JPanel bankPanel = new JPanel();
+        JButton bankToggle = new JButton("Toggle Register Bank View");
+        bankToggle.setMinimumSize(new Dimension(300, 30));
+        bankToggle.setMaximumSize(new Dimension(300, 30));
+        bankToggle.addActionListener(e -> {
+            bankPanel.remove(currentlyVisibleBank);
+            bankPanel.add(currentlyInvisibleBank);
+            JScrollPane temp = currentlyVisibleBank;
+            currentlyVisibleBank = currentlyInvisibleBank;
+            currentlyInvisibleBank = temp;
+            updateDisplay();
+        });
         JButton resetButton = new JButton("RESET");
         resetButton.setMinimumSize(new Dimension(100, 30));
         resetButton.setMaximumSize(new Dimension(100, 30));
         resetButton.addActionListener(e -> {
             setVisible(false);
-            new BasicMemoryManipulator(GET_ID(), registerBanks);
+            new Simulator(GET_ID(), registerBanks);
             for(RegisterFileModule bank : registerBanks)
             {
                 if(bank != null) { bank.reset(); }
@@ -94,8 +136,11 @@ public class BasicMemoryManipulator extends JFrame
         toolBar.add(countLabel);
         toolBar.add(tickButton);
         toolBar.add(tickField);
+        toolBar.add(stackToggle);
+        toolBar.add(controlsToggle);
+        toolBar.add(bankToggle);
         JPanel blankPanel = new JPanel();
-        Dimension fill = new Dimension(width - 300, 30);
+        Dimension fill = new Dimension(width - 1200, 30);
         blankPanel.setMinimumSize(fill);
         blankPanel.setMaximumSize(fill);
         toolBar.add(blankPanel);
@@ -109,17 +154,30 @@ public class BasicMemoryManipulator extends JFrame
         leftRightPane.setDividerLocation(width / 2);
 
         // Left
-        JPanel leftPanel = new JPanel(new GridLayout(0, 1));
+        JPanel leftPanel = new JPanel(new GridLayout(1, 2));
 
+        // Stacks
+        callStackDisplayText = new JTextArea();
+        callStackDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        callStackDisplayText.setEditable(false);
+        callDisplayPane = new JScrollPane(callStackDisplayText);
+        reversalStackDisplayText = new JTextArea();
+        reversalStackDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        reversalStackDisplayText.setEditable(false);
+        reversalDisplayPane = new JScrollPane(reversalStackDisplayText);
+        stackPanel.add(callDisplayPane);
+        currentlyVisibleStack = callDisplayPane;
+        currentlyInvisibleStack = reversalDisplayPane;
+
+        // Memory
         // Memory manipulation
         JPanel memoryOperationsPanel = new JPanel(new GridLayout(0, 1));  // 0 rows means "as many as needed"
-
         JPanel entryPanel = new JPanel( new GridLayout(3, 2));
         addressField = new JTextField(1);
         valueField = new JTextField(1);
         JPanel addressRadioPanel = new JPanel(new GridLayout(1, 2));
-        addressBinRadio = new JRadioButton("Binary");
-        addressDecRadio = new JRadioButton("Decimal");
+        addressBinRadio = new JRadioButton("Bin");
+        addressDecRadio = new JRadioButton("Dec");
         addressHexRadio = new JRadioButton("Hex");
         ButtonGroup addressGroup = new ButtonGroup();
         addressGroup.add(addressBinRadio);
@@ -133,14 +191,14 @@ public class BasicMemoryManipulator extends JFrame
         addressRadioPanel.add(addressDecRadio);
         addressRadioPanel.add(addressHexRadio);
         JPanel valueRadioPanel = new JPanel(new GridLayout(1, 2));
-        valueBinRadio = new JRadioButton("Binary");
-        valueDecRadio = new JRadioButton("Decimal");
+        valueBinRadio = new JRadioButton("Bin");
+        valueDecRadio = new JRadioButton("Dec");
         valueHexRadio = new JRadioButton("Hex");
         ButtonGroup valueGroup = new ButtonGroup();
         valueGroup.add(valueBinRadio);
         valueGroup.add(valueDecRadio);
         valueGroup.add(valueHexRadio);
-        valueBinRadio.setSelected(true);
+        valueHexRadio.setSelected(true);
         valueBinRadio.addActionListener(e -> { updateDisplay(); });
         valueDecRadio.addActionListener(e -> { updateDisplay(); });
         valueHexRadio.addActionListener(e -> { updateDisplay(); });
@@ -178,7 +236,6 @@ public class BasicMemoryManipulator extends JFrame
 
         // MemoryModule creation
         JPanel memoryCreationPanel = new JPanel(new GridLayout(0, 2));
-
         JPanel cachePanel = new JPanel(new GridLayout(1, 2));
         cacheRadio = new JRadioButton("Cache");
         cacheField = new JTextField();
@@ -228,8 +285,12 @@ public class BasicMemoryManipulator extends JFrame
 
         recurBackgroundColor(memoryCreationPanel, new Color(200, 200, 200));
 
-        leftPanel.add(memoryOperationsPanel);
-        leftPanel.add(memoryCreationPanel);
+        memoryPanel.add(memoryCreationPanel);
+        currentlyVisibleControls = memoryCreationPanel;
+        currentlyInvisibleControls = memoryOperationsPanel;
+
+        leftPanel.add(stackPanel);
+        leftPanel.add(memoryPanel);
 
         // Right
         JPanel rightPanel = new JPanel();
@@ -282,17 +343,30 @@ public class BasicMemoryManipulator extends JFrame
 
         // Bottom
         JPanel bottomPanel = new JPanel(new BorderLayout());
-        registerDisplayText = new JTextArea();
-        registerDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        registerDisplayText.setMinimumSize(new Dimension(0, 90));
-        registerDisplayText.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
-        registerDisplayText.setEditable(false);
+
+        indexableBankDisplayText = new JTextArea();
+        indexableBankDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        indexableBankDisplayText.setMinimumSize(new Dimension(0, 90));
+        indexableBankDisplayText.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+        indexableBankDisplayText.setEditable(false);
+        indexableDisplayPane = new JScrollPane(indexableBankDisplayText);
+        indexableDisplayPane.setPreferredSize(new Dimension(frameWidth, 90));
+        internalBankDisplayText = new JTextArea();
+        internalBankDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        internalBankDisplayText.setMinimumSize(new Dimension(0, 90));
+        internalBankDisplayText.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+        internalBankDisplayText.setEditable(false);
+        internalDisplayPane = new JScrollPane(internalBankDisplayText);
+        internalDisplayPane.setPreferredSize(new Dimension(frameWidth, 90));
+        bankPanel.add(indexableDisplayPane);
+        currentlyVisibleBank = indexableDisplayPane;
+        currentlyInvisibleBank = internalDisplayPane;
+
         memoryDisplayText = new JTextArea();
         memoryDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
         memoryDisplayText.setEditable(false);
-        registerDisplayPane = new JScrollPane(registerDisplayText);
-        registerDisplayPane.setPreferredSize(new Dimension(frameWidth, 90));
-        bottomPanel.add(registerDisplayPane, BorderLayout.NORTH);
+
+        bottomPanel.add(bankPanel, BorderLayout.NORTH);
         memoryDisplayPane = new JScrollPane(memoryDisplayText);
         bottomPanel.add(memoryDisplayPane, BorderLayout.CENTER);
 
@@ -322,6 +396,8 @@ public class BasicMemoryManipulator extends JFrame
             @Override
             public void componentHidden(ComponentEvent e) {}
         });
+
+        panes = new JScrollPane[] { memoryDisplayPane, indexableDisplayPane, internalDisplayPane, callDisplayPane, reversalDisplayPane };
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
@@ -367,32 +443,48 @@ public class BasicMemoryManipulator extends JFrame
      */
     private void updateDisplay()
     {
-        JScrollBar hBarReg = registerDisplayPane.getHorizontalScrollBar();
-        int xR = hBarReg.getValue();
-        JScrollBar vBarReg = registerDisplayPane.getVerticalScrollBar();
-        int yR = vBarReg.getValue();
-        JScrollBar hBarMem = memoryDisplayPane.getHorizontalScrollBar();
-        int xM = hBarMem.getValue();
-        JScrollBar vBarMem = memoryDisplayPane.getVerticalScrollBar();
-        int yM = vBarMem.getValue();
+        List<JScrollBar> bars = new ArrayList<>();
+        List<Integer> positions = new ArrayList<>();
+        for(JScrollPane pane : panes)
+        {
+            bars.add(pane.getHorizontalScrollBar());
+            positions.add(bars.getLast().getValue());
+            bars.add(pane.getVerticalScrollBar());
+            positions.add(bars.getLast().getValue());
+        }
 
-        registerDisplayText.setText(registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(8, getRadices()[1]));
+        callStackDisplayText.setText(registerBanks[CALL_STACK_INDEX].getDisplayText(1, getRadices()[1]));
+        reversalStackDisplayText.setText(registerBanks[REVERSAL_STACK_INDEX].getDisplayText(1, getRadices()[1]));
+        indexableBankDisplayText.setText(registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(8, getRadices()[1]));
+        internalBankDisplayText.setText(registerBanks[INTERNAL_BANK_INDEX].getDisplayText(8, getRadices()[1]));
         if(currentlySelected != null)
             { memoryDisplayText.setText(currentlySelected.getMemoryDisplay(getRadices()[0], getRadices()[1])); }
 
+        Dimension paneSize = stackPanel.getSize();
+        paneSize.width = Math.min(stackPanel.getWidth(), 8 * (valueBinRadio.isSelected() ? 38 : (valueHexRadio.isSelected() ? 14 : 20)));
+        callDisplayPane.setPreferredSize(paneSize);
+        reversalDisplayPane.setPreferredSize(new Dimension(Math.min(stackPanel.getWidth(), (int)((double)paneSize.width * 1.5)), paneSize.height));
+
         SwingUtilities.invokeLater(() -> {
-            hBarReg.setValue(xR);
-            vBarReg.setValue(yR);
-            hBarMem.setValue(xM);
-            vBarMem.setValue(yM);
+            for(int i = 0; i < bars.size(); i++)
+            {
+                bars.get(i).setValue(positions.get(i));
+            }
+
+            // Forces JLists to update item names
             for(JList<MemoryModule> list : memoryLists)
             {
                 if(list.getModel().getSize() > 0)
-                {                                                     // Forces JLists to update item names
+                {
                     ((DefaultListModel<MemoryModule>)list.getModel()).setElementAt(
                                                      list.getModel().getElementAt(0), 0);
                 }
             }
+
+            // Forces frame to redraw
+            Dimension size = getSize();
+            setSize(new Dimension(size.width + 1, size.height + 1));
+            setSize(size);
         });
     }
 
@@ -614,7 +706,7 @@ public class BasicMemoryManipulator extends JFrame
                 bank.store(register + i, line[i]);
             }
 
-            registerDisplayText.setText(bank.getDisplayText(8, getRadices()[1]));
+            indexableBankDisplayText.setText(bank.getDisplayText(8, getRadices()[1]));
         }
         catch(NumberFormatException e)
         {
