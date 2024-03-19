@@ -54,7 +54,7 @@ public class RegisterFileModule
     {
         if(mode.equals(REGISTER_FILE_MODE.ADDRESSED))
         {
-            if(index < 0 || index >= memory.length)
+            if(index < 0 || index >= getNumRegisters())
             {
                 throw new IllegalArgumentException("Register address out of range.");
             }
@@ -63,7 +63,7 @@ public class RegisterFileModule
         else if(mode.equals(REGISTER_FILE_MODE.STACK))
         {
             if(index != -1) { WARN(logger, "You are attempting to address a stack register file"); }
-            if(currentRegisterIndex == memory.length - 1)
+            if(currentRegisterIndex == getNumRegisters() - 1)
                 { throw new StackOverflowError("Register file " + id + " overflowed"); }
             currentRegisterIndex += 1;
             memory[currentRegisterIndex] = value & masks[currentRegisterIndex];
@@ -71,7 +71,7 @@ public class RegisterFileModule
         else if(mode.equals(REGISTER_FILE_MODE.STACK_CIRCULAR))
         {
             if(index != -1) { WARN(logger, "You are attempting to address a stack register file"); }
-            currentRegisterIndex = (currentRegisterIndex + 1) % memory.length;
+            currentRegisterIndex = (currentRegisterIndex + 1) % getNumRegisters();
             memory[currentRegisterIndex] = value & masks[currentRegisterIndex];
         }
     }
@@ -87,7 +87,7 @@ public class RegisterFileModule
     {
         if(mode.equals(REGISTER_FILE_MODE.ADDRESSED))
         {
-            if(index < 0 || index >= memory.length)
+            if(index < 0 || index >= getNumRegisters())
             {
                 throw new IllegalArgumentException("Register address out of range.");
             }
@@ -106,7 +106,7 @@ public class RegisterFileModule
         {
             if(index != -1) { WARN(logger, "You are attempting to address a stack register file"); }
             long value = memory[currentRegisterIndex];
-            currentRegisterIndex = (currentRegisterIndex + memory.length - 1) % memory.length;
+            currentRegisterIndex = (currentRegisterIndex + getNumRegisters() - 1) % getNumRegisters();
             return value;
         }
         else { throw new RuntimeException("Register file mode not assigned; should never occur"); }
@@ -114,18 +114,22 @@ public class RegisterFileModule
 
     public String getDisplayText()
     {
-        return getDisplayText(mode.equals(REGISTER_FILE_MODE.ADDRESSED) ? 8 : 1);
+        return getDisplayText(16);
     }
 
-    public String getDisplayText(int maxRowSize)
+    public String getDisplayText(int radix)
+    {
+        return getDisplayText(mode.equals(REGISTER_FILE_MODE.ADDRESSED) ? 8 : 1, radix);
+    }
+
+    public String getDisplayText(int maxRowSize, int radix)
     {
         StringBuilder ret = new StringBuilder();
         ret.append("  ");
         for(int i = 0; i < names.length; i++)
         {
-            int valueLength = Math.max(names[i].length(), Long.toBinaryString(masks[i]).length());
+            int valueLength = Math.max(names[i].length(), Long.toString(masks[i], radix).length());
             StringBuilder currentName = new StringBuilder();
-            int startPos = (valueLength + 1) / 2;
             currentName.append(" ".repeat((valueLength - names[i].length()) / 2))
                        .append(names[i])
                        .append(" ".repeat(valueLength - currentName.length()));
@@ -133,13 +137,13 @@ public class RegisterFileModule
                .append("  |  ");
         }
         ret.setCharAt(ret.length() - "|  ".length(), '\n');
-        for(int i = 0; i < memory.length; i++)
+        for(int i = 0; i < getNumRegisters(); i++)
         {
-            int valueLength = Long.toBinaryString(masks[i]).length();
-            String binaryValue = Long.toBinaryString(memory[i] & masks[i]);
+            int valueLength = Long.toString(masks[i], radix).length();
+            String value = Long.toString(memory[i] & masks[i], radix);
             StringBuilder currentValue = new StringBuilder();
-            currentValue.append("0".repeat(valueLength - binaryValue.length()))
-                        .append(binaryValue)
+            currentValue.append("0".repeat(valueLength - value.length()))
+                        .append(value)
                         .append("  |  ");
             ret.append(currentValue);
         }
@@ -175,11 +179,11 @@ public class RegisterFileModule
             ret.delete(lengthBeforeBefore - 1, ret.length());
         }
 
-        return ret.toString();
+        return ret.toString().toUpperCase();
     }
 
     public void reset()
     {
-        memory = new long[memory.length];
+        memory = new long[getNumRegisters()];
     }
 }

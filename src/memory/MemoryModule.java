@@ -229,7 +229,7 @@ public class MemoryModule
             }
             ret.append("    \n");
         }
-        return ret.toString();
+        return ret.toString().toUpperCase();
     }
 
     /**

@@ -26,7 +26,7 @@ public class BasicMemoryManipulator extends JFrame
     private JScrollPane memoryDisplayPane, registerDisplayPane, reversalDisplayPane;
     private JTextArea memoryDisplayText, registerDisplayText, reversalDisplayText;
     private JRadioButton cacheRadio, ramRadio, dataRadio, instructionRadio, shortWordsRadio, longWordsRadio,
-                         wordRadio, lineRadio, addressBinRadio, addressDecRadio, valueBinRadio, valueDecRadio;
+                         wordRadio, lineRadio, addressBinRadio, addressDecRadio, addressHexRadio, valueBinRadio, valueDecRadio, valueHexRadio;
     private JList<MemoryModule> instructionCachesList, dataCachesList, unifiedMemoryList;
     private JList<MemoryModule>[] memoryLists;
     private DefaultListModel<MemoryModule> instructionCachesModel, dataCachesModel, unifiedMemoryModel;
@@ -120,25 +120,33 @@ public class BasicMemoryManipulator extends JFrame
         JPanel addressRadioPanel = new JPanel(new GridLayout(1, 2));
         addressBinRadio = new JRadioButton("Binary");
         addressDecRadio = new JRadioButton("Decimal");
+        addressHexRadio = new JRadioButton("Hex");
         ButtonGroup addressGroup = new ButtonGroup();
         addressGroup.add(addressBinRadio);
         addressGroup.add(addressDecRadio);
+        addressGroup.add(addressHexRadio);
         addressBinRadio.setSelected(true);
-        addressBinRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
-        addressDecRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
+        addressBinRadio.addActionListener(e -> { updateDisplay(); });
+        addressDecRadio.addActionListener(e -> { updateDisplay(); });
+        addressHexRadio.addActionListener(e -> { updateDisplay(); });
         addressRadioPanel.add(addressBinRadio);
         addressRadioPanel.add(addressDecRadio);
+        addressRadioPanel.add(addressHexRadio);
         JPanel valueRadioPanel = new JPanel(new GridLayout(1, 2));
         valueBinRadio = new JRadioButton("Binary");
         valueDecRadio = new JRadioButton("Decimal");
+        valueHexRadio = new JRadioButton("Hex");
         ButtonGroup valueGroup = new ButtonGroup();
         valueGroup.add(valueBinRadio);
         valueGroup.add(valueDecRadio);
+        valueGroup.add(valueHexRadio);
         valueBinRadio.setSelected(true);
-        valueBinRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
-        valueDecRadio.addActionListener(e -> { if(currentlySelected != null){ updateDisplay(); } });
+        valueBinRadio.addActionListener(e -> { updateDisplay(); });
+        valueDecRadio.addActionListener(e -> { updateDisplay(); });
+        valueHexRadio.addActionListener(e -> { updateDisplay(); });
         valueRadioPanel.add(valueBinRadio);
         valueRadioPanel.add(valueDecRadio);
+        valueRadioPanel.add(valueHexRadio);
         entryPanel.add(new JLabel("Address"));
         entryPanel.add(new JLabel("Argument"));
         entryPanel.add(addressField);
@@ -368,7 +376,7 @@ public class BasicMemoryManipulator extends JFrame
         JScrollBar vBarMem = memoryDisplayPane.getVerticalScrollBar();
         int yM = vBarMem.getValue();
 
-        registerDisplayText.setText(registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(8));
+        registerDisplayText.setText(registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(8, getRadices()[1]));
         if(currentlySelected != null)
             { memoryDisplayText.setText(currentlySelected.getMemoryDisplay(getRadices()[0], getRadices()[1])); }
 
@@ -463,7 +471,7 @@ public class BasicMemoryManipulator extends JFrame
     private int getAddress()
     {
                     // Must parse as long so that 32-character inputs are accepted
-        return (int)Long.parseLong(addressField.getText(), addressBinRadio.isSelected() ? 2 : 10);
+        return (int)Long.parseLong(addressField.getText(), getRadices()[0]);
     }
 
     /**
@@ -523,7 +531,7 @@ public class BasicMemoryManipulator extends JFrame
      */
     private int[] getRadices()
     {
-        return new int[] { addressBinRadio.isSelected() ? 2 : 10, valueBinRadio.isSelected() ? 2 : 10 };
+        return new int[] { addressBinRadio.isSelected() ? 2 : (addressDecRadio.isSelected() ? 10 : 16), valueBinRadio.isSelected() ? 2 : (valueDecRadio.isSelected() ? 10 : 16) };
     }
 
     /**
@@ -596,7 +604,7 @@ public class BasicMemoryManipulator extends JFrame
                 bank.store(register + i, line[i]);
             }
 
-            registerDisplayText.setText(bank.getDisplayText(8));
+            registerDisplayText.setText(bank.getDisplayText(8, getRadices()[1]));
         }
         catch(NumberFormatException e)
         {
