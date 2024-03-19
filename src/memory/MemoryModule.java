@@ -1,6 +1,8 @@
 package memory;
 
-import java.lang.invoke.MethodHandles;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.logging.*;
 import static main.GLOBALS.*;
@@ -493,7 +495,6 @@ public class MemoryModule
                 int[] newWords = words;
                 if(words.length < lineSize)
                 {
-                    accesses.remove(chain);
                     int[] oldWords = (next != null) ? accessNext(REQUEST_TYPE.LOAD,
                                                                  generateLoadArgsFromValues(virtualAddress, true), chain)
                                                     : readData(line, getFirstAddress(line), true);
@@ -537,6 +538,63 @@ public class MemoryModule
         setDirty(line, dirty);
         setFirstAddress(line, virtualAddress >> numOffsetBits << numOffsetBits);
         System.arraycopy(words, 0, line, FIRST_WORD_INDEX, words.length);
+    }
+
+    public void storeFiles(String path, int startingAddress)
+    {
+        File directory = new File(path);
+        File[] files = directory.listFiles();
+
+        int previousSize = 0;
+        List<Integer> words = new ArrayList<>();
+
+        if (files != null)
+        {
+            for (File file : files)
+            {
+                if (file.isFile())
+                {
+                    try
+                    {
+                        FileInputStream fis = new FileInputStream(file);
+                        byte[] buffer = new byte[4];
+                        int bytesRead;
+
+                        while((bytesRead = fis.read(buffer)) != -1)
+                        {
+                            if(bytesRead == 4)
+                            {
+                                int value = ((buffer[0] & 0xFF) << 24) |
+                                            ((buffer[1] & 0xFF) << 16) |
+                                            ((buffer[2] & 0xFF) << 8) |
+                                             (buffer[3] & 0xFF);
+                                words.add(value);
+                            }
+                            else
+                            {
+                                System.out.println("Remaining " + bytesRead + "byte(s) ignored for file: " + file.getName());
+                            }
+                        }
+                    }
+                    catch(IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+
+                    System.out.println("Processed " + (words.size() - previousSize) + " words from file: " + file.getName());
+                    previousSize = words.size();
+                }
+            }
+        }
+        else
+        {
+            System.out.println("The specified directory is empty or does not exist.");
+        }
+
+        for(int i = 0; i < previousSize; i++)
+        {
+            writeData(false, startingAddress + i, new int[] { words.get(i) });
+        }
     }
 
     /**

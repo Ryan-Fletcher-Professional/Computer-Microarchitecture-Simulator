@@ -13,6 +13,12 @@ public class GLOBALS
     public static final int DEFAULT_UI_WIDTH  = screenSize.width - 20;
     public static final int DEFAULT_UI_HEIGHT = screenSize.height - 100;
 
+    public static final String PATH_TO_FILES = "src/files/";
+    public static final String PATH_TO_DATA_FILES = PATH_TO_FILES + "data/";
+    public static final int DATA_STARTING_ADDRESS = 0b100000000000000000000;  // 1MB
+    public static final String PATH_TO_INSTRUCTION_BINS = PATH_TO_FILES + "instructionBins/";
+
+    public static final int INDEXABLE_BANK_SIZE = 16;
     public static final int INDEXABLE_BANK_INDEX = 0;
     public static final int INTERNAL_BANK_INDEX = 1;
     public static final int CALL_STACK_INDEX = 2;
@@ -107,21 +113,13 @@ public class GLOBALS
     }
 
     /**
-     * @return GET_TRACE_LINE(String invoker, int offset) invoked by the method below this one on the stack.
-     */
-    public static String GET_TRACE_LINE()
-    {
-        return GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1);
-    }
-
-    /**
      * @param invoker The name of the method containing the line in question.
      * @param offset N - 1, where N is the number of method calls between this and invoker.
      * @return {tab}at className.invoker(className.java:lineNumber)
      */
-    public static String GET_TRACE_LINE(String invoker, int offset)
+    public static String GET_TRACE_LINE(Logger logger, String invoker, int offset)
     {
-        String className = MethodHandles.lookup().lookupClass().getName();
+        String className = logger.getName(); //MethodHandles.lookup().lookupClass().getName();
         return "\tat " + className + "." + invoker + "(" + className + ".java:" +
                 Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
     }
@@ -134,7 +132,7 @@ public class GLOBALS
     public static void WARN(Logger logger, String message)
     {
         logger.log(Level.WARNING,
-                GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1) +
+                GET_TRACE_LINE(logger, Thread.currentThread().getStackTrace()[2].getMethodName(), 1) +
                         " " + message);
     }
 }

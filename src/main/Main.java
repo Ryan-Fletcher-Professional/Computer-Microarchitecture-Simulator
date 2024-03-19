@@ -3,15 +3,22 @@ package main;
 import memory.RegisterFileModule;
 import simulator.BasicMemoryManipulator;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import static main.GLOBALS.*;
 
 public class Main
 {
     public static void main(String[] args)
     {
+        // TODO : Ensure PC starts at 10 if 32 bit word mode or 01 if 64 bit word mode
+        createTestInstructionBinary("00");
+
         RegisterFileModule[] registerBanks = new RegisterFileModule[REGISTER_BANK_INDECES.length];
-        int[] indexableLengths = new int[16];
-        String[] indexableNames = new String[16];
+        int[] indexableLengths = new int[INDEXABLE_BANK_SIZE];
+        String[] indexableNames = new String[INDEXABLE_BANK_SIZE];
         for(int i = 0; i < indexableLengths.length; i++)
         {
             indexableLengths[i] = 32;
@@ -40,5 +47,53 @@ public class Main
         registerBanks[CALL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK, callStackLengths, callStackNames);
         registerBanks[REVERSAL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK_CIRCULAR, reversalStackLengths, reversalStackNames);
         new BasicMemoryManipulator(GET_ID(), registerBanks);
+    }
+
+    private static void createTestInstructionBinary(String name)
+    {
+        String filePath = PATH_TO_INSTRUCTION_BINS + name + ".txt";
+        File file = new File(filePath);
+
+        try
+        {
+            if(!file.exists())
+            {
+                // Ensure the parent directories exist
+                file.getParentFile().mkdirs();
+
+                boolean isFileCreated = file.createNewFile();
+
+                if(isFileCreated)
+                {
+                    try(FileWriter writer = new FileWriter(file))
+                    {
+                        // 32-bit word mode with size 1024 reversal and call stacks
+                        writer.write(new char[] { 0b01000000, 0b00010000, 0b00000000, 0b00000000 });
+                        writer.write(new char[] { 0b00000000, 0b00000000, 0b00000000, 0b00000000 });
+
+                        writer.write(new char[] { 0b11110110, 0b00000000, 0b00000000, 0b00000000 });  // HALT 0
+
+                        System.out.println("Test binary created and text written successfully.");
+                    }
+                    catch(IOException e)
+                    {
+                        System.out.println("An error occurred while writing to the test binary.");
+                    }
+                }
+                else
+                {
+                    System.out.println("Test binary already exists or could not be created.");
+                }
+            }
+            else
+            {
+                System.out.println("Test binary already exists.");
+            }
+        }
+        catch(IOException e)
+        {
+            System.out.println("An error occurred while checking or creating the test binary.");
+            e.printStackTrace();
+        }
     }
 }

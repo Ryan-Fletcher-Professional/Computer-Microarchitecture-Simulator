@@ -445,19 +445,25 @@ public class BasicMemoryManipulator extends JFrame
         try
         {
             MEMORY_KIND kind = cacheRadio.isSelected() ? MEMORY_KIND.CACHE : MEMORY_KIND.RAM;
+            MemoryModule next = model.getSize() > 0 ? model.getElementAt(model.getSize() - 1) :
+                                    (unifiedMemoryModel.getSize() > 0 ?
+                                     unifiedMemoryModel.getElementAt(unifiedMemoryModel.getSize() - 1) :
+                                         null);
             newModule = new MemoryModule(GET_ID(),
                                          kind,
                                          dataRadio.isSelected() ? MEMORY_TYPE.DATA : MEMORY_TYPE.INSTRUCTION,
                                          shortWordsRadio.isSelected() ? WORD_LENGTH.SHORT : WORD_LENGTH.LONG,
                                          kind.equals(MEMORY_KIND.CACHE) ? DEFAULT_CACHE_WRITE_MODE : DEFAULT_RAM_WRITE_MODE,
-                                         model.getSize() > 0 ? model.getElementAt(model.getSize() - 1) :
-                                                 (unifiedMemoryModel.getSize() > 0 ?
-                                                  unifiedMemoryModel.getElementAt(unifiedMemoryModel.getSize() - 1) :
-                                                  null),
+                                         next,
                                          Integer.parseInt(columnSizeField.getText()),
                                          Integer.parseInt(lineSizeField.getText()),
                                          cacheRadio.isSelected() ? cacheDelay : ramDelay);
             model.addElement(newModule);
+            if(next == null)
+            {
+                newModule.storeFiles(PATH_TO_INSTRUCTION_BINS, 0);
+                newModule.storeFiles(PATH_TO_DATA_FILES, DATA_STARTING_ADDRESS);
+            }
         }
         catch(NumberFormatException e)
         {
@@ -508,17 +514,21 @@ public class BasicMemoryManipulator extends JFrame
         int radix = 10;
         try
         {
-            if(valueIsGeneralRegister())
-            {
-                text = text.substring(1);
-            }
-            else if(valueIsInternalRegister())
+            if(valueIsInternalRegister())
             {
                 return Arrays.asList(INTERNAL_REGISTER_NAMES).indexOf(text);
+            }
+            else if(valueIsGeneralRegister())
+            {
+                text = text.substring(1);
             }
             else if(valueBinRadio.isSelected())
             {
                 radix = 2;
+            }
+            else if(valueHexRadio.isSelected())
+            {
+                radix = 16;
             }
         }
         catch(StringIndexOutOfBoundsException e) { throw new NumberFormatException(); }
