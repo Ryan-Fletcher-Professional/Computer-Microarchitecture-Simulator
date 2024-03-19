@@ -92,6 +92,8 @@ public class MemoryModule
             .append(itemDelim)
             .append("Mode:")
             .append(itemGap)
+            .append(wordLength.equals(WORD_LENGTH.SHORT) ? 32 : 64)
+            .append(" - ")
             .append(writeMode)
             .append(itemDelim)
             .append("Lines:")
@@ -569,10 +571,10 @@ public class MemoryModule
                         {
                             if(bytesRead == 4)
                             {
-                                int value = ((buffer[0] & 0xFF) << 24) |
-                                            ((buffer[1] & 0xFF) << 16) |
-                                            ((buffer[2] & 0xFF) << 8) |
-                                             (buffer[3] & 0xFF);
+                                int value = (buffer[0] << 24) |
+                                            (buffer[1] << 16) |
+                                            (buffer[2] << 8) |
+                                             buffer[3];
                                 words.add(value);
                             }
                             else
@@ -596,9 +598,15 @@ public class MemoryModule
             System.out.println("The specified directory is empty or does not exist.");
         }
 
-        for(int i = 0; i < previousSize; i++)
+        int[] line = new int[lineSize];
+        for(int i = 0; i < words.size(); i++)
         {
-            writeData(false, startingAddress + i, new int[] { words.get(i) });
+            line[i % lineSize] = words.get(i);
+            if((i % lineSize == lineSize - 1) || (i == words.size() - 1))
+            {
+                writeData(false, startingAddress + i, line);
+                line = new int[lineSize];
+            }
         }
     }
 

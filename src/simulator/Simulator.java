@@ -24,16 +24,16 @@ public class Simulator extends JFrame
     private int frameWidth, frameHeight;
 
     private JTextField addressField, valueField, columnSizeField, lineSizeField, cacheField, ramField;
-    private JScrollPane memoryDisplayPane, indexableDisplayPane, internalDisplayPane, callDisplayPane, reversalDisplayPane,
+    private JScrollPane callDisplayPane, reversalDisplayPane,
                         currentlyVisibleBank, currentlyInvisibleBank, currentlyVisibleStack, currentlyInvisibleStack;
     private JScrollPane[] panes;
     private JTextArea memoryDisplayText, indexableBankDisplayText, internalBankDisplayText,
                       callStackDisplayText, reversalStackDisplayText;
     private JRadioButton cacheRadio, ramRadio, dataRadio, instructionRadio, shortWordsRadio, longWordsRadio,
-                         wordRadio, lineRadio, addressBinRadio, addressDecRadio, addressHexRadio, valueBinRadio, valueDecRadio, valueHexRadio;
-    private JList<MemoryModule> instructionCachesList, dataCachesList, unifiedMemoryList;
+                         wordRadio, lineRadio, addressBinRadio, addressDecRadio, addressHexRadio,
+                         valueBinRadio, valueDecRadio, valueHexRadio;
     private JList<MemoryModule>[] memoryLists;
-    private DefaultListModel<MemoryModule> instructionCachesModel, dataCachesModel, unifiedMemoryModel;
+    private DefaultListModel<MemoryModule> unifiedMemoryModel;
     private MemoryModule currentlySelected;
     private JPanel currentlyVisibleControls, currentlyInvisibleControls, stackPanel;
 
@@ -297,12 +297,12 @@ public class Simulator extends JFrame
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
 
         unifiedMemoryModel = new DefaultListModel<>();
-        dataCachesModel = new DefaultListModel<>();
-        instructionCachesModel = new DefaultListModel<>();
-        unifiedMemoryList = new JList<>(unifiedMemoryModel);
-        dataCachesList = new JList<>(dataCachesModel);
-        instructionCachesList = new JList<>(instructionCachesModel);
-        memoryLists = new JList[] { unifiedMemoryList, dataCachesList, instructionCachesList };
+        DefaultListModel<MemoryModule> dataCachesModel = new DefaultListModel<>();
+        DefaultListModel<MemoryModule> instructionCachesModel = new DefaultListModel<>();
+        JList<MemoryModule> unifiedMemoryList = new JList<>(unifiedMemoryModel);
+        JList<MemoryModule> dataCachesList = new JList<>(dataCachesModel);
+        JList<MemoryModule> instructionCachesList = new JList<>(instructionCachesModel);
+        memoryLists = new JList[] {unifiedMemoryList, dataCachesList, instructionCachesList};
 
         JPanel memoryModificationPanel = new JPanel(new GridLayout(1, 0));
         JButton throughNoAllocateButton = new JButton("Set Write-Through No Allocate");
@@ -349,14 +349,14 @@ public class Simulator extends JFrame
         indexableBankDisplayText.setMinimumSize(new Dimension(0, 90));
         indexableBankDisplayText.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
         indexableBankDisplayText.setEditable(false);
-        indexableDisplayPane = new JScrollPane(indexableBankDisplayText);
+        JScrollPane indexableDisplayPane = new JScrollPane(indexableBankDisplayText);
         indexableDisplayPane.setPreferredSize(new Dimension(frameWidth, 90));
         internalBankDisplayText = new JTextArea();
         internalBankDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
         internalBankDisplayText.setMinimumSize(new Dimension(0, 90));
         internalBankDisplayText.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
         internalBankDisplayText.setEditable(false);
-        internalDisplayPane = new JScrollPane(internalBankDisplayText);
+        JScrollPane internalDisplayPane = new JScrollPane(internalBankDisplayText);
         internalDisplayPane.setPreferredSize(new Dimension(frameWidth, 90));
         bankPanel.add(indexableDisplayPane);
         currentlyVisibleBank = indexableDisplayPane;
@@ -367,7 +367,7 @@ public class Simulator extends JFrame
         memoryDisplayText.setEditable(false);
 
         bottomPanel.add(bankPanel, BorderLayout.NORTH);
-        memoryDisplayPane = new JScrollPane(memoryDisplayText);
+        JScrollPane memoryDisplayPane = new JScrollPane(memoryDisplayText);
         bottomPanel.add(memoryDisplayPane, BorderLayout.CENTER);
 
         // Finish arranging window
@@ -397,7 +397,7 @@ public class Simulator extends JFrame
             public void componentHidden(ComponentEvent e) {}
         });
 
-        panes = new JScrollPane[] { memoryDisplayPane, indexableDisplayPane, internalDisplayPane, callDisplayPane, reversalDisplayPane };
+        panes = new JScrollPane[] {memoryDisplayPane, indexableDisplayPane, internalDisplayPane, callDisplayPane, reversalDisplayPane };
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);

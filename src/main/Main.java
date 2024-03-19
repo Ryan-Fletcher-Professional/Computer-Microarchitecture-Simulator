@@ -4,6 +4,7 @@ import memory.RegisterFileModule;
 import simulator.Simulator;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -56,38 +57,37 @@ public class Main
 
         try
         {
-            if(!file.exists())
+            if(file.exists())
             {
-                // Ensure the parent directories exist
-                file.getParentFile().mkdirs();
+                file.delete();
+            }
 
-                boolean isFileCreated = file.createNewFile();
+            // Ensure the parent directories exist
+            file.getParentFile().mkdirs();
 
-                if(isFileCreated)
+            boolean isFileCreated = file.createNewFile();
+
+            if(isFileCreated)
+            {
+                try(FileOutputStream writer = new FileOutputStream(file))
                 {
-                    try(FileWriter writer = new FileWriter(file))
-                    {
-                        // 32-bit word mode with size 1024 reversal and call stacks
-                        writer.write(new char[] { 0b01000000, 0b00010000, 0b00000000, 0b00000000 });
-                        writer.write(new char[] { 0b00000000, 0b00000000, 0b00000000, 0b00000000 });
+                    byte[] words = new byte[] {
+                            (byte)0b01000000, (byte)0b00010000, (byte)0b00000000, (byte)0b00000000,  // 32-bit word mode with size 1024 reversal and call stacks
+                            (byte)0b00000000, (byte)0b00000000, (byte)0b00000000, (byte)0b00000000,
+                            (byte)0b11110110, (byte)0b00000000, (byte)0b00000000, (byte)0b00000000  // HALT 0
+                    };
+                    writer.write(words);
 
-                        writer.write(new char[] { 0b11110110, 0b00000000, 0b00000000, 0b00000000 });  // HALT 0
-
-                        System.out.println("Test binary created and text written successfully.");
-                    }
-                    catch(IOException e)
-                    {
-                        System.out.println("An error occurred while writing to the test binary.");
-                    }
+                    System.out.println("Test binary created and text written successfully.");
                 }
-                else
+                catch(IOException e)
                 {
-                    System.out.println("Test binary already exists or could not be created.");
+                    System.out.println("An error occurred while writing to the test binary.");
                 }
             }
             else
             {
-                System.out.println("Test binary already exists.");
+                System.out.println("Test binary already exists or could not be created.");
             }
         }
         catch(IOException e)
