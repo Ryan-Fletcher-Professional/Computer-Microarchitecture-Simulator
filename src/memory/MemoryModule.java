@@ -367,7 +367,7 @@ public class MemoryModule
                     }
                     else
                     {
-                        WARN("Unexpected behavior: Lowest level of memory had dirty data in storage.");
+                        WARN(logger, "Unexpected behavior: Lowest level of memory had dirty data in storage.");
                     }
                     setDirty(line, false);
                 }
@@ -488,7 +488,7 @@ public class MemoryModule
                 }
                 else
                 {
-                    WARN("Unexpected behavior: Lowest level of memory had dirty data or did not have requested address.");
+                    WARN(logger, "Unexpected behavior: Lowest level of memory had dirty data or did not have requested address.");
                 }
                 int[] newWords = words;
                 if(words.length < lineSize)
@@ -592,7 +592,7 @@ public class MemoryModule
                 }
                 else
                 {
-                    WARN("Unexpected behavior: Lowest level of memory did not have requested virtual address in storage.");
+                    WARN(logger, "Unexpected behavior: Lowest level of memory did not have requested virtual address in storage.");
                 }
                 if(writeMode.equals(WRITE_MODE.BACK) && isDirty(line))
                 {
@@ -602,7 +602,7 @@ public class MemoryModule
                     }
                     else
                     {
-                        WARN("Unexpected behavior: Lowest level of memory had dirty data in storage.");
+                        WARN(logger, "Unexpected behavior: Lowest level of memory had dirty data in storage.");
                     }
                 }
                 writeData(false, virtualAddress, newLine);
@@ -618,7 +618,7 @@ public class MemoryModule
             }
             else
             {
-                WARN("Unexpected behavior: Lowest level of memory did not have requested virtual address in storage.");
+                WARN(logger, "Unexpected behavior: Lowest level of memory did not have requested virtual address in storage.");
             }
             writeData(false, virtualAddress, newLine);
         }
@@ -709,37 +709,5 @@ public class MemoryModule
         last.tick();    // Should never take exception
                         }catch(MemoryRequestTimerNotStartedException _ignored_){}
         if(last.isFinished()) { accesses.getFirst().removeLast(); }
-    }
-
-    /**
-     * @return GET_TRACE_LINE(String invoker, int offset) invoked by the method below this one on the stack.
-     */
-    private static String GET_TRACE_LINE()
-    {
-        return GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1);
-    }
-
-    /**
-     * @param invoker The name of the method containing the line in question.
-     * @param offset N - 1, where N is the number of method calls between this and invoker.
-     * @return {tab}at className.invoker(className.java:lineNumber)
-     */
-    private static String GET_TRACE_LINE(String invoker, int offset)
-    {
-        String className = MethodHandles.lookup().lookupClass().getName();
-        return "\tat " + className + "." + invoker + "(" + className + ".java:" +
-               Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
-    }
-
-    /**
-     * Prints a red warning message to the console, like an Exception but it doesn't cause terminal and can't be caught.
-     * {tab}at className.invoker(className.java:lineNumber) message
-     * @param message The message to follow the logistical info in the warning.
-     */
-    private static void WARN(String message)
-    {
-        logger.log(Level.WARNING,
-                  GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1) +
-                       " " + message);
     }
 }

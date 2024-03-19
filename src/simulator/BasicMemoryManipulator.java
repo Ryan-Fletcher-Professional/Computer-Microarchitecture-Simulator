@@ -4,24 +4,22 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
-import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static main.GLOBALS.*;
 import memory.MemoryModule;
 import memory.MemoryRequest;
-import memory.RegisterBankForTesting;
+import memory.RegisterFileModule;
 
 public class BasicMemoryManipulator extends JFrame
 {
     private static final Logger logger = Logger.getLogger(BasicMemoryManipulator.class.getName());
 
     private final int id;
-    private RegisterBankForTesting[] registerBanks;
+    private RegisterFileModule[] registerBanks;
     private int frameWidth, frameHeight;
 
     private JTextField addressField, valueField, columnSizeField, lineSizeField, cacheField, ramField;
@@ -34,13 +32,13 @@ public class BasicMemoryManipulator extends JFrame
     private DefaultListModel<MemoryModule> instructionCachesModel, dataCachesModel, unifiedMemoryModel;
     private MemoryModule currentlySelected;
 
-    public BasicMemoryManipulator(int id, RegisterBankForTesting[] registerBanks)
+    public BasicMemoryManipulator(int id, RegisterFileModule[] registerBanks)
     {
         this.id = id;
         new BasicMemoryManipulator(id, registerBanks, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT);
     }
 
-    public BasicMemoryManipulator(int id, RegisterBankForTesting[] registerBanks, int width, int height)
+    public BasicMemoryManipulator(int id, RegisterFileModule[] registerBanks, int width, int height)
     {
         this.id = id;
         this.registerBanks = registerBanks;
@@ -88,7 +86,7 @@ public class BasicMemoryManipulator extends JFrame
         resetButton.addActionListener(e -> {
             setVisible(false);
             new BasicMemoryManipulator(GET_ID(), registerBanks);
-            for(RegisterBankForTesting bank : registerBanks)
+            for(RegisterFileModule bank : registerBanks)
             {
                 if(bank != null) { bank.reset(); }
             }
@@ -455,7 +453,7 @@ public class BasicMemoryManipulator extends JFrame
         }
         catch(NumberFormatException e)
         {
-            WARN("Memory interface received invalid device parameters.");
+            WARN(logger, "Memory interface received invalid device parameters.");
         }
     }
 
@@ -539,7 +537,7 @@ public class BasicMemoryManipulator extends JFrame
 
             int[] newValueS = new int[] { getValue() };
 
-            RegisterBankForTesting bank = registerBanks[INDEXABLE_BANK_INDEX];
+            RegisterFileModule bank = registerBanks[INDEXABLE_BANK_INDEX];
             if(valueIsRegister())
             {
                 int register = newValueS[0];
@@ -565,7 +563,7 @@ public class BasicMemoryManipulator extends JFrame
         }
         catch(NumberFormatException e)
         {
-            WARN("Memory interface received invalid store parameters.");
+            WARN(logger, "Memory interface received invalid store parameters.");
         }
         updateDisplay();
     }
@@ -580,7 +578,7 @@ public class BasicMemoryManipulator extends JFrame
             if(currentlySelected == null) { throw new NumberFormatException(); }
 
             int register = getValue();
-            RegisterBankForTesting bank = registerBanks[INDEXABLE_BANK_INDEX];
+            RegisterFileModule bank = registerBanks[INDEXABLE_BANK_INDEX];
             if(register > 15)
             {
                 bank = registerBanks[INTERNAL_BANK_INDEX];
@@ -602,41 +600,9 @@ public class BasicMemoryManipulator extends JFrame
         }
         catch(NumberFormatException e)
         {
-            WARN("Memory interface received invalid load parameters.");
+            WARN(logger, "Memory interface received invalid load parameters.");
         }
 
         updateDisplay();
-    }
-
-    /**
-     * @return GET_TRACE_LINE(String invoker, int offset) invoked by the method below this one on the stack.
-     */
-    private static String GET_TRACE_LINE()
-    {
-        return GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1);
-    }
-
-    /**
-     * @param invoker The name of the method containing the line in question.
-     * @param offset N - 1, where N is the number of method calls between this and invoker.
-     * @return {tab}at className.invoker(className.java:lineNumber)
-     */
-    private static String GET_TRACE_LINE(String invoker, int offset)
-    {
-        String className = MethodHandles.lookup().lookupClass().getName();
-        return "\tat " + className + "." + invoker + "(" + className + ".java:" +
-               Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
-    }
-
-    /**
-     * Prints a red warning message to the console, like an Exception but it doesn't cause terminal and can't be caught.
-     * {tab}at className.invoker(className.java:lineNumber) message
-     * @param message The message to follow the logistical info in the warning.
-     */
-    private static void WARN(String message)
-    {
-        logger.log(Level.WARNING,
-                  GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1) +
-                      " " + message);
     }
 }

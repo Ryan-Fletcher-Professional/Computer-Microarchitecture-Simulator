@@ -1,6 +1,9 @@
 package main;
 
 import java.awt.*;
+import java.lang.invoke.MethodHandles;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GLOBALS
 {
@@ -12,13 +15,21 @@ public class GLOBALS
 
     public static final int INDEXABLE_BANK_INDEX = 0;
     public static final int INTERNAL_BANK_INDEX = 1;
-    public static final int REVERSAL_BANK_INDEX = 2;
-    public static final int[] REGISTER_BANK_INDECES = new int[] { INDEXABLE_BANK_INDEX, INTERNAL_BANK_INDEX, REVERSAL_BANK_INDEX };
+    public static final int CALL_STACK_INDEX = 2;
+    public static final int REVERSAL_STACK_INDEX = 3;
+    public static final int[] REGISTER_BANK_INDECES = new int[] { INDEXABLE_BANK_INDEX, INTERNAL_BANK_INDEX, CALL_STACK_INDEX, REVERSAL_STACK_INDEX };
     public static final String[] INTERNAL_REGISTER_NAMES = new String[] { "C0", "PC", "CC", "PRED 1", "PRED 2", "CALL", "REV" };
     public enum MEMORY_KIND
     {
         CACHE,
         RAM
+    }
+
+    public enum REGISTER_FILE_MODE
+    {
+        ADDRESSED,
+        STACK,
+        STACK_CIRCULAR
     }
 
     public enum MEMORY_TYPE
@@ -93,5 +104,37 @@ public class GLOBALS
             default:
                 throw new IllegalArgumentException("Invalid memory type");
         }
+    }
+
+    /**
+     * @return GET_TRACE_LINE(String invoker, int offset) invoked by the method below this one on the stack.
+     */
+    public static String GET_TRACE_LINE()
+    {
+        return GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1);
+    }
+
+    /**
+     * @param invoker The name of the method containing the line in question.
+     * @param offset N - 1, where N is the number of method calls between this and invoker.
+     * @return {tab}at className.invoker(className.java:lineNumber)
+     */
+    public static String GET_TRACE_LINE(String invoker, int offset)
+    {
+        String className = MethodHandles.lookup().lookupClass().getName();
+        return "\tat " + className + "." + invoker + "(" + className + ".java:" +
+                Thread.currentThread().getStackTrace()[2 + offset].getLineNumber() + ")";
+    }
+
+    /**
+     * Prints a red warning message to the console, like an Exception but it doesn't cause terminal and can't be caught.
+     * {tab}at className.invoker(className.java:lineNumber) message
+     * @param message The message to follow the logistical info in the warning.
+     */
+    public static void WARN(Logger logger, String message)
+    {
+        logger.log(Level.WARNING,
+                GET_TRACE_LINE(Thread.currentThread().getStackTrace()[2].getMethodName(), 1) +
+                        " " + message);
     }
 }
