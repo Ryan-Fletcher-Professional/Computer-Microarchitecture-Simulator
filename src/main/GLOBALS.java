@@ -23,7 +23,13 @@ public class GLOBALS
     public static final int CALL_STACK_INDEX = 2;
     public static final int REVERSAL_STACK_INDEX = 3;
     public static final int[] REGISTER_BANK_INDECES = new int[] { INDEXABLE_BANK_INDEX, INTERNAL_BANK_INDEX, CALL_STACK_INDEX, REVERSAL_STACK_INDEX };
-    public static final String[] INTERNAL_REGISTER_NAMES = new String[] { "C0", "PC", "CC", "PRED 1", "PRED 2", "CALL", "REV" };
+    public static final String PC = "PC";
+    public static final String CC = "CC";
+    public static final String PRED_1 = "PRED 1";
+    public static final String PRED_2 = "PRED 2";
+    public static final String CALL = "CALL";
+    public static final String REV = "REV";
+    public static final String[] INTERNAL_REGISTER_NAMES = new String[] { "C0", PC, CC, PRED_1, PRED_2, CALL, REV };
     public enum MEMORY_KIND
     {
         CACHE,

@@ -13,6 +13,12 @@ public class Instructions
     public static Map<TYPECODE, String> TYPECODE_STRINGS = new HashMap<>() {{
        put(TYPECODE.MISC, "111");
     }};
+    public static Map<String, TYPECODE> TYPECODES = new HashMap<>() {{
+        for(TYPECODE code : TYPECODE_STRINGS.keySet())
+        {
+            put(TYPECODE_STRINGS.get(code), code);
+        }
+    }};
     public static final int OPCODE_SIZE = 3;
     public enum OPCODE
     {
@@ -24,6 +30,12 @@ public class Instructions
         put(OPCODE.NOOP, "000");
         put(OPCODE.STALL, "001");
         put(OPCODE.QUASH_SIZE_ERR, "010");
+    }};
+    public static Map<String, OPCODE> OPCODES = new HashMap<>() {{
+        for(OPCODE code : OPCODE_STRINGS.keySet())
+        {
+            put(OPCODE_STRINGS.get(code), code);
+        }
     }};
     public static final int HEADER_SIZE = TYPECODE_SIZE + OPCODE_SIZE;
     public enum HEADER  // TODO : EACH HEADER MUST BE NAMED AND PUT() VERY CAREFULLY
@@ -37,6 +49,16 @@ public class Instructions
         put(HEADER.STALL, TYPECODE_STRINGS.get(TYPECODE.MISC) + OPCODE_STRINGS.get(OPCODE.STALL));
         put(HEADER.QUASH_SIZE_ERR, TYPECODE_STRINGS.get(TYPECODE.MISC) + OPCODE_STRINGS.get(OPCODE.QUASH_SIZE_ERR));
     }};
+    public static Map<String, HEADER> HEADERS = new HashMap<>() {{
+        for(HEADER code : HEADER_STRINGS.keySet())
+        {
+            put(HEADER_STRINGS.get(code), code);
+        }
+    }};
+
+    public static String AUX_RESULT = "resultOfExecution";
+    public static String AUX_BRANCH = "branch";
+    public static String AUX_JSR = "jumpToSubroutine";
 
     private static String GET_FILLER(int size)
     {
