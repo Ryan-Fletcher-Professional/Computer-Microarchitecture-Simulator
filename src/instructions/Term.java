@@ -1,25 +1,67 @@
-package pipeline;
+package instructions;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class Term
+public class Term implements Cloneable
 {
     private final int[] bits;
 
+    /**
+     * Removes leading 0s.
+     * @param term
+     */
     public Term(int term)
     {
         this(Integer.toUnsignedString(term, 2));
     }
 
+    /**
+     *
+     * @param term
+     * @param trim Whether to remove leading 0s
+     */
+    public Term(int term, boolean trim)
+    {
+        this(Integer.toUnsignedString(term, 2), trim);
+    }
+
+    /**
+     * Removes leading 0s.
+     * @param term
+     */
     public Term(long term)
     {
         this(Long.toUnsignedString(term, 2));
     }
 
+    /**
+     *
+     * @param term
+     * @param trim Whether to remove leading 0s
+     */
+    public Term(long term, boolean trim)
+    {
+        this(Long.toUnsignedString(term, 2), trim);
+    }
+
+    /**
+     * Removes leading 0s.
+     * @param term
+     */
     public Term(String term)
     {
         this(term.chars().map(c -> (c == '0') ? 0 : 1).toArray());
+    }
+
+    /**
+     *
+     * @param term
+     * @param trim Whether to remove leading 0s
+     */
+    public Term(String term, boolean trim)
+    {
+        this(term.chars().map(c -> (c == '0') ? 0 : 1).toArray(), trim);
     }
 
     /**
@@ -28,8 +70,18 @@ public class Term
      */
     public Term(int[] bits)
     {
+        this(bits, true);
+    }
+
+    /**
+     *
+     * @param bits
+     * @param trim Whether to remove leading 0s
+     */
+    public Term(int[] bits, boolean trim)
+    {
         if(bits.length < 1) { throw new IllegalArgumentException("Term must have at least one bit"); }
-        this.bits = new int[bits.length - Arrays.stream(bits).mapToObj(String::valueOf).collect(Collectors.joining()).indexOf('1')];
+        this.bits = new int[bits.length - (trim ? (Arrays.stream(bits).mapToObj(String::valueOf).collect(Collectors.joining()).indexOf('1')) : 0)];
         for(int i = 0; i < this.bits.length; i++)
         {
             this.bits[this.bits.length - 1 - i] = bits[bits.length - 1 - i];
@@ -136,5 +188,11 @@ public class Term
             aBits[i] = (aBits[i] + bBits[i]) % 2;
         }
         return new Term(aBits);
+    }
+
+    @Override
+    public Term clone()
+    {
+        return new Term(getBits(), false);
     }
 }

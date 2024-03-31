@@ -1,4 +1,4 @@
-package pipeline;
+package instructions;
 
 import java.util.Map;
 
@@ -9,24 +9,24 @@ public class Instruction
 
     public Instruction(int word)
     {
-        this(new Term(word));
+        this(new Term(word, false));
     }
 
     public Instruction(long word)
     {
-        this(new Term(word));
+        this(new Term(word, false));
     }
 
     public Instruction(String word)
     {
-        this(new Term(word));
+        this(new Term(word, false));
     }
 
     public Instruction(Term word)
     {
         int size = word.length();
         if((size != 32) && (size != 64)) {throw new IllegalArgumentException("Instruction word must be 32 or 64 bits long"); }
-        this.word = word;
+        this.word = word.clone();
     }
 
     public void addAuxBits(String identifier, int term)

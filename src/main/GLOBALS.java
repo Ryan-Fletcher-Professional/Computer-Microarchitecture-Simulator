@@ -1,5 +1,7 @@
 package main;
 
+import instructions.Instructions;
+
 import java.awt.*;
 import java.lang.invoke.MethodHandles;
 import java.util.logging.Level;
