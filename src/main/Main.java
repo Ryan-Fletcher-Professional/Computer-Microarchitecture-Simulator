@@ -1,6 +1,7 @@
 package main;
 
 import memory.RegisterFileModule;
+import pipeline.Pipeline;
 import simulator.Simulator;
 
 import javax.swing.*;
@@ -8,6 +9,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 
 import static main.GLOBALS.*;
 
@@ -48,7 +50,10 @@ public class Main
         registerBanks[INTERNAL_BANK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, internalLengths, internalNames);
         registerBanks[CALL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK, callStackLengths, callStackNames);
         registerBanks[REVERSAL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK_CIRCULAR, reversalStackLengths, reversalStackNames);
-        new Simulator(GET_ID(), registerBanks, JFrame.MAXIMIZED_BOTH);
+        int[] pendingRegisterLengths = new int[indexableLengths.length];
+        Arrays.fill(pendingRegisterLengths, 5);
+        RegisterFileModule pendingRegisters = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, pendingRegisterLengths, indexableNames);
+        new Simulator(GET_ID(), registerBanks, new Pipeline(registerBanks[INDEXABLE_BANK_INDEX], registerBanks[INTERNAL_BANK_INDEX], registerBanks[CALL_STACK_INDEX], registerBanks[REVERSAL_STACK_INDEX], null, pendingRegisters, 32), JFrame.MAXIMIZED_BOTH);
     }
 
     private static void createTestInstructionBinary(String name)

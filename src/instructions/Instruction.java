@@ -29,6 +29,11 @@ public class Instruction
         this.word = word.clone();
     }
 
+    public int wordLength()
+    {
+        return word.length();
+    }
+
     public void addAuxBits(String identifier, int term)
     {
         addAuxBits(identifier, new Term(term));

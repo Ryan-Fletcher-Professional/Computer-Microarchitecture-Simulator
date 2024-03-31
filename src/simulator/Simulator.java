@@ -16,6 +16,7 @@ import static main.GLOBALS.*;
 import memory.MemoryModule;
 import memory.MemoryRequest;
 import memory.RegisterFileModule;
+import pipeline.Pipeline;
 
 public class Simulator extends JFrame
 {
@@ -23,30 +24,32 @@ public class Simulator extends JFrame
 
     private final int id;
     private RegisterFileModule[] registerBanks;
+    private Pipeline pipeline;
     private int frameWidth, frameHeight;
 
     private JTextField addressField, valueField, columnSizeField, lineSizeField, cacheField, ramField;
-    private JScrollPane callDisplayPane, reversalDisplayPane,
-                        currentlyVisibleBank, currentlyInvisibleBank, currentlyVisibleStack, currentlyInvisibleStack;
-    private JScrollPane[] panes;
+    private JScrollPane callDisplayPane, reversalDisplayPane, pipelineDisplayPane,
+                        currentlyVisibleBank, currentlyInvisibleBank;
+    private JScrollPane[] panes, stackPipeline;
+    private int currentStackPipelineIndex;
     private JTextArea memoryDisplayText, indexableBankDisplayText, internalBankDisplayText,
-                      callStackDisplayText, reversalStackDisplayText;
+                      callStackDisplayText, reversalStackDisplayText, pipelineDisplayText;
     private JRadioButton cacheRadio, ramRadio, dataRadio, instructionRadio, shortWordsRadio, longWordsRadio,
                          wordRadio, lineRadio, addressBinRadio, addressDecRadio, addressHexRadio,
                          valueBinRadio, valueDecRadio, valueHexRadio;
     private JList<MemoryModule>[] memoryLists;
     private DefaultListModel<MemoryModule> unifiedMemoryModel;
     private MemoryModule currentlySelectedMemory;
-    private JPanel currentlyVisibleControls, currentlyInvisibleControls, stackPanel;
+    private JPanel currentlyVisibleControls, currentlyInvisibleControls, stackPipelinePanel;
 
-    public Simulator(int id, RegisterFileModule[] registerBanks, int extendedState)
+    public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int extendedState)
     {
         this.id = id;
-        new Simulator(id, registerBanks, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT, extendedState);
+        new Simulator(id, registerBanks, pipeline, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT, extendedState);
     }
 
-    public Simulator(int id, RegisterFileModule[] registerBanks, int width, int height, int extendedState)
-    {
+    public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int width, int height, int extendedState)
+    {  // TODO : PIPELINE
         this.id = id;
         this.registerBanks = registerBanks;
         this.frameWidth = width;
@@ -88,17 +91,22 @@ public class Simulator extends JFrame
             updateDisplay();
         });
 
-        stackPanel = new JPanel();
-        JButton stackToggle = new JButton("Toggle Stack View");
-        stackToggle.setMinimumSize(new Dimension(300, 30));
-        stackToggle.setMaximumSize(new Dimension(300, 30));
-        stackToggle.addActionListener(e -> {
-            stackPanel.remove(currentlyVisibleStack);
-            stackPanel.add(currentlyInvisibleStack);
-            JScrollPane temp = currentlyVisibleStack;
-            currentlyVisibleStack = currentlyInvisibleStack;
-            currentlyInvisibleStack = temp;
+        stackPipelinePanel = new JPanel();
+        JButton stackPipelineToggle = new JButton("Rotate Stack/Pipeline View");
+        stackPipelineToggle.setMinimumSize(new Dimension(300, 30));
+        stackPipelineToggle.setMaximumSize(new Dimension(300, 30));
+        stackPipelineToggle.addActionListener(e -> {
+            stackPipelinePanel.remove(stackPipeline[currentStackPipelineIndex]);
+            currentStackPipelineIndex = (currentStackPipelineIndex + 1) % stackPipeline.length;
+            stackPipelinePanel.add(stackPipeline[currentStackPipelineIndex]);
             updateDisplay();
+
+//            stackPanel.remove(currentlyVisibleStack);
+//            stackPanel.add(currentlyInvisibleStack);
+//            JScrollPane temp = currentlyVisibleStack;
+//            currentlyVisibleStack = currentlyInvisibleStack;
+//            currentlyInvisibleStack = temp;
+//            updateDisplay();
         });
         JPanel memoryPanel = new JPanel(new GridLayout(0, 1));
         JButton controlsToggle = new JButton("Toggle Controls View");
@@ -130,7 +138,7 @@ public class Simulator extends JFrame
         saveButton.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Select a path to save");
-            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir") + "/src/files/dumps"));
+            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
             fileChooser.setSelectedFile(new File(this.id + ".txt"));
             fileChooser.setFileFilter(new FileNameExtensionFilter("Text Files", "txt"));
             int userSelection = fileChooser.showSaveDialog(this);
@@ -144,13 +152,14 @@ public class Simulator extends JFrame
         resetButton.setMaximumSize(new Dimension(100, 30));
         resetButton.addActionListener(e -> {
             setVisible(false);
-            new Simulator(GET_ID(), registerBanks, this.getExtendedState());
+            new Simulator(GET_ID(), registerBanks, pipeline, this.getExtendedState());
             for(RegisterFileModule bank : registerBanks)
             {
                 if(bank != null) { bank.reset(); }
             }
+            pipeline.reset();
         });
-        Component[] toolBarComponents = new Component[] { countLabel, tickButton, tickField, stackToggle,
+        Component[] toolBarComponents = new Component[] { countLabel, tickButton, tickField, stackPipelineToggle,
                                                           controlsToggle, bankToggle, saveButton };
         int leftSize = 0;
         for(Component component : toolBarComponents)
@@ -184,9 +193,16 @@ public class Simulator extends JFrame
         reversalStackDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
         reversalStackDisplayText.setEditable(false);
         reversalDisplayPane = new JScrollPane(reversalStackDisplayText);
-        stackPanel.add(callDisplayPane);
-        currentlyVisibleStack = callDisplayPane;
-        currentlyInvisibleStack = reversalDisplayPane;
+
+        // Pipeline
+        pipelineDisplayText = new JTextArea();
+        pipelineDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        pipelineDisplayText.setEditable(false);
+        pipelineDisplayPane = new JScrollPane(pipelineDisplayText);
+
+        stackPipeline = new JScrollPane[] { callDisplayPane, reversalDisplayPane, pipelineDisplayPane };
+        currentStackPipelineIndex = 0;
+        stackPipelinePanel.add(stackPipeline[currentStackPipelineIndex]);
 
         // Memory
         // Memory manipulation
@@ -308,7 +324,7 @@ public class Simulator extends JFrame
         currentlyVisibleControls = memoryCreationPanel;
         currentlyInvisibleControls = memoryOperationsPanel;
 
-        leftPanel.add(stackPanel);
+        leftPanel.add(stackPipelinePanel);
         leftPanel.add(memoryPanel);
 
         // Right
@@ -476,15 +492,16 @@ public class Simulator extends JFrame
 
         callStackDisplayText.setText(registerBanks[CALL_STACK_INDEX].getDisplayText(1, getRadices()[1]));
         reversalStackDisplayText.setText(registerBanks[REVERSAL_STACK_INDEX].getDisplayText(1, getRadices()[1]));
+        pipelineDisplayText.setText(pipeline.getDisplayText(getRadices()[1]));
         indexableBankDisplayText.setText(registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(8, getRadices()[1]));
         internalBankDisplayText.setText(registerBanks[INTERNAL_BANK_INDEX].getDisplayText(8, getRadices()[1]));
         if(currentlySelectedMemory != null)
             { memoryDisplayText.setText(currentlySelectedMemory.getMemoryDisplay(getRadices()[0], getRadices()[1])); }
 
-        Dimension paneSize = stackPanel.getSize();
-        paneSize.width = Math.min(stackPanel.getWidth(), 8 * (valueBinRadio.isSelected() ? 38 : (valueHexRadio.isSelected() ? 14 : 20)));
+        Dimension paneSize = stackPipelinePanel.getSize();
+        paneSize.width = Math.min(stackPipelinePanel.getWidth(), 8 * (valueBinRadio.isSelected() ? 38 : (valueHexRadio.isSelected() ? 14 : 20)));
         callDisplayPane.setPreferredSize(paneSize);
-        reversalDisplayPane.setPreferredSize(new Dimension(Math.min(stackPanel.getWidth(), (int)((double)paneSize.width * 1.5)), paneSize.height));
+        reversalDisplayPane.setPreferredSize(new Dimension(Math.min(stackPipelinePanel.getWidth(), (int)((double)paneSize.width * 1.5)), paneSize.height));
 
         SwingUtilities.invokeLater(() -> {
             for(int i = 0; i < bars.size(); i++)

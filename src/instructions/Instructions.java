@@ -17,21 +17,25 @@ public class Instructions
     public enum OPCODE
     {
         NOOP,
-        STALL
+        STALL,
+        QUASH_SIZE_ERR
     }
     public static Map<OPCODE, String> OPCODE_STRINGS = new HashMap<>() {{
         put(OPCODE.NOOP, "000");
         put(OPCODE.STALL, "001");
+        put(OPCODE.QUASH_SIZE_ERR, "010");
     }};
     public static final int HEADER_SIZE = TYPECODE_SIZE + OPCODE_SIZE;
     public enum HEADER  // TODO : EACH HEADER MUST BE NAMED AND PUT() VERY CAREFULLY
     {
         NOOP,
-        STALL
+        STALL,
+        QUASH_SIZE_ERR
     }
     public static Map<HEADER, String> HEADER_STRINGS = new HashMap<>() {{
         put(HEADER.NOOP, TYPECODE_STRINGS.get(TYPECODE.MISC) + OPCODE_STRINGS.get(OPCODE.NOOP));
         put(HEADER.STALL, TYPECODE_STRINGS.get(TYPECODE.MISC) + OPCODE_STRINGS.get(OPCODE.STALL));
+        put(HEADER.QUASH_SIZE_ERR, TYPECODE_STRINGS.get(TYPECODE.MISC) + OPCODE_STRINGS.get(OPCODE.QUASH_SIZE_ERR));
     }};
 
     private static String GET_FILLER(int size)
@@ -85,12 +89,26 @@ public class Instructions
         return new Instruction(GET_INSTRUCTION_TERM(size, type, op, flags, args));
     }
 
+    /**
+     * Puts filler 0s between flags and args
+     * @param size
+     * @param header
+     * @param flags
+     * @param args
+     * @return
+     */
+    public static Instruction GET_INSTRUCTION(int size, HEADER header, String flags, String args)
+    {
+        return new Instruction((GET_INSTRUCTION_TERM(size, header, flags, args)));
+    }
+
     public static Instruction NOOP(int size)
     {
-        return GET_INSTRUCTION(size, TYPECODE.MISC, OPCODE.NOOP, "", "");
+        return GET_INSTRUCTION(size, HEADER.NOOP, "", "");
     }
     public static Instruction STALL(int size)
     {
-        return GET_INSTRUCTION(size, TYPECODE.MISC, OPCODE.STALL, "", "");
+        return GET_INSTRUCTION(size, HEADER.STALL, "", "");
     }
+    public static Instruction QUASH_SIZE_ERR(int size) { return GET_INSTRUCTION(size, HEADER.QUASH_SIZE_ERR, "", ""); }
 }

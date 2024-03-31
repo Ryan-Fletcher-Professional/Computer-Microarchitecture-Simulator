@@ -5,8 +5,9 @@ import static instructions.Instructions.*;
 
 public class PipelineStage
 {
-    private final int wordSize;
-    private PipelineStage previousStage;
+    private int wordSize;
+    PipelineStage previousStage;
+    Instruction heldInstruction;
     private PipelineStage nextStage;
     private boolean blocked = false;
 
@@ -25,6 +26,15 @@ public class PipelineStage
     {
         if(previousStage != null) { throw new UnsupportedOperationException("Following stage is already assigned"); }
         nextStage = next;
+    }
+
+    public void setWordSize(int size)
+    {
+        wordSize = size;
+        if((heldInstruction != null) && (heldInstruction.wordLength() != size))
+        {
+            heldInstruction = QUASH_SIZE_ERR(size);
+        }
     }
 
     public boolean isBlocked()
