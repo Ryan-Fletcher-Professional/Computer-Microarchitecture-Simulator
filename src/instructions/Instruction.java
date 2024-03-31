@@ -34,6 +34,11 @@ public class Instruction
         return word.length();
     }
 
+    public long wordNum()
+    {
+        return word.toLong();
+    }
+
     public void addAuxBits(String identifier, int term)
     {
         addAuxBits(identifier, new Term(term));

@@ -122,18 +122,13 @@ public class RegisterFileModule
         return getDisplayText(mode.equals(REGISTER_FILE_MODE.ADDRESSED) ? 8 : 1, radix);
     }
 
-    private static String smartToString(long i, int radix)
-    {
-        return radix == 10 ? Long.toString(i, 10) : Long.toUnsignedString(i, radix);
-    }
-
     public String getDisplayText(int maxRowSize, int radix)
     {
         StringBuilder ret = new StringBuilder();
         ret.append("  ");
         for(int i = 0; i < names.length; i++)
         {
-            int valueLength = Math.max(names[i].length(), smartToString(masks[i], radix).length());
+            int valueLength = Math.max(names[i].length(), SMART_TO_STRING(masks[i], radix).length());
             StringBuilder currentName = new StringBuilder();
             currentName.append(" ".repeat((valueLength - names[i].length()) / 2))
                        .append(names[i])
@@ -144,8 +139,8 @@ public class RegisterFileModule
         ret.setCharAt(ret.length() - "|  ".length(), '\n');
         for(int i = 0; i < getNumRegisters(); i++)
         {
-            int valueLength = Math.max(names[i].length(), smartToString(masks[i], radix).length());
-            String value = smartToString(memory[i] & masks[i], radix);
+            int valueLength = Math.max(names[i].length(), SMART_TO_STRING(masks[i], radix).length());
+            String value = SMART_TO_STRING(memory[i] & masks[i], radix);
             StringBuilder currentValue = new StringBuilder();
             currentValue.append("0".repeat(valueLength - value.length()))
                         .append(value)

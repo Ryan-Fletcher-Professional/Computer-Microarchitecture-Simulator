@@ -61,21 +61,21 @@ public class Pipeline
         this.nearestCache = nearestCache;
         this.pendingRegisters = pendingRegisters;
         this.wordSize = wordSize;
-        PipelineStage dummyStartStage = new PipelineStage(wordSize);
-        FetchStage fetch = new FetchStage(wordSize, internalRegisters, nearestCache);
-        DecodeStage decode = new DecodeStage(wordSize, indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
-        ExecuteStage execute = new ExecuteStage(wordSize);
-        MemoryAccessStage access = new MemoryAccessStage(wordSize,
+        PipelineStage dummyStartStage = new PipelineStage(wordSize, "dummy start");
+        FetchStage fetch = new FetchStage(wordSize, "Fetch", internalRegisters, nearestCache);
+        DecodeStage decode = new DecodeStage(wordSize, "Decode", indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
+        ExecuteStage execute = new ExecuteStage(wordSize, "Execute");
+        MemoryAccessStage access = new MemoryAccessStage(wordSize, "Access",
                                                          nearestCache);
-        MemoryWritebackStage write = new MemoryWritebackStage(wordSize,
+        MemoryWritebackStage write = new MemoryWritebackStage(wordSize, "Write",
                                                               indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
-        this.dummyEndStage = new PipelineStage(wordSize);
+        this.dummyEndStage = new PipelineStage(wordSize, "dummy end");
         PipelineStage.CONSECUTE(new PipelineStage[] { dummyStartStage, fetch, decode, execute, access, write, this.dummyEndStage });
     }
 
-    public String getDisplayText()
+    public String getDisplayText(int radix)
     {
-
+        return (dummyEndStage.previousStage == null) ? "No pipeline stages" : dummyEndStage.previousStage.getDisplayText(radix);
     }
 
     public void reset()

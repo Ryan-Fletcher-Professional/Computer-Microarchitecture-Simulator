@@ -8,10 +8,10 @@ public class FetchStage extends PipelineStage
     private final RegisterFileModule internalRegisters;
     private final MemoryModule nearestCache;
 
-    public FetchStage(int wordSize,
+    public FetchStage(int wordSize, String name,
                       RegisterFileModule internalRegisters, MemoryModule nearestCache)
     {
-        super(wordSize);
+        super(wordSize, name);
         this.internalRegisters = internalRegisters;
         this.nearestCache = nearestCache;
     }

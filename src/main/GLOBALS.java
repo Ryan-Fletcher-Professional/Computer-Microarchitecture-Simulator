@@ -1,9 +1,6 @@
 package main;
 
-import instructions.Instructions;
-
 import java.awt.*;
-import java.lang.invoke.MethodHandles;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -112,6 +109,11 @@ public class GLOBALS
             default:
                 throw new IllegalArgumentException("Invalid memory type");
         }
+    }
+
+    public static String SMART_TO_STRING(long i, int radix)
+    {
+        return radix == 10 ? Long.toString(i, 10) : Long.toUnsignedString(i, radix);
     }
 
     /**

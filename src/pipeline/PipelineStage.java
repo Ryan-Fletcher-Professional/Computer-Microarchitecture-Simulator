@@ -2,18 +2,21 @@ package pipeline;
 
 import instructions.Instruction;
 import static instructions.Instructions.*;
+import static main.GLOBALS.SMART_TO_STRING;
 
 public class PipelineStage
 {
+    private final String name;
     private int wordSize;
     PipelineStage previousStage;
     Instruction heldInstruction;
     private PipelineStage nextStage;
     private boolean blocked = false;
 
-    public PipelineStage(int wordSize)
+    public PipelineStage(int wordSize, String name)
     {
         this.wordSize = wordSize;
+        this.name = name;
     }
 
     public void setPrevious(PipelineStage previous)
@@ -24,7 +27,7 @@ public class PipelineStage
 
     public void setNext(PipelineStage next)
     {
-        if(previousStage != null) { throw new UnsupportedOperationException("Following stage is already assigned"); }
+        if(nextStage != null) { throw new UnsupportedOperationException("Following stage is already assigned"); }
         nextStage = next;
     }
 
@@ -52,6 +55,31 @@ public class PipelineStage
         Instruction ret = this.isBlocked() ? STALL(wordSize) : NOOP(wordSize);
         if(previousStage != null) { ret = previousStage.execute(this.isBlocked()); }
         return ret;
+    }
+
+    public String getDisplayText(int radix)
+    {
+        if(previousStage == null) { return ""; }
+        StringBuilder ret = new StringBuilder();
+
+        String wordString = (heldInstruction != null) ? SMART_TO_STRING(heldInstruction.wordNum(), radix) : "NONE";
+        int valueLength = Math.max(name.length(), wordString.length());
+        StringBuilder currentName = new StringBuilder();
+        currentName.append("  ")
+                   .append(" ".repeat((valueLength - name.length()) / 2))
+                   .append(name)
+                   .append(" ".repeat(valueLength + "  ".length() - currentName.length()))
+                   .append("  ");
+        ret.append(currentName).append("\n\n");
+
+        StringBuilder currentValue = new StringBuilder();
+        currentValue.append("  ").append(wordString).append("  ");
+        ret.append(currentValue).append("\n\n");
+
+        ret.append("  ").append("-".repeat(valueLength)).append("  ");
+
+        ret.append("\n").append(previousStage.getDisplayText(radix));
+        return ret.toString();
     }
 
     public static void CONSECUTE(PipelineStage[] stages)

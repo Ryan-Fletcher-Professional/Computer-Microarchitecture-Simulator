@@ -2,6 +2,7 @@ package simulator;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
@@ -23,6 +24,8 @@ public class Simulator extends JFrame
     private static final Logger logger = Logger.getLogger(Simulator.class.getName());
 
     private final int id;
+    private JSplitPane topBottomPane;
+    private JLabel callStackLabel, reversalStackLabel, pipelineLabel;
     private RegisterFileModule[] registerBanks;
     private Pipeline pipeline;
     private int frameWidth, frameHeight;
@@ -30,7 +33,8 @@ public class Simulator extends JFrame
     private JTextField addressField, valueField, columnSizeField, lineSizeField, cacheField, ramField;
     private JScrollPane callDisplayPane, reversalDisplayPane, pipelineDisplayPane,
                         currentlyVisibleBank, currentlyInvisibleBank;
-    private JScrollPane[] panes, stackPipeline;
+    private JScrollPane[] panes;
+    private JPanel[] stackPipeline;
     private int currentStackPipelineIndex;
     private JTextArea memoryDisplayText, indexableBankDisplayText, internalBankDisplayText,
                       callStackDisplayText, reversalStackDisplayText, pipelineDisplayText;
@@ -40,7 +44,8 @@ public class Simulator extends JFrame
     private JList<MemoryModule>[] memoryLists;
     private DefaultListModel<MemoryModule> unifiedMemoryModel;
     private MemoryModule currentlySelectedMemory;
-    private JPanel currentlyVisibleControls, currentlyInvisibleControls, stackPipelinePanel;
+    private JPanel currentlyVisibleControls, currentlyInvisibleControls, stackPipelinePanel,
+                   callStackDisplayPanel, reversalStackDisplayPanel, pipelineDisplayPanel;
 
     public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int extendedState)
     {
@@ -49,9 +54,10 @@ public class Simulator extends JFrame
     }
 
     public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int width, int height, int extendedState)
-    {  // TODO : PIPELINE
+    {
         this.id = id;
         this.registerBanks = registerBanks;
+        this.pipeline = pipeline;
         this.frameWidth = width;
         this.frameHeight = height;
 
@@ -176,7 +182,7 @@ public class Simulator extends JFrame
         add(toolBar, BorderLayout.NORTH);
 
         // Top left for control, top right for cache configuration view, bottom for state view
-        JSplitPane topBottomPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        topBottomPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         topBottomPane.setDividerLocation(height / 2);
         JSplitPane leftRightPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         leftRightPane.setDividerLocation(width / 2);
@@ -185,22 +191,41 @@ public class Simulator extends JFrame
         JPanel leftPanel = new JPanel(new GridLayout(1, 2));
 
         // Stacks
+        callStackDisplayPanel = new JPanel(new BorderLayout());
+        callStackLabel = new JLabel("Call Stack");
+        callStackLabel.setMinimumSize(new Dimension(200, 30));
+        callStackLabel.setMaximumSize(new Dimension(200, 30));
         callStackDisplayText = new JTextArea();
         callStackDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
         callStackDisplayText.setEditable(false);
         callDisplayPane = new JScrollPane(callStackDisplayText);
+        callStackDisplayPanel.add(callStackLabel, BorderLayout.NORTH);
+        callStackDisplayPanel.add(callDisplayPane, BorderLayout.SOUTH);
+
+        reversalStackDisplayPanel = new JPanel(new BorderLayout());
+        reversalStackLabel = new JLabel("Reversal Stack");
+        reversalStackLabel.setMinimumSize(new Dimension(200, 30));
+        reversalStackLabel.setMaximumSize(new Dimension(200, 30));
         reversalStackDisplayText = new JTextArea();
         reversalStackDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
         reversalStackDisplayText.setEditable(false);
         reversalDisplayPane = new JScrollPane(reversalStackDisplayText);
+        reversalStackDisplayPanel.add(reversalStackLabel, BorderLayout.NORTH);
+        reversalStackDisplayPanel.add(reversalDisplayPane, BorderLayout.SOUTH);
 
         // Pipeline
+        pipelineDisplayPanel = new JPanel(new BorderLayout());
+        pipelineLabel = new JLabel("Pipeline");
+        pipelineLabel.setMinimumSize(new Dimension(200, 30));
+        pipelineLabel.setMaximumSize(new Dimension(200, 30));
         pipelineDisplayText = new JTextArea();
         pipelineDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
         pipelineDisplayText.setEditable(false);
         pipelineDisplayPane = new JScrollPane(pipelineDisplayText);
+        pipelineDisplayPanel.add(pipelineLabel, BorderLayout.NORTH);
+        pipelineDisplayPanel.add(pipelineDisplayPane, BorderLayout.SOUTH);
 
-        stackPipeline = new JScrollPane[] { callDisplayPane, reversalDisplayPane, pipelineDisplayPane };
+        stackPipeline = new JPanel[] { callStackDisplayPanel, reversalStackDisplayPanel, pipelineDisplayPanel };
         currentStackPipelineIndex = 0;
         stackPipelinePanel.add(stackPipeline[currentStackPipelineIndex]);
 
@@ -499,9 +524,11 @@ public class Simulator extends JFrame
             { memoryDisplayText.setText(currentlySelectedMemory.getMemoryDisplay(getRadices()[0], getRadices()[1])); }
 
         Dimension paneSize = stackPipelinePanel.getSize();
+        int dividerSize = ((BasicSplitPaneUI)topBottomPane.getUI()).getDivider().getDividerSize();
         paneSize.width = Math.min(stackPipelinePanel.getWidth(), 8 * (valueBinRadio.isSelected() ? 38 : (valueHexRadio.isSelected() ? 14 : 20)));
-        callDisplayPane.setPreferredSize(paneSize);
-        reversalDisplayPane.setPreferredSize(new Dimension(Math.min(stackPipelinePanel.getWidth(), (int)((double)paneSize.width * 1.5)), paneSize.height));
+        callDisplayPane.setPreferredSize(new Dimension(paneSize.width, paneSize.height - dividerSize - callStackLabel.getHeight()));
+        reversalDisplayPane.setPreferredSize(new Dimension(Math.min(stackPipelinePanel.getWidth(), (int)((double)paneSize.width * 1.5)), paneSize.height - (2 * dividerSize) - reversalStackLabel.getHeight()));
+        pipelineDisplayPane.setPreferredSize(new Dimension(paneSize.width, paneSize.height - (2 * dividerSize) - pipelineLabel.getHeight()));
 
         SwingUtilities.invokeLater(() -> {
             for(int i = 0; i < bars.size(); i++)
