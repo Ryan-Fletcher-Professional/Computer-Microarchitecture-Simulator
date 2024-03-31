@@ -1,9 +1,14 @@
 package pipeline;
 
+import memory.MemoryModule;
+
 public class MemoryAccessStage extends PipelineStage
 {
-    public MemoryAccessStage(int wordSize, PipelineStage previous, PipelineStage next)
+    private final MemoryModule nearestCache;
+
+    public MemoryAccessStage(int wordSize, MemoryModule nearestCache)
     {
-        super(wordSize, previous, next);
+        super(wordSize);
+        this.nearestCache = nearestCache;
     }
 }

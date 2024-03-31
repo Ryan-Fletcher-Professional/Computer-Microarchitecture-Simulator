@@ -24,7 +24,7 @@ public class Instructions
         put(OPCODE.STALL, "001");
     }};
     public static final int HEADER_SIZE = TYPECODE_SIZE + OPCODE_SIZE;
-    public enum HEADER  // ITEMS MUST BE NAMED VERY CAREFULLY
+    public enum HEADER  // TODO : EACH HEADER MUST BE NAMED AND PUT() VERY CAREFULLY
     {
         NOOP,
         STALL
@@ -70,8 +70,6 @@ public class Instructions
     {
         return new Term(GET_INSTRUCTION_STRING(size, headerString, flags, args), false);
     }
-
-
 
     /**
      * Puts filler 0s between flags and args
