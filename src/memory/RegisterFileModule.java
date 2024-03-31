@@ -182,6 +182,7 @@ public class RegisterFileModule
                 lengthBefore = ret.length();
             }
             ret.delete(lengthBeforeBefore - 1, ret.length());
+            if(maxRowSize == 1) { ret.append('\n'); }
         }
 
         return ret.toString().toUpperCase();

@@ -3,6 +3,7 @@ package main;
 import memory.RegisterFileModule;
 import simulator.Simulator;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -15,7 +16,7 @@ public class Main
     public static void main(String[] args)
     {
         // TODO : Ensure PC starts at 10 if 32 bit word mode or 01 if 64 bit word mode
-        createTestInstructionBinary("00");
+        //createTestInstructionBinary("00");
 
         RegisterFileModule[] registerBanks = new RegisterFileModule[REGISTER_BANK_INDECES.length];
         int[] indexableLengths = new int[INDEXABLE_BANK_SIZE];
@@ -47,7 +48,7 @@ public class Main
         registerBanks[INTERNAL_BANK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, internalLengths, internalNames);
         registerBanks[CALL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK, callStackLengths, callStackNames);
         registerBanks[REVERSAL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK_CIRCULAR, reversalStackLengths, reversalStackNames);
-        new Simulator(GET_ID(), registerBanks);
+        new Simulator(GET_ID(), registerBanks, JFrame.MAXIMIZED_BOTH);
     }
 
     private static void createTestInstructionBinary(String name)
@@ -87,7 +88,7 @@ public class Main
             }
             else
             {
-                System.out.println("Test binary already exists or could not be created.");
+                System.out.println("Test binary could not be overwritten or could not be created.");
             }
         }
         catch(IOException e)

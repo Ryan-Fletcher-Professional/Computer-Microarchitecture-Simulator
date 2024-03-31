@@ -1,9 +1,11 @@
 package simulator;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -34,16 +36,16 @@ public class Simulator extends JFrame
                          valueBinRadio, valueDecRadio, valueHexRadio;
     private JList<MemoryModule>[] memoryLists;
     private DefaultListModel<MemoryModule> unifiedMemoryModel;
-    private MemoryModule currentlySelected;
+    private MemoryModule currentlySelectedMemory;
     private JPanel currentlyVisibleControls, currentlyInvisibleControls, stackPanel;
 
-    public Simulator(int id, RegisterFileModule[] registerBanks)
+    public Simulator(int id, RegisterFileModule[] registerBanks, int extendedState)
     {
         this.id = id;
-        new Simulator(id, registerBanks, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT);
+        new Simulator(id, registerBanks, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT, extendedState);
     }
 
-    public Simulator(int id, RegisterFileModule[] registerBanks, int width, int height)
+    public Simulator(int id, RegisterFileModule[] registerBanks, int width, int height, int extendedState)
     {
         this.id = id;
         this.registerBanks = registerBanks;
@@ -122,25 +124,42 @@ public class Simulator extends JFrame
             currentlyInvisibleBank = temp;
             updateDisplay();
         });
+        JButton saveButton = new JButton("Save to File");
+        saveButton.setMinimumSize(new Dimension(300, 30));
+        saveButton.setMaximumSize(new Dimension(300, 30));
+        saveButton.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Select a path to save");
+            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir") + "/src/files/dumps"));
+            fileChooser.setSelectedFile(new File(this.id + ".txt"));
+            fileChooser.setFileFilter(new FileNameExtensionFilter("Text Files", "txt"));
+            int userSelection = fileChooser.showSaveDialog(this);
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                File fileToSave = fileChooser.getSelectedFile();
+                currentlySelectedMemory.dumpToFile(fileToSave.getAbsolutePath());
+            }
+        });
         JButton resetButton = new JButton("RESET");
         resetButton.setMinimumSize(new Dimension(100, 30));
         resetButton.setMaximumSize(new Dimension(100, 30));
         resetButton.addActionListener(e -> {
             setVisible(false);
-            new Simulator(GET_ID(), registerBanks);
+            new Simulator(GET_ID(), registerBanks, this.getExtendedState());
             for(RegisterFileModule bank : registerBanks)
             {
                 if(bank != null) { bank.reset(); }
             }
         });
-        toolBar.add(countLabel);
-        toolBar.add(tickButton);
-        toolBar.add(tickField);
-        toolBar.add(stackToggle);
-        toolBar.add(controlsToggle);
-        toolBar.add(bankToggle);
+        Component[] toolBarComponents = new Component[] { countLabel, tickButton, tickField, stackToggle,
+                                                          controlsToggle, bankToggle, saveButton };
+        int leftSize = 0;
+        for(Component component : toolBarComponents)
+        {
+            toolBar.add(component);
+            leftSize += component.getWidth();
+        }
         JPanel blankPanel = new JPanel();
-        Dimension fill = new Dimension(width - 1200, 30);
+        Dimension fill = new Dimension(width - leftSize, 30);
         blankPanel.setMinimumSize(fill);
         blankPanel.setMaximumSize(fill);
         toolBar.add(blankPanel);
@@ -283,7 +302,7 @@ public class Simulator extends JFrame
         memoryCreationPanel.add(shortWordsRadio);
         memoryCreationPanel.add(longWordsRadio);
 
-        recurBackgroundColor(memoryCreationPanel, new Color(200, 200, 200));
+        //recurBackgroundColor(memoryCreationPanel, new Color(200, 200, 200));
 
         memoryPanel.add(memoryCreationPanel);
         currentlyVisibleControls = memoryCreationPanel;
@@ -309,23 +328,23 @@ public class Simulator extends JFrame
         JButton throughAllocateButton = new JButton("Set Write-Through Allocate");
         JButton writeBackButton = new JButton("Set Write-Back");
         throughNoAllocateButton.addActionListener(e -> {
-                if(currentlySelected != null)
+                if(currentlySelectedMemory != null)
                 {
-                    currentlySelected.setWriteMode(WRITE_MODE.THROUGH_NO_ALLOCATE);
+                    currentlySelectedMemory.setWriteMode(WRITE_MODE.THROUGH_NO_ALLOCATE);
                     updateDisplay();
                 }
             });
         throughAllocateButton.addActionListener(e -> {
-                if(currentlySelected != null)
+                if(currentlySelectedMemory != null)
                 {
-                    currentlySelected.setWriteMode(WRITE_MODE.THROUGH_ALLOCATE);
+                    currentlySelectedMemory.setWriteMode(WRITE_MODE.THROUGH_ALLOCATE);
                     updateDisplay();
                 }
             });
         writeBackButton.addActionListener(e -> {
-                if(currentlySelected != null)
+                if(currentlySelectedMemory != null)
                 {
-                    currentlySelected.setWriteMode(WRITE_MODE.BACK);
+                    currentlySelectedMemory.setWriteMode(WRITE_MODE.BACK);
                     updateDisplay();
                 }
             });
@@ -402,6 +421,8 @@ public class Simulator extends JFrame
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
 
+        setExtendedState(extendedState);
+
         updateDisplay();
     }
 
@@ -457,8 +478,8 @@ public class Simulator extends JFrame
         reversalStackDisplayText.setText(registerBanks[REVERSAL_STACK_INDEX].getDisplayText(1, getRadices()[1]));
         indexableBankDisplayText.setText(registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(8, getRadices()[1]));
         internalBankDisplayText.setText(registerBanks[INTERNAL_BANK_INDEX].getDisplayText(8, getRadices()[1]));
-        if(currentlySelected != null)
-            { memoryDisplayText.setText(currentlySelected.getMemoryDisplay(getRadices()[0], getRadices()[1])); }
+        if(currentlySelectedMemory != null)
+            { memoryDisplayText.setText(currentlySelectedMemory.getMemoryDisplay(getRadices()[0], getRadices()[1])); }
 
         Dimension paneSize = stackPanel.getSize();
         paneSize.width = Math.min(stackPanel.getWidth(), 8 * (valueBinRadio.isSelected() ? 38 : (valueHexRadio.isSelected() ? 14 : 20)));
@@ -481,10 +502,8 @@ public class Simulator extends JFrame
                 }
             }
 
-            // Forces frame to redraw
-            Dimension size = getSize();
-            setSize(new Dimension(size.width + 1, size.height + 1));
-            setSize(size);
+            validate();
+            repaint();
         });
     }
 
@@ -509,7 +528,7 @@ public class Simulator extends JFrame
         list.addListSelectionListener(e -> {
             if(!e.getValueIsAdjusting() && (list.getSelectedValue() != null))
             {
-                currentlySelected = list.getSelectedValue();
+                currentlySelectedMemory = list.getSelectedValue();
                 for(JList other : otherLists)
                 {
                     other.clearSelection();
@@ -643,7 +662,7 @@ public class Simulator extends JFrame
     {
         try
         {
-            if(currentlySelected == null) { throw new NumberFormatException(); }
+            if(currentlySelectedMemory == null) { throw new NumberFormatException(); }
 
             int[] newValueS = new int[] { getValue() };
 
@@ -656,7 +675,7 @@ public class Simulator extends JFrame
                     bank = registerBanks[INTERNAL_BANK_INDEX];
                     newValueS[0] -= 15;
                 }
-                if(lineRadio.isSelected()) { newValueS = new int[currentlySelected.getLineSize()]; }
+                if(lineRadio.isSelected()) { newValueS = new int[currentlySelectedMemory.getLineSize()]; }
                 for(int i = 0; i < newValueS.length; i++)
                 {
                     newValueS[i] = (int)bank.load(register + i);
@@ -665,11 +684,11 @@ public class Simulator extends JFrame
 
             LinkedList<MemoryRequest> request = new LinkedList<>(List.of(
                                                 new MemoryRequest(valueIsRegister() ? bank.getID() : -1,
-                                                                  currentlySelected.getID(),
+                                                                  currentlySelectedMemory.getID(),
                                                                   dataRadio.isSelected() ? MEMORY_TYPE.DATA : MEMORY_TYPE.INSTRUCTION,
                                                                   REQUEST_TYPE.STORE,
                                                                   new Object[]{getAddress(), newValueS})));
-            currentlySelected.store(request);
+            currentlySelectedMemory.store(request);
         }
         catch(NumberFormatException e)
         {
@@ -685,7 +704,7 @@ public class Simulator extends JFrame
     {
         try
         {
-            if(currentlySelected == null) { throw new NumberFormatException(); }
+            if(currentlySelectedMemory == null) { throw new NumberFormatException(); }
 
             int register = getValue();
             RegisterFileModule bank = registerBanks[INDEXABLE_BANK_INDEX];
@@ -696,10 +715,10 @@ public class Simulator extends JFrame
             }
 
             LinkedList<MemoryRequest> request = new LinkedList<>(List.of(
-                                                new MemoryRequest(bank.getID(), currentlySelected.getID(),
-                                                                  currentlySelected.getType(), REQUEST_TYPE.LOAD,
+                                                new MemoryRequest(bank.getID(), currentlySelectedMemory.getID(),
+                                                                  currentlySelectedMemory.getType(), REQUEST_TYPE.LOAD,
                                                                   new Object[]{getAddress(), lineRadio.isSelected()})));
-            int[] line = currentlySelected.load(request);
+            int[] line = currentlySelectedMemory.load(request);
 
             for(int i = 0; i < line.length; i++)
             {

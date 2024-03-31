@@ -1,8 +1,6 @@
 package memory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.logging.*;
 import static main.GLOBALS.*;
@@ -607,6 +605,58 @@ public class MemoryModule
                 writeData(false, startingAddress + i, line);
                 line = new int[lineSize];
             }
+        }
+    }
+
+    public void dumpToFile(String absolutePath)
+    {
+        File file = new File(absolutePath);
+
+        try
+        {
+            if(file.exists())
+            {
+                file.delete();
+            }
+
+            file.getParentFile().mkdirs();
+
+            boolean isFileCreated = file.createNewFile();
+
+            if(isFileCreated)
+            {
+                try(FileOutputStream writer = new FileOutputStream(file))
+                {
+                    for(int[] line : memory)
+                    {
+                        int[] words = readData(line, -1, true);
+                        byte[] data = new byte[4 * words.length];
+                        for(int i = 0; i < words.length; i++)
+                        {
+                            data[(4 * i) + 0] = (byte)(words[i] >> 24);
+                            data[(4 * i) + 1] = (byte)(words[i] >> 16);
+                            data[(4 * i) + 2] = (byte)(words[i] >> 8);
+                            data[(4 * i) + 3] = (byte)(words[i] >> 0);
+                        }
+                        System.out.println(Arrays.toString(data));
+                        writer.write(data);
+                    }
+                    System.out.println("Dump file created and text written successfully.");
+                }
+                catch(IOException e)
+                {
+                    System.out.println("An error occurred while writing to the dump file.");
+                }
+            }
+            else
+            {
+                System.out.println("Dump file could not be overwritten or could not be created.");
+            }
+        }
+        catch(IOException e)
+        {
+            System.out.println("An error occurred while dumping memory to file");
+            e.printStackTrace();
         }
     }
 
