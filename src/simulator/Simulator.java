@@ -106,13 +106,6 @@ public class Simulator extends JFrame
             currentStackPipelineIndex = (currentStackPipelineIndex + 1) % stackPipeline.length;
             stackPipelinePanel.add(stackPipeline[currentStackPipelineIndex]);
             updateDisplay();
-
-//            stackPanel.remove(currentlyVisibleStack);
-//            stackPanel.add(currentlyInvisibleStack);
-//            JScrollPane temp = currentlyVisibleStack;
-//            currentlyVisibleStack = currentlyInvisibleStack;
-//            currentlyInvisibleStack = temp;
-//            updateDisplay();
         });
         JPanel memoryPanel = new JPanel(new GridLayout(0, 1));
         JButton controlsToggle = new JButton("Toggle Controls View");
@@ -528,7 +521,7 @@ public class Simulator extends JFrame
         paneSize.width = Math.min(stackPipelinePanel.getWidth(), 8 * (valueBinRadio.isSelected() ? 38 : (valueHexRadio.isSelected() ? 14 : 20)));
         callDisplayPane.setPreferredSize(new Dimension(paneSize.width, paneSize.height - dividerSize - callStackLabel.getHeight()));
         reversalDisplayPane.setPreferredSize(new Dimension(Math.min(stackPipelinePanel.getWidth(), (int)((double)paneSize.width * 1.5)), paneSize.height - (2 * dividerSize) - reversalStackLabel.getHeight()));
-        pipelineDisplayPane.setPreferredSize(new Dimension(paneSize.width, paneSize.height - (2 * dividerSize) - pipelineLabel.getHeight()));
+        pipelineDisplayPane.setPreferredSize(new Dimension(Math.max(paneSize.width, 8 * 38), paneSize.height - (2 * dividerSize) - pipelineLabel.getHeight()));
 
         SwingUtilities.invokeLater(() -> {
             for(int i = 0; i < bars.size(); i++)

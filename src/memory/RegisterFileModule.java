@@ -9,6 +9,11 @@ public class RegisterFileModule
 {
     private static final Logger logger = Logger.getLogger(RegisterFileModule.class.getName());
 
+    public static final String INDEXABLE_PREFIX = "R";
+    public static final String INTERNAL_PREFIX = "N";
+    public static final String CALL_PREFIX = "C";
+    public static final String REVERSAL_PREFIX = "U";
+
     private long[] memory;
     private final long[] masks;
     private final int totalLength;

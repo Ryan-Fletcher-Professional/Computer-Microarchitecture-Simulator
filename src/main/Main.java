@@ -52,8 +52,7 @@ public class Main
         registerBanks[REVERSAL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK_CIRCULAR, reversalStackLengths, reversalStackNames);
         int[] pendingRegisterLengths = new int[indexableLengths.length];
         Arrays.fill(pendingRegisterLengths, 5);
-        RegisterFileModule pendingRegisters = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, pendingRegisterLengths, indexableNames);
-        new Simulator(GET_ID(), registerBanks, new Pipeline(registerBanks[INDEXABLE_BANK_INDEX], registerBanks[INTERNAL_BANK_INDEX], registerBanks[CALL_STACK_INDEX], registerBanks[REVERSAL_STACK_INDEX], null, pendingRegisters, 32), JFrame.MAXIMIZED_BOTH);
+        new Simulator(GET_ID(), registerBanks, new Pipeline(registerBanks[INDEXABLE_BANK_INDEX], registerBanks[INTERNAL_BANK_INDEX], registerBanks[CALL_STACK_INDEX], registerBanks[REVERSAL_STACK_INDEX], null, NEW_PENDING_REGISTERS(registerBanks), 32), JFrame.MAXIMIZED_BOTH);
     }
 
     private static void createTestInstructionBinary(String name)

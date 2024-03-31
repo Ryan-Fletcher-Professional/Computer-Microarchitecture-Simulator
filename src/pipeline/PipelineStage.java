@@ -1,13 +1,15 @@
 package pipeline;
 
 import instructions.Instruction;
+import instructions.Term;
+
 import static instructions.Instructions.*;
 import static main.GLOBALS.SMART_TO_STRING;
 
 public class PipelineStage
 {
     private final String name;
-    private int wordSize;
+    protected int wordSize;
     PipelineStage previousStage;
     Instruction heldInstruction;
     private PipelineStage nextStage;
@@ -45,14 +47,47 @@ public class PipelineStage
         return blocked;
     }
 
+    protected Instruction passUnblocked() throws MRAException
+    {
+        heldInstruction.addAuxBits(AUX_FINISHED, AUX_FALSE);
+        Instruction ret = heldInstruction;
+        heldInstruction = previousStage.execute(false);
+        return ret;
+    }
+
+    protected Instruction passBlocked() throws MRAException
+    {
+        heldInstruction.addAuxBits(AUX_FINISHED, AUX_TRUE);
+        previousStage.execute(true);
+        return heldInstruction.getHeader() == HEADER.STALL ? STALL(wordSize) : NOOP(wordSize);
+    }
+
+    protected Instruction passBlocking() throws MRAException
+    {
+        previousStage.execute(true);
+        return STALL(wordSize);
+    }
+
+    protected Instruction pass(boolean nextStatus) throws MRAException
+    {
+        if(!nextStatus)
+        {
+            return passUnblocked();
+        }
+        else
+        {
+            return passBlocked();
+        }
+    }
+
     /**
      * SHOULD BE EXTENDED BY CHILD CLASSES
      * @param nextStatus Blocked status of following stage in pipeline.
-     * @return Whether this stage IS blocked.
+     * @return STALL if this stage is blocked. If not, previousStage.execute() (default NOOP).
      */
-    public Instruction execute(boolean nextStatus) throws MRAException
+    protected Instruction execute(boolean nextStatus) throws MRAException
     {
-        Instruction ret = this.isBlocked() ? STALL(wordSize) : NOOP(wordSize);
+        Instruction ret = this.isBlocked() ? STALL(wordSize) : LOAD_PC(wordSize);
         if(previousStage != null) { ret = previousStage.execute(this.isBlocked()); }
         return ret;
     }
@@ -62,12 +97,13 @@ public class PipelineStage
         if(previousStage == null) { return ""; }
         StringBuilder ret = new StringBuilder();
 
+        String nameString = name + "  :  " + (isBlocked() ? "BLOCKED" : "AVAILABLE");
         String wordString = (heldInstruction != null) ? SMART_TO_STRING(heldInstruction.wordNum(), radix) : "NONE";
-        int valueLength = Math.max(name.length(), wordString.length());
+        int valueLength = Math.max(nameString.length(), wordString.length());
         StringBuilder currentName = new StringBuilder();
         currentName.append("  ")
-                   .append(" ".repeat((valueLength - name.length()) / 2))
-                   .append(name)
+                   .append(" ".repeat((valueLength - nameString.length()) / 2))
+                   .append(nameString)
                    .append(" ".repeat(valueLength + "  ".length() - currentName.length()))
                    .append("  ");
         ret.append(currentName).append("\n\n");

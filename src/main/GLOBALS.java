@@ -1,5 +1,7 @@
 package main;
 
+import memory.RegisterFileModule;
+
 import java.awt.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -120,6 +122,16 @@ public class GLOBALS
     public static String SMART_TO_STRING(long i, int radix)
     {
         return radix == 10 ? Long.toString(i, 10) : Long.toUnsignedString(i, radix);
+    }
+
+    public static boolean[][] NEW_PENDING_REGISTERS(RegisterFileModule[] banks)
+    {
+        int longest = 0;
+        for(RegisterFileModule bank : banks)
+        {
+            longest = Math.max(longest, bank.getNumRegisters());
+        }
+        return new boolean[4][longest];
     }
 
     /**

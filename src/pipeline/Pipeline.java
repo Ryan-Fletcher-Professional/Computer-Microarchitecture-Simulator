@@ -3,6 +3,7 @@ package pipeline;
 import instructions.Instruction;
 import memory.MemoryModule;
 import memory.RegisterFileModule;
+import static main.GLOBALS.*;
 
 public class Pipeline
 {
@@ -11,19 +12,23 @@ public class Pipeline
     private RegisterFileModule callStack;
     private RegisterFileModule reversalStack;
     private MemoryModule nearestCache;
-    private RegisterFileModule pendingRegisters;
+    private boolean[][] pendingRegisters;
     private int wordSize;
     private PipelineStage dummyEndStage;  // This and dummyStartStage exist to prevent erroneous consecutation of actual pipeline stages
 
     public Pipeline(RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters,
                     RegisterFileModule callStack, RegisterFileModule reversalStack,
-                    MemoryModule nearestCache, RegisterFileModule pendingRegisters,
-                    int wordSize)
+                    MemoryModule nearestCache, boolean[][] pendingRegisters, int wordSize)
     {
         initialize(indexableRegisters, internalRegisters, callStack, reversalStack,
                    nearestCache, pendingRegisters, wordSize);
     }
 
+    // TODO : Cycling with a different word size from before will call this.
+    /**
+     * NOTE: WILL FLUSH THE PIPELINE IF WORD SIZE CHANGES
+     * @param size
+     */
     public void setWordSize(int size)
     {
         wordSize = size;
@@ -35,6 +40,7 @@ public class Pipeline
         }
     }
 
+    // TODO : Call when cycling from the simulator
     public Instruction execute()
     {
         Instruction ret = null;
@@ -51,7 +57,7 @@ public class Pipeline
 
     private void initialize(RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters,
                             RegisterFileModule callStack, RegisterFileModule reversalStack,
-                            MemoryModule nearestCache, RegisterFileModule pendingRegisters,
+                            MemoryModule nearestCache, boolean[][] pendingRegisters,
                             int wordSize)
     {
         this.indexableRegisters = indexableRegisters;
@@ -59,12 +65,11 @@ public class Pipeline
         this.callStack = callStack;
         this.reversalStack = reversalStack;
         this.nearestCache = nearestCache;
-        this.pendingRegisters = pendingRegisters;
         this.wordSize = wordSize;
         PipelineStage dummyStartStage = new PipelineStage(wordSize, "dummy start");
         FetchStage fetch = new FetchStage(wordSize, "Fetch", internalRegisters, nearestCache);
         DecodeStage decode = new DecodeStage(wordSize, "Decode", indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
-        ExecuteStage execute = new ExecuteStage(wordSize, "Execute");
+        ExecuteStage execute = new ExecuteStage(wordSize, "Execute", internalRegisters);
         MemoryAccessStage access = new MemoryAccessStage(wordSize, "Access",
                                                          nearestCache);
         MemoryWritebackStage write = new MemoryWritebackStage(wordSize, "Write",
@@ -80,7 +85,6 @@ public class Pipeline
 
     public void reset()
     {
-        pendingRegisters.reset();
-        initialize(indexableRegisters, internalRegisters, callStack, reversalStack, nearestCache, pendingRegisters, wordSize);
+        initialize(indexableRegisters, internalRegisters, callStack, reversalStack, nearestCache, NEW_PENDING_REGISTERS(new RegisterFileModule[] { indexableRegisters, internalRegisters, callStack, reversalStack }), wordSize);
     }
 }
