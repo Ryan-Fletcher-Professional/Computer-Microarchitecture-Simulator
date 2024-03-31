@@ -33,8 +33,8 @@ public class PipelineStage
      */
     public Instruction execute(boolean nextStatus)
     {
-        Instruction ret = NOOP(wordSize);
-        if(previousStage != null) { ret = previousStage.execute(isBlocked()); }
+        Instruction ret = this.isBlocked() ? STALL(wordSize) : NOOP(wordSize);
+        if(previousStage != null) { ret = previousStage.execute(this.isBlocked()); }
         return ret;
     }
 }
