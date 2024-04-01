@@ -36,7 +36,7 @@ public class ExecuteStage extends PipelineStage
     {
         if(ALU_INSTRUCTIONS.contains(heldInstruction.getHeader()))
         {
-            heldInstruction.execute();
+            heldInstruction.execute(this);
         }
         if(JUMP_INSTRUCTIONS.contains(heldInstruction.getHeader()))
         {

@@ -6,12 +6,28 @@ import static instructions.Instructions.*;
 
 public class MemoryAccessStage extends PipelineStage
 {
-    private final MemoryModule nearestCache;
+    private MemoryModule nearestInstructionCache;
+    private MemoryModule nearestDataCache;
 
-    public MemoryAccessStage(int wordSize, String name, MemoryModule nearestCache)
+    public MemoryAccessStage(int wordSize, String name, MemoryModule nearestInstructionCache, MemoryModule nearestDataCache)
     {
         super(wordSize, name);
-        this.nearestCache = nearestCache;
+        this.nearestInstructionCache = nearestInstructionCache;
+        this.nearestDataCache = nearestDataCache;
+    }
+
+    @Override
+    public void setNearestInstructionCache(MemoryModule module)
+    {
+        this.nearestInstructionCache = module;
+        super.setNearestInstructionCache(module);
+    }
+
+    @Override
+    public void setNearestDataCache(MemoryModule module)
+    {
+        this.nearestDataCache = module;
+        super.setNearestDataCache(module);
     }
 
     @Override
@@ -19,7 +35,7 @@ public class MemoryAccessStage extends PipelineStage
     {
         if(MEMORY_INSTRUCTIONS.contains(heldInstruction.getHeader()))  // TODO : Instruction.execute() should be able to properly handle being called after AUX_FINISHED is marked as TRUE
         {
-            heldInstruction.execute();
+            heldInstruction.execute(this);
         }
         else
         {

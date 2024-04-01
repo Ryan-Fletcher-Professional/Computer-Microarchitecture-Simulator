@@ -48,13 +48,6 @@ public class RegisterFileModule
         return memory.length;
     }
 
-    public void stackStore(long value) throws OperationNotSupportedException
-    {
-        if(!(mode.equals(REGISTER_FILE_MODE.STACK) || mode.equals(REGISTER_FILE_MODE.STACK_CIRCULAR)))
-            { throw new OperationNotSupportedException("Register file " + id + " is not a stack register file"); }
-        store(-1, value);
-    }
-
     public void store(int index, long value)
     {
         if(mode.equals(REGISTER_FILE_MODE.ADDRESSED))
@@ -79,13 +72,6 @@ public class RegisterFileModule
             currentRegisterIndex = (currentRegisterIndex + 1) % getNumRegisters();
             memory[currentRegisterIndex] = value & masks[currentRegisterIndex];
         }
-    }
-
-    public long stackLoad() throws OperationNotSupportedException
-    {
-        if(!(mode.equals(REGISTER_FILE_MODE.STACK) || mode.equals(REGISTER_FILE_MODE.STACK_CIRCULAR)))
-            { throw new OperationNotSupportedException("Register file " + id + " is not a stack register file"); }
-        return load(-1);
     }
 
     public long load(int index)
@@ -113,6 +99,23 @@ public class RegisterFileModule
             long value = memory[currentRegisterIndex];
             currentRegisterIndex = (currentRegisterIndex + getNumRegisters() - 1) % getNumRegisters();
             return value;
+        }
+        else { throw new RuntimeException("Register file mode not assigned; should never occur"); }
+    }
+
+    public long peek(int index)
+    {
+        if(mode.equals(REGISTER_FILE_MODE.ADDRESSED))
+        {
+            return memory[index];
+        }
+        if(mode.equals(REGISTER_FILE_MODE.STACK))
+        {
+            return memory[currentRegisterIndex - index];
+        }
+        if(mode.equals(REGISTER_FILE_MODE.STACK_CIRCULAR))
+        {
+            return memory[(currentRegisterIndex + getNumRegisters() - index) % getNumRegisters()];
         }
         else { throw new RuntimeException("Register file mode not assigned; should never occur"); }
     }

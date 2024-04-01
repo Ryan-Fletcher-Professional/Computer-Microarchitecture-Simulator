@@ -3,6 +3,7 @@ package main;
 import memory.RegisterFileModule;
 
 import java.awt.*;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,6 +33,12 @@ public class GLOBALS
     public static final String CALL = "CALL";
     public static final String REV = "REV";
     public static final String[] INTERNAL_REGISTER_NAMES = new String[] { "C0", PC, CC, PRED_1, PRED_2, CALL, REV };
+    public static final int PC_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(PC);
+    public static final int CC_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(CC);
+    public static final int PRED_1_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(PRED_1);
+    public static final int PRED_2_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(PRED_2);
+    public static final int CALL_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(CALL);
+    public static final int REV_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(REV);
     public enum MEMORY_KIND
     {
         CACHE,

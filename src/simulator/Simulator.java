@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import static main.GLOBALS.*;
+
+import instructions.Instruction;
+import static instructions.Instructions.*;
 import memory.MemoryModule;
 import memory.MemoryRequest;
 import memory.RegisterFileModule;
@@ -84,6 +87,7 @@ public class Simulator extends JFrame
             for(int i = 0; i < numTicks; i++)
             {
                 CURRENT_TICK += 1;
+                Instruction output = pipeline.execute();
                 for(JList<MemoryModule> list : memoryLists)
                 {
                     for(int j = 0; j < list.getModel().getSize(); j++)
@@ -91,7 +95,7 @@ public class Simulator extends JFrame
                         list.getModel().getElementAt(j).tick();
                     }
                 }
-                if((numTicks == Double.POSITIVE_INFINITY) && allAccessesAreEmpty()) { break; }
+                if(output.getHeader().equals(HEADER.HALT) || ERROR_INSTRUCTIONS.contains(output.getHeader())) { break; }
             }
             countLabel.setText("Cycles: " + CURRENT_TICK);
             updateDisplay();
@@ -137,7 +141,7 @@ public class Simulator extends JFrame
         saveButton.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Select a path to save");
-            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir") + "/" + PATH_TO_FILES));
             fileChooser.setSelectedFile(new File(this.id + ".txt"));
             fileChooser.setFileFilter(new FileNameExtensionFilter("Text Files", "txt"));
             int userSelection = fileChooser.showSaveDialog(this);
@@ -159,7 +163,7 @@ public class Simulator extends JFrame
             pipeline.reset();
         });
         Component[] toolBarComponents = new Component[] { countLabel, tickButton, tickField, stackPipelineToggle,
-                                                          controlsToggle, bankToggle, saveButton };
+                                                          bankToggle, controlsToggle, saveButton };
         int leftSize = 0;
         for(Component component : toolBarComponents)
         {
@@ -508,20 +512,21 @@ public class Simulator extends JFrame
             positions.add(bars.getLast().getValue());
         }
 
-        callStackDisplayText.setText(registerBanks[CALL_STACK_INDEX].getDisplayText(1, getRadices()[1]));
-        reversalStackDisplayText.setText(registerBanks[REVERSAL_STACK_INDEX].getDisplayText(1, getRadices()[1]));
-        pipelineDisplayText.setText(pipeline.getDisplayText(getRadices()[1]));
-        indexableBankDisplayText.setText(registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(8, getRadices()[1]));
-        internalBankDisplayText.setText(registerBanks[INTERNAL_BANK_INDEX].getDisplayText(8, getRadices()[1]));
+        int radix = getRadices()[1];
+        callStackDisplayText.setText(registerBanks[CALL_STACK_INDEX].getDisplayText(1, radix));
+        reversalStackDisplayText.setText(registerBanks[REVERSAL_STACK_INDEX].getDisplayText(1, radix));
+        pipelineDisplayText.setText(pipeline.getDisplayText((radix != 10) ? radix : 2));
+        indexableBankDisplayText.setText(registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(8, radix));
+        internalBankDisplayText.setText(registerBanks[INTERNAL_BANK_INDEX].getDisplayText(8, radix));
         if(currentlySelectedMemory != null)
-            { memoryDisplayText.setText(currentlySelectedMemory.getMemoryDisplay(getRadices()[0], getRadices()[1])); }
+            { memoryDisplayText.setText(currentlySelectedMemory.getMemoryDisplay(getRadices()[0], radix)); }
 
         Dimension paneSize = stackPipelinePanel.getSize();
         int dividerSize = ((BasicSplitPaneUI)topBottomPane.getUI()).getDivider().getDividerSize();
         paneSize.width = Math.min(stackPipelinePanel.getWidth(), 8 * (valueBinRadio.isSelected() ? 38 : (valueHexRadio.isSelected() ? 14 : 20)));
         callDisplayPane.setPreferredSize(new Dimension(paneSize.width, paneSize.height - dividerSize - callStackLabel.getHeight()));
         reversalDisplayPane.setPreferredSize(new Dimension(Math.min(stackPipelinePanel.getWidth(), (int)((double)paneSize.width * 1.5)), paneSize.height - (2 * dividerSize) - reversalStackLabel.getHeight()));
-        pipelineDisplayPane.setPreferredSize(new Dimension(Math.max(paneSize.width, 8 * 38), paneSize.height - (2 * dividerSize) - pipelineLabel.getHeight()));
+        pipelineDisplayPane.setPreferredSize(new Dimension(Math.max(paneSize.width, 8 * 38) * (int)((pipeline.getWordSize() == 64) ? 1.5 : 1), paneSize.height - (2 * dividerSize) - pipelineLabel.getHeight()));
 
         SwingUtilities.invokeLater(() -> {
             for(int i = 0; i < bars.size(); i++)
@@ -590,16 +595,19 @@ public class Simulator extends JFrame
         try { cacheDelay = Integer.parseInt(cacheField.getText()); } catch(NumberFormatException _ignored_) {}
         try { ramDelay = Integer.parseInt(ramField.getText()); } catch(NumberFormatException _ignored_) {}
 
+        MEMORY_KIND kind;
+        MEMORY_TYPE type;
         try
         {
-            MEMORY_KIND kind = cacheRadio.isSelected() ? MEMORY_KIND.CACHE : MEMORY_KIND.RAM;
+            kind = cacheRadio.isSelected() ? MEMORY_KIND.CACHE : MEMORY_KIND.RAM;
+            type = dataRadio.isSelected() ? MEMORY_TYPE.DATA : MEMORY_TYPE.INSTRUCTION;
             MemoryModule next = model.getSize() > 0 ? model.getElementAt(model.getSize() - 1) :
                                     (unifiedMemoryModel.getSize() > 0 ?
                                      unifiedMemoryModel.getElementAt(unifiedMemoryModel.getSize() - 1) :
                                          null);
             newModule = new MemoryModule(GET_ID(),
                                          kind,
-                                         dataRadio.isSelected() ? MEMORY_TYPE.DATA : MEMORY_TYPE.INSTRUCTION,
+                                         type,
                                          shortWordsRadio.isSelected() ? WORD_LENGTH.SHORT : WORD_LENGTH.LONG,
                                          kind.equals(MEMORY_KIND.CACHE) ? DEFAULT_CACHE_WRITE_MODE : DEFAULT_RAM_WRITE_MODE,
                                          next,
@@ -611,6 +619,14 @@ public class Simulator extends JFrame
             {
                 newModule.storeFiles(PATH_TO_INSTRUCTION_BINS, 0);
                 newModule.storeFiles(PATH_TO_DATA_FILES, DATA_STARTING_ADDRESS);
+            }
+            if((next == null) || (type.equals(MEMORY_TYPE.INSTRUCTION) && kind.equals(MEMORY_KIND.CACHE)))
+            {
+                pipeline.setNearestInstructionCache(newModule);
+            }
+            if((next == null) || (type.equals(MEMORY_TYPE.DATA) && kind.equals(MEMORY_KIND.CACHE)))
+            {
+                pipeline.setNearestDataCache(newModule);
             }
         }
         catch(NumberFormatException e)

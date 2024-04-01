@@ -40,11 +40,11 @@ public class MemoryWritebackStage extends PipelineStage
         {
             // TODO : Handle jump to subroutine
         }
-        else if(heldInstruction.getHeader() == HEADER.NOOP)
+        else if(heldInstruction.getHeader().equals(HEADER.NOOP))
         {
             // TODO : Record NOOP
         }
-        else if(heldInstruction.getHeader() == HEADER.STALL)
+        else if(heldInstruction.getHeader().equals(HEADER.STALL))
         {
             // TODO : Record stall
         }

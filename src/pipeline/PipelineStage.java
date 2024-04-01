@@ -1,7 +1,7 @@
 package pipeline;
 
 import instructions.Instruction;
-import instructions.Term;
+import memory.MemoryModule;
 
 import static instructions.Instructions.*;
 import static main.GLOBALS.SMART_TO_STRING;
@@ -19,6 +19,7 @@ public class PipelineStage
     {
         this.wordSize = wordSize;
         this.name = name;
+        this.heldInstruction = NOOP(wordSize);
     }
 
     public void setPrevious(PipelineStage previous)
@@ -39,6 +40,22 @@ public class PipelineStage
         if((heldInstruction != null) && (heldInstruction.wordLength() != size))
         {
             heldInstruction = QUASH_SIZE_ERR(size);
+        }
+    }
+
+    public void setNearestInstructionCache(MemoryModule module)
+    {
+        if(previousStage != null)
+        {
+            previousStage.setNearestInstructionCache(module);
+        }
+    }
+
+    public void setNearestDataCache(MemoryModule module)
+    {
+        if(previousStage != null)
+        {
+            previousStage.setNearestDataCache(module);
         }
     }
 

@@ -10,10 +10,14 @@ public class Instructions
     public static final int TYPECODE_SIZE = 3;
     public enum TYPECODE
     {
-        MISC
+        MISC,
+        INTERNAL
     }
     public static Map<TYPECODE, String> TYPECODE_STRINGS = new HashMap<>() {{
-       put(TYPECODE.MISC, "111");
+
+        put(TYPECODE.MISC, "110");
+        put(TYPECODE.INTERNAL, "111");
+
     }};
     public static Map<String, TYPECODE> TYPECODES = new HashMap<>() {{
         for(TYPECODE code : TYPECODE_STRINGS.keySet())
@@ -24,16 +28,22 @@ public class Instructions
     public static final int OPCODE_SIZE = 3;
     public enum OPCODE
     {
+        HALT,
+
         NOOP,
         STALL,
         QUASH_SIZE_ERR,
         LOAD_PC
     }
     public static Map<OPCODE, String> OPCODE_STRINGS = new HashMap<>() {{
+
+        put(OPCODE.HALT, "101");
+
         put(OPCODE.NOOP, "000");
         put(OPCODE.STALL, "001");
         put(OPCODE.QUASH_SIZE_ERR, "010");
         put(OPCODE.LOAD_PC, "011");
+
     }};
     public static Map<String, OPCODE> OPCODES = new HashMap<>() {{
         for(OPCODE code : OPCODE_STRINGS.keySet())
@@ -44,6 +54,8 @@ public class Instructions
     public static final int HEADER_SIZE = TYPECODE_SIZE + OPCODE_SIZE;
     public enum HEADER  // TODO : EACH HEADER MUST BE NAMED AND PUT() VERY CAREFULLY
     {
+        HALT,
+
         NOOP,
         STALL,
         QUASH_SIZE_ERR,
@@ -51,10 +63,14 @@ public class Instructions
     }
     private static String MAKE_HEADER_STRING(TYPECODE type, OPCODE op) { return TYPECODE_STRINGS.get(type) + OPCODE_STRINGS.get(op); }
     public static Map<HEADER, String> HEADER_STRINGS = new HashMap<>() {{
-        put(HEADER.NOOP, MAKE_HEADER_STRING(TYPECODE.MISC, OPCODE.NOOP));
-        put(HEADER.STALL, MAKE_HEADER_STRING(TYPECODE.MISC, OPCODE.STALL));
-        put(HEADER.QUASH_SIZE_ERR, MAKE_HEADER_STRING(TYPECODE.MISC, OPCODE.QUASH_SIZE_ERR));
-        put(HEADER.LOAD_PC, MAKE_HEADER_STRING(TYPECODE.MISC, OPCODE.LOAD_PC));
+
+        put(HEADER.HALT,            MAKE_HEADER_STRING( TYPECODE.MISC,       OPCODE.HALT            ));
+
+        put(HEADER.NOOP,            MAKE_HEADER_STRING( TYPECODE.INTERNAL,   OPCODE.NOOP            ));
+        put(HEADER.STALL,           MAKE_HEADER_STRING( TYPECODE.INTERNAL,   OPCODE.STALL           ));
+        put(HEADER.QUASH_SIZE_ERR,  MAKE_HEADER_STRING( TYPECODE.INTERNAL,   OPCODE.QUASH_SIZE_ERR  ));
+        put(HEADER.LOAD_PC,         MAKE_HEADER_STRING( TYPECODE.INTERNAL,   OPCODE.LOAD_PC         ));
+
     }};
     public static Map<String, HEADER> HEADERS = new HashMap<>() {{
         for(HEADER code : HEADER_STRINGS.keySet())
@@ -71,20 +87,24 @@ public class Instructions
     {
 
     }));
-    public static final List<HEADER> JUMP_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
-    {
-        // SHOULD INCLUDE ALL BRANCH INSTRUCTIONS
-    }));
     public static final List<HEADER> BRANCH_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {
 
     }));
+    public static final List<HEADER> JUMP_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
+    {
+        // SHOULD INCLUDE ALL BRANCH INSTRUCTIONS
+    }));
+    public static final List<HEADER> ERROR_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
+    {
+        HEADER.QUASH_SIZE_ERR
+    }));
 
     public static final int AUX_FALSE = 0;
-    public static Term AUX_FALSE() { return new Term(AUX_FALSE); }
+    public static Term AUX_FALSE() { return new Term(AUX_FALSE, false); }
     public static boolean AUX_FALSE(Term term) { return term.toInt() == AUX_FALSE; }
     public static final int AUX_TRUE = 1;
-    public static Term AUX_TRUE() { return new Term(AUX_TRUE); }
+    public static Term AUX_TRUE() { return new Term(AUX_TRUE, false); }
     public static boolean AUX_TRUE(Term term) { return term.toInt() == AUX_TRUE; }
     public static final String AUX_FINISHED = "final result has just been written or instruction has been handled manually by pipeline";
     public static final String AUX_RESULT = "final result of execution";
@@ -162,14 +182,15 @@ public class Instructions
         return new Instruction((GET_INSTRUCTION_TERM(size, header, flags, args)));
     }
 
-    public static Instruction NOOP(int size)
+    public static Instruction NOOP              (int size)
     {
         return GET_INSTRUCTION(size, HEADER.NOOP, "", "");
     }
-    public static Instruction STALL(int size)
+    public static Instruction STALL             (int size)
     {
         return GET_INSTRUCTION(size, HEADER.STALL, "", "");
     }
-    public static Instruction QUASH_SIZE_ERR(int size) { return GET_INSTRUCTION(size, HEADER.QUASH_SIZE_ERR, "", ""); }
-    public static Instruction LOAD_PC(int size) { return GET_INSTRUCTION(size, HEADER.LOAD_PC, "", ""); }
+    public static Instruction QUASH_SIZE_ERR    (int size) { return GET_INSTRUCTION(size, HEADER.QUASH_SIZE_ERR,"", ""); }
+    public static Instruction LOAD_PC           (int size) { return GET_INSTRUCTION(size, HEADER.LOAD_PC, "", ""); }
+    public static Instruction HALT              (int size) { return GET_INSTRUCTION(size, HEADER.HALT, "", ""); }
 }

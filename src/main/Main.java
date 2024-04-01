@@ -5,11 +5,10 @@ import pipeline.Pipeline;
 import simulator.Simulator;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static main.GLOBALS.*;
 
@@ -17,8 +16,7 @@ public class Main
 {
     public static void main(String[] args)
     {
-        // TODO : Ensure PC starts at 10 if 32 bit word mode or 01 if 64 bit word mode
-        //createTestInstructionBinary("00");
+        int[] startingParams = FIND_START_PARAMS(PATH_TO_INSTRUCTION_BINS);
 
         RegisterFileModule[] registerBanks = new RegisterFileModule[REGISTER_BANK_INDECES.length];
         int[] indexableLengths = new int[INDEXABLE_BANK_SIZE];
@@ -28,19 +26,19 @@ public class Main
             indexableLengths[i] = 32;
             indexableNames[i] = "R" + i;
         }
-        int[] internalLengths = new int[] { 1, 25, 16, 64, 64, 10, 10 };
+        int[] internalLengths = new int[] { 1, 25, 16, 64, 64, startingParams[1], startingParams[2] };
         String[] internalNames = INTERNAL_REGISTER_NAMES;
         // TODO : Ensure external pushes to and pops from call stack perform 17 operations in correct order
-        int[] callStackLengths = new int[(int)Math.pow(2, internalLengths[5]) * (indexableLengths.length + 1)];  // Will be pushed/popped in groups of 17; 1 for return pointer and 16 for snapshot of indexable register file
-        String[] callStackNames = new String[(int)Math.pow(2, internalLengths[5]) * (indexableLengths.length + 1)];
+        int[] callStackLengths = new int[internalLengths[5] * (indexableLengths.length + 1)];  // Will be pushed/popped in groups of 17; 1 for return pointer and 16 for snapshot of indexable register file
+        String[] callStackNames = new String[internalLengths[5] * (indexableLengths.length + 1)];
         for(int i = 0; i < callStackLengths.length; i++)
         {
             int index = i % (indexableLengths.length + 1);
             callStackLengths[i] = (index == 0) ? 25 : 32;
             callStackNames[i] = i / (indexableLengths.length + 1) + " " + ((index == 0) ? "R" : index);
         }
-        int[] reversalStackLengths = new int[(int)Math.pow(2, internalLengths[6])];
-        String[] reversalStackNames = new String[(int)Math.pow(2, internalLengths[6])];
+        int[] reversalStackLengths = new int[internalLengths[6]];
+        String[] reversalStackNames = new String[internalLengths[6]];
         for(int i = 0; i < reversalStackLengths.length; i++)
         {
             reversalStackLengths[i] = 64;
@@ -48,57 +46,56 @@ public class Main
         }
         registerBanks[INDEXABLE_BANK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, indexableLengths, indexableNames);
         registerBanks[INTERNAL_BANK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, internalLengths, internalNames);
+        registerBanks[INTERNAL_BANK_INDEX].store(List.of(INTERNAL_REGISTER_NAMES).indexOf(PC), (startingParams[0] == 32) ? 0b10 : 0b01);
         registerBanks[CALL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK, callStackLengths, callStackNames);
         registerBanks[REVERSAL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK_CIRCULAR, reversalStackLengths, reversalStackNames);
         int[] pendingRegisterLengths = new int[indexableLengths.length];
         Arrays.fill(pendingRegisterLengths, 5);
-        new Simulator(GET_ID(), registerBanks, new Pipeline(registerBanks[INDEXABLE_BANK_INDEX], registerBanks[INTERNAL_BANK_INDEX], registerBanks[CALL_STACK_INDEX], registerBanks[REVERSAL_STACK_INDEX], null, NEW_PENDING_REGISTERS(registerBanks), 32), JFrame.MAXIMIZED_BOTH);
+        new Simulator(GET_ID(), registerBanks, new Pipeline(registerBanks[INDEXABLE_BANK_INDEX], registerBanks[INTERNAL_BANK_INDEX], registerBanks[CALL_STACK_INDEX], registerBanks[REVERSAL_STACK_INDEX], null, null, NEW_PENDING_REGISTERS(registerBanks), startingParams[0]), JFrame.MAXIMIZED_BOTH);
     }
 
-    private static void createTestInstructionBinary(String name)
+    private static int[] FIND_START_PARAMS(String path)
     {
-        String filePath = PATH_TO_INSTRUCTION_BINS + name + ".txt";
-        File file = new File(filePath);
+        int[] ret = new int[] { 32, 0b1000000000, 0b1000000000 };
 
+        File directory = new File(path);
+        File[] files = directory.listFiles();
         try
         {
-            if(file.exists())
+            FileInputStream fis = new FileInputStream(files[0]);
+            byte[] buffer = new byte[4];
+            if(fis.read(buffer) == 4)
             {
-                file.delete();
-            }
-
-            // Ensure the parent directories exist
-            file.getParentFile().mkdirs();
-
-            boolean isFileCreated = file.createNewFile();
-
-            if(isFileCreated)
-            {
-                try(FileOutputStream writer = new FileOutputStream(file))
+                int value = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
+                if((value & 0b10000000000000000000000000000000) == 0b10000000000000000000000000000000)
                 {
-                    byte[] words = new byte[] {
-                            (byte)0b01000000, (byte)0b00010000, (byte)0b00000000, (byte)0b00000000,  // 32-bit word mode with size 1024 reversal and call stacks
-                            (byte)0b00000000, (byte)0b00000000, (byte)0b00000000, (byte)0b00000000,
-                            (byte)0b11110110, (byte)0b00000000, (byte)0b00000000, (byte)0b00000000  // HALT 0
-                    };
-                    writer.write(words);
-
-                    System.out.println("Test binary created and text written successfully.");
+                    ret[0] = 64;
                 }
-                catch(IOException e)
+                for(int i = 0; i < 10; i++)
                 {
-                    System.out.println("An error occurred while writing to the test binary.");
+                    if((value & (0b01000000000000000000000000000000 >> i)) != 0b00000000000000000000000000000000)
+                    {
+                        ret[1] = (value & (0b01000000000000000000000000000000 >> i)) >> 20;
+                        break;
+                    }
+                }
+                for(int i = 0; i < 10; i++)
+                {
+                    if((value & (0b00000000000100000000000000000000 >> i)) != 0b00000000000000000000000000000000)
+                    {
+                        ret[2] = (value & (0b00000000000100000000000000000000 >> i)) >> 10;
+                        break;
+                    }
                 }
             }
-            else
-            {
-                System.out.println("Test binary could not be overwritten or could not be created.");
-            }
+            fis.close();
         }
+        catch(ArrayIndexOutOfBoundsException ignored) {}
         catch(IOException e)
         {
-            System.out.println("An error occurred while checking or creating the test binary.");
             e.printStackTrace();
         }
+
+        return ret;
     }
 }

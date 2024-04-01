@@ -1,6 +1,8 @@
 package instructions;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class Term implements Cloneable
@@ -16,6 +18,7 @@ public class Term implements Cloneable
         this(Integer.toUnsignedString(term, 2));
     }
 
+
     /**
      *
      * @param term
@@ -24,6 +27,11 @@ public class Term implements Cloneable
     public Term(int term, boolean trim)
     {
         this(Integer.toUnsignedString(term, 2), trim);
+    }
+
+    public Term(int term, boolean trim, int sizeToPadTo)
+    {
+        this("0".repeat(sizeToPadTo - Integer.toUnsignedString(term, 2).length()) + Integer.toUnsignedString(term, 2), false);
     }
 
     /**
@@ -45,6 +53,11 @@ public class Term implements Cloneable
         this(Long.toUnsignedString(term, 2), trim);
     }
 
+    public Term(long term, boolean trim, int sizeToPadTo)
+    {
+        this("0".repeat(sizeToPadTo - Long.toUnsignedString(term, 2).length()) + Long.toUnsignedString(term, 2), false);
+    }
+
     /**
      * Removes leading 0s.
      * @param term
@@ -64,6 +77,11 @@ public class Term implements Cloneable
         this(term.chars().map(c -> (c == '0') ? 0 : 1).toArray(), trim);
     }
 
+    public Term(String term, boolean trim, int sizeToPadTo)
+    {
+        this("0".repeat(sizeToPadTo - term.length()) + term, false);
+    }
+
     /**
      * Removes leading 0s.
      * @param bits
@@ -81,11 +99,17 @@ public class Term implements Cloneable
     public Term(int[] bits, boolean trim)
     {
         if(bits.length < 1) { throw new IllegalArgumentException("Term must have at least one bit"); }
-        this.bits = new int[bits.length - (trim ? (Arrays.stream(bits).mapToObj(String::valueOf).collect(Collectors.joining()).indexOf('1')) : 0)];
-        for(int i = 0; i < this.bits.length; i++)
+        List<Integer> bitsList = new ArrayList<>();
+        boolean hitSigFig = !trim;
+        for(int i = 0; i < bits.length; i++)
         {
-            this.bits[this.bits.length - 1 - i] = bits[bits.length - 1 - i];
+            if(hitSigFig || (bits[i] == 1))
+            {
+                hitSigFig = true;
+                bitsList.add(bits[i]);
+            }
         }
+        this.bits = bitsList.stream().mapToInt(i->i).toArray();
     }
 
     public int length()
@@ -151,7 +175,7 @@ public class Term implements Cloneable
     {
         int[] ones = new int[term.length()];
         Arrays.fill(ones, 1);
-        return XOR(term, new Term(ones));
+        return XOR(term, new Term(ones, false));
     }
 
     public static Term AND(Term a, Term b)
@@ -163,7 +187,7 @@ public class Term implements Cloneable
         {
             aBits[i] = (aBits[i] + bBits[i]) / 2;
         }
-        return new Term(aBits);
+        return new Term(aBits, false);
     }
 
     public static Term OR(Term a, Term b)
@@ -175,7 +199,7 @@ public class Term implements Cloneable
         {
             aBits[i] = Math.min(1, aBits[i] + bBits[i]);
         }
-        return new Term(aBits);
+        return new Term(aBits, false);
     }
 
     public static Term XOR(Term a, Term b)
@@ -187,7 +211,7 @@ public class Term implements Cloneable
         {
             aBits[i] = (aBits[i] + bBits[i]) % 2;
         }
-        return new Term(aBits);
+        return new Term(aBits, false);
     }
 
     @Override

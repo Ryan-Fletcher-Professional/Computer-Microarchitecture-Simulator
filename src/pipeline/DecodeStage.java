@@ -38,7 +38,7 @@ public class DecodeStage extends PipelineStage
          */
 
         // TODO : getSourceRegs() returns an index for each source in the instruction, REGISTER OR NOT!
-        //  Non-register sources (and already-read sources) are set to index=-10 with no prefix
+        //  Non-register sources (and already-read sources) are set to index=-1 with no prefix
         String[] sourceRegs = heldInstruction.getSourceRegs();
         for(int i = 0; i < sourceRegs.length; i++)
         {
@@ -72,7 +72,8 @@ public class DecodeStage extends PipelineStage
             else if(sourceRegs[i].startsWith(RegisterFileModule.CALL_PREFIX) && (idx >= 0))
             {
                 if(!pendingRegisters[CALL_STACK_INDEX][idx])
-                {// heldInstruction.addAuxBits(AUX_SOURCE(i), indexableRegisters.load(idx));  // TODO
+                {
+                    // heldInstruction.addAuxBits(AUX_SOURCE(i), indexableRegisters.load(idx));  // TODO
                     heldInstruction.addAuxBits(AUX_SOURCE(i) + READ, AUX_TRUE);
                     pendingRegisters[CALL_STACK_INDEX][idx] = true;
                 }
