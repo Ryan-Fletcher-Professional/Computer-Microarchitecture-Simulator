@@ -33,7 +33,8 @@ public class Instructions
         NOOP,
         STALL,
         QUASH_SIZE_ERR,
-        LOAD_PC
+        LOAD_PC,
+        EXECUTION_ERR
     }
     public static Map<OPCODE, String> OPCODE_STRINGS = new HashMap<>() {{
 
@@ -43,6 +44,8 @@ public class Instructions
         put(OPCODE.STALL, "001");
         put(OPCODE.QUASH_SIZE_ERR, "010");
         put(OPCODE.LOAD_PC, "011");
+        //
+        put(OPCODE.EXECUTION_ERR, "111");
 
     }};
     public static Map<String, OPCODE> OPCODES = new HashMap<>() {{
@@ -59,7 +62,8 @@ public class Instructions
         NOOP,
         STALL,
         QUASH_SIZE_ERR,
-        LOAD_PC
+        LOAD_PC,
+        EXECUTION_ERR
     }
     private static String MAKE_HEADER_STRING(TYPECODE type, OPCODE op) { return TYPECODE_STRINGS.get(type) + OPCODE_STRINGS.get(op); }
     public static Map<HEADER, String> HEADER_STRINGS = new HashMap<>() {{
@@ -70,6 +74,7 @@ public class Instructions
         put(HEADER.STALL,           MAKE_HEADER_STRING( TYPECODE.INTERNAL,   OPCODE.STALL           ));
         put(HEADER.QUASH_SIZE_ERR,  MAKE_HEADER_STRING( TYPECODE.INTERNAL,   OPCODE.QUASH_SIZE_ERR  ));
         put(HEADER.LOAD_PC,         MAKE_HEADER_STRING( TYPECODE.INTERNAL,   OPCODE.LOAD_PC         ));
+        put(HEADER.EXECUTION_ERR,   MAKE_HEADER_STRING( TYPECODE.INTERNAL,   OPCODE.EXECUTION_ERR   ));
 
     }};
     public static Map<String, HEADER> HEADERS = new HashMap<>() {{
@@ -95,9 +100,13 @@ public class Instructions
     {
         // SHOULD INCLUDE ALL BRANCH INSTRUCTIONS
     }));
-    public static final List<HEADER> ERROR_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
+    public static final List<HEADER> QUASH_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {
         HEADER.QUASH_SIZE_ERR
+    }));
+    public static final List<HEADER> ERROR_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
+    {
+        HEADER.EXECUTION_ERR,       // Should have flag matching errType
     }));
 
     public static final int AUX_FALSE = 0;
@@ -112,7 +121,10 @@ public class Instructions
     public static final String AUX_JSR = "jump to subroutine";
     public static final String AUX_JUMP_ADDRESS = "address to jump to";
     public static final String AUX_CURRENT_PC = "return address for JSR";
-    private static final String AUX_SOURCE_ = "source value ";
+    public static final String AUX_SOURCE_ = "source value ";
+    public static final String AUX_ERR_TYPE = "execution error type";
+        public static final int ERR_TYPE_NOT_IMPLEMENTED = 0b00000000000000000000000001;  // For when trying to execute() an instruction that has been intentionally left unimplemented
+
     public static String AUX_SOURCE(int idx)
     {
         return AUX_SOURCE_ + Integer.toString(idx);
@@ -193,4 +205,9 @@ public class Instructions
     public static Instruction QUASH_SIZE_ERR    (int size) { return GET_INSTRUCTION(size, HEADER.QUASH_SIZE_ERR,"", ""); }
     public static Instruction LOAD_PC           (int size) { return GET_INSTRUCTION(size, HEADER.LOAD_PC, "", ""); }
     public static Instruction HALT              (int size) { return GET_INSTRUCTION(size, HEADER.HALT, "", ""); }
+    public static Instruction ERR               (int size, long errType)
+    {
+        Instruction err = GET_INSTRUCTION(size, HEADER.EXECUTION_ERR, "", Long.toUnsignedString(errType, 2));
+        return err;
+    }
 }
