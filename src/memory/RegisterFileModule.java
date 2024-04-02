@@ -17,7 +17,7 @@ public class RegisterFileModule
     private long[] memory;
     private final long[] masks;
     private final int totalLength;
-    private final String[] names;
+    public final String[] names;
     private final int id;
     private int currentRegisterIndex = -1;
     private final REGISTER_FILE_MODE mode;
@@ -72,6 +72,11 @@ public class RegisterFileModule
             currentRegisterIndex = (currentRegisterIndex + 1) % getNumRegisters();
             memory[currentRegisterIndex] = value & masks[currentRegisterIndex];
         }
+    }
+
+    public long load()
+    {
+        return load(-1);
     }
 
     public long load(int index)

@@ -31,11 +31,7 @@ public class DecodeStage extends PipelineStage
     @Override
     public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
-        /*
-            Splitting instruction into fields is not simulated explicity.
-            It's simply handled by the Instruction class and the relevant
-                methods will not be called inappropriately by FetchStage.
-         */
+        // TODO : Split flags and argument according to header and add as aux bits
 
         // TODO : getSourceRegs() returns an index for each source in the instruction, REGISTER OR NOT!
         //  Non-register sources and already-read sources are set to index=-1 with no prefix
@@ -73,7 +69,9 @@ public class DecodeStage extends PipelineStage
             {
                 if(!pendingRegisters[CALL_STACK_INDEX][idx])
                 {
-                    // heldInstruction.addAuxBits(AUX_SOURCE(i), indexableRegisters.load(idx));  // TODO
+                    // Index callstack from top w/return address=-1, RR=0, R1=1, etc.
+                    // Memory instructions will need to pop from stack later.
+                    heldInstruction.addAuxBits(AUX_SOURCE(i), callStack.peek(idx + 1));
                     heldInstruction.addAuxBits(AUX_SOURCE(i) + READ, AUX_TRUE);
                     pendingRegisters[CALL_STACK_INDEX][idx] = true;
                 }
@@ -86,7 +84,9 @@ public class DecodeStage extends PipelineStage
             {
                 if(!pendingRegisters[REVERSAL_STACK_INDEX][idx])
                 {
-                    // heldInstruction.addAuxBits(AUX_SOURCE(i), indexableRegisters.load(idx));  // TODO
+                    // Index reversal stack from top. Each item is 64-bit word.
+                    // Memory instructions will need to pop from stack later.
+                    heldInstruction.addAuxBits(AUX_SOURCE(i), reversalStack.peek(idx));
                     heldInstruction.addAuxBits(AUX_SOURCE(i) + READ, AUX_TRUE);
                     pendingRegisters[REVERSAL_STACK_INDEX][idx] = true;
                 }

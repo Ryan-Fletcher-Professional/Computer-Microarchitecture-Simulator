@@ -2,6 +2,7 @@ package pipeline;
 
 import instructions.Instruction;
 import memory.MemoryModule;
+import memory.RegisterFileModule;
 
 import java.util.Objects;
 
@@ -9,12 +10,14 @@ import static instructions.Instructions.*;
 
 public class MemoryAccessStage extends PipelineStage
 {
+    public RegisterFileModule indexableRegisters;
     private MemoryModule nearestInstructionCache;
-    private MemoryModule nearestDataCache;
+    public MemoryModule nearestDataCache;
 
-    public MemoryAccessStage(int wordSize, String name, MemoryModule nearestInstructionCache, MemoryModule nearestDataCache)
+    public MemoryAccessStage(int wordSize, String name, RegisterFileModule indexableRegisters, MemoryModule nearestInstructionCache, MemoryModule nearestDataCache)
     {
         super(wordSize, name);
+        this.indexableRegisters = indexableRegisters;
         this.nearestInstructionCache = nearestInstructionCache;
         this.nearestDataCache = nearestDataCache;
     }

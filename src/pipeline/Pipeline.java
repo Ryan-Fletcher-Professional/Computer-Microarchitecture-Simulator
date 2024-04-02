@@ -75,7 +75,7 @@ public class Pipeline
         FetchStage fetch = new FetchStage(wordSize, "Fetch", internalRegisters, nearestInstructionCache);
         DecodeStage decode = new DecodeStage(wordSize, "Decode", indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
         ExecuteStage execute = new ExecuteStage(wordSize, "Execute", internalRegisters);
-        MemoryAccessStage access = new MemoryAccessStage(wordSize, "Access",
+        MemoryAccessStage access = new MemoryAccessStage(wordSize, "Access", indexableRegisters,
                                                          nearestInstructionCache, nearestDataCache);
         MemoryWritebackStage write = new MemoryWritebackStage(wordSize, "Write",
                                                               indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);

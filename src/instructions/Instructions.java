@@ -10,11 +10,13 @@ public class Instructions
     public static final int TYPECODE_SIZE = 3;
     public enum TYPECODE
     {
+        LOAD_STORE,
         MISC,
         INTERNAL
     }
     public static Map<TYPECODE, String> TYPECODE_STRINGS = new HashMap<>() {{
 
+        put(TYPECODE.LOAD_STORE, "000");
         put(TYPECODE.MISC, "110");
         put(TYPECODE.INTERNAL, "111");
 
@@ -28,6 +30,8 @@ public class Instructions
     public static final int OPCODE_SIZE = 3;
     public enum OPCODE
     {
+        LOAD,
+
         HALT,
 
         NOOP,
@@ -37,6 +41,8 @@ public class Instructions
         EXECUTION_ERR
     }
     public static Map<OPCODE, String> OPCODE_STRINGS = new HashMap<>() {{
+
+        put(OPCODE.LOAD, "000");
 
         put(OPCODE.HALT, "101");
 
@@ -57,6 +63,8 @@ public class Instructions
     public static final int HEADER_SIZE = TYPECODE_SIZE + OPCODE_SIZE;
     public enum HEADER  // TODO : EACH HEADER MUST BE NAMED AND PUT() VERY CAREFULLY
     {
+        LOAD,
+
         HALT,
 
         NOOP,
@@ -67,6 +75,8 @@ public class Instructions
     }
     private static String MAKE_HEADER_STRING(TYPECODE type, OPCODE op) { return TYPECODE_STRINGS.get(type) + OPCODE_STRINGS.get(op); }
     public static Map<HEADER, String> HEADER_STRINGS = new HashMap<>() {{
+
+        put(HEADER.LOAD,            MAKE_HEADER_STRING( TYPECODE.LOAD_STORE, OPCODE.LOAD            ));
 
         put(HEADER.HALT,            MAKE_HEADER_STRING( TYPECODE.MISC,       OPCODE.HALT            ));
 
@@ -123,12 +133,18 @@ public class Instructions
     public static final String AUX_JUMP_ADDRESS = "address to jump to";
     public static final String AUX_CURRENT_PC = "return address for JSR";
     public static final String AUX_SOURCE_ = "source value ";
+    public static final String AUX_DEST_ = "source value ";
     public static final String AUX_ERR_TYPE = "execution error type";
         public static final int ERR_TYPE_NOT_IMPLEMENTED = 0b00000000000000000000000001;  // For when trying to execute() an instruction that has been intentionally left unimplemented
 
     public static String AUX_SOURCE(int idx)
     {
         return AUX_SOURCE_ + Integer.toString(idx);
+    }
+
+    public static String AUX_DEST(int idx)
+    {
+        return AUX_DEST_ + Integer.toString(idx);
     }
 
     private static String GET_FILLER(int size)
@@ -195,6 +211,7 @@ public class Instructions
         return new Instruction((GET_INSTRUCTION_TERM(size, header, flags, args)));
     }
 
+    public static Instruction LOAD              (int size, String flags, String args) { return GET_INSTRUCTION(size, HEADER.LOAD, flags, args); }
     public static Instruction NOOP              (int size)
     {
         return GET_INSTRUCTION(size, HEADER.NOOP, "", "");
