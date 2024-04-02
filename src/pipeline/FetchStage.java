@@ -1,10 +1,9 @@
 package pipeline;
 
-import instructions.Instruction;
 import memory.MemoryModule;
 import memory.RegisterFileModule;
 import static main.GLOBALS.*;
-
+import instructions.Instruction;
 import static instructions.Instructions.*;
 
 public class FetchStage extends PipelineStage
@@ -31,37 +30,46 @@ public class FetchStage extends PipelineStage
     @Override
     protected Instruction passUnblocked() throws MRAException
     {
+        // Increment PC then return unblocked
         internalRegisters.store(PC_INDEX, internalRegisters.load(PC_INDEX) + ((wordSize == 32) ? 1 : 2));
-        return super.passUnblocked();
+        Instruction ret = super.passUnblocked();
+        return ret;
+    }
+
+    @Override
+    protected Instruction getDefaultInstruction(int wordSize)
+    {
+        return LOAD_PC(wordSize);
     }
 
     @Override
     protected Instruction pass(boolean nextStatus) throws MRAException
     {
-        if(heldInstruction.getAuxBits(AUX_FINISHED) == null)
+        if(!heldInstruction.isFinished())
         {
             return passBlocking();
         }
-        if((heldInstruction.getAuxBits(AUX_FINISHED) != null) && !nextStatus)
+        if(heldInstruction.isFinished() && !nextStatus)
         {
             heldInstruction = new Instruction(heldInstruction.getAuxBits(AUX_RESULT));
-            return passUnblocked();
+            Instruction ret = passUnblocked();
+            heldInstruction = null;
+            return ret;
         }
         return passBlocked();
     }
 
     @Override
-    public Instruction execute(boolean nextStatus) throws MRAException
+    public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
-        // Previous stage should always be dummy LOAD_PC
+        // Default execute gives LOAD_PC
         // LOAD_PC should read the value in PC *AND* send out to the cache to get the instruction at that address
-        if(heldInstruction == null) { heldInstruction = previousStage.execute(false); }
-
-        if(heldInstruction.getAuxBits(AUX_FINISHED) == null)
-        {
-            if(!heldInstruction.getHeader().equals(HEADER.LOAD_PC)) { throw new MRAException("Fetch was given an instruction besides LOAD_PC: " + HEADER_STRINGS.get(heldInstruction.getHeader())); }
-            heldInstruction.execute(this);
-        }
-        return pass(nextStatus);
+        heldInstruction = super.execute(nextIsBlocked);
+        heldInstruction.execute(this);
+        Instruction ret = pass(nextIsBlocked);
+        heldInstruction = super.execute(nextIsBlocked);
+        if(!heldInstruction.getHeader().equals(HEADER.LOAD_PC)) { throw new MRAException("Fetch was given an instruction besides LOAD_PC: " + HEADER_STRINGS.get(heldInstruction.getHeader())); }
+        heldInstruction.execute(this);
+        return ret;
     }
 }

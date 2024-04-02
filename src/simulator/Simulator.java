@@ -15,8 +15,9 @@ import java.util.logging.Logger;
 
 import static main.GLOBALS.*;
 
-import instructions.Instruction;
 import static instructions.Instructions.*;
+
+import instructions.Instruction;
 import memory.MemoryModule;
 import memory.MemoryRequest;
 import memory.RegisterFileModule;
@@ -26,7 +27,7 @@ public class Simulator extends JFrame
 {
     private static final Logger logger = Logger.getLogger(Simulator.class.getName());
 
-    private final int id;
+    private final int id, startingPC;
     private JSplitPane topBottomPane;
     private JLabel callStackLabel, reversalStackLabel, pipelineLabel;
     private RegisterFileModule[] registerBanks;
@@ -50,19 +51,19 @@ public class Simulator extends JFrame
     private JPanel currentlyVisibleControls, currentlyInvisibleControls, stackPipelinePanel,
                    callStackDisplayPanel, reversalStackDisplayPanel, pipelineDisplayPanel;
 
-    public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int extendedState)
+    public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int extendedState, int startingPC)
     {
-        this.id = id;
-        new Simulator(id, registerBanks, pipeline, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT, extendedState);
+        this(id, registerBanks, pipeline, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT, extendedState, startingPC);
     }
 
-    public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int width, int height, int extendedState)
+    public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int width, int height, int extendedState, int startingPC)
     {
         this.id = id;
         this.registerBanks = registerBanks;
         this.pipeline = pipeline;
         this.frameWidth = width;
         this.frameHeight = height;
+        this.startingPC = startingPC;
 
         setTitle("Basic Memory Manipulator");
         setSize(width, height);
@@ -87,7 +88,6 @@ public class Simulator extends JFrame
             for(int i = 0; i < numTicks; i++)
             {
                 CURRENT_TICK += 1;
-                Instruction output = pipeline.execute();
                 for(JList<MemoryModule> list : memoryLists)
                 {
                     for(int j = 0; j < list.getModel().getSize(); j++)
@@ -95,6 +95,7 @@ public class Simulator extends JFrame
                         list.getModel().getElementAt(j).tick();
                     }
                 }
+                Instruction output = pipeline.execute();
                 if(output.getHeader().equals(HEADER.HALT) || ERROR_INSTRUCTIONS.contains(output.getHeader())) { break; }
             }
             countLabel.setText("Cycles: " + CURRENT_TICK);
@@ -155,11 +156,12 @@ public class Simulator extends JFrame
         resetButton.setMaximumSize(new Dimension(100, 30));
         resetButton.addActionListener(e -> {
             setVisible(false);
-            new Simulator(GET_ID(), registerBanks, pipeline, this.getExtendedState());
+            new Simulator(GET_ID(), registerBanks, pipeline, this.getExtendedState(), startingPC);
             for(RegisterFileModule bank : registerBanks)
             {
                 if(bank != null) { bank.reset(); }
             }
+            registerBanks[INTERNAL_BANK_INDEX].store(List.of(INTERNAL_REGISTER_NAMES).indexOf(PC), startingPC);
             pipeline.reset();
         });
         Component[] toolBarComponents = new Component[] { countLabel, tickButton, tickField, stackPipelineToggle,

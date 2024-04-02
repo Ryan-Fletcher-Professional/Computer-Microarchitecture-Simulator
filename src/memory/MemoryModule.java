@@ -743,6 +743,7 @@ public class MemoryModule
             }
             writeData(false, virtualAddress, newLine);
         }
+
         return readData(line, virtualAddress, wholeLine);
     }
 
@@ -828,7 +829,7 @@ public class MemoryModule
         }
                         try{
         last.tick();    // Should never take exception
-                        }catch(MemoryRequestTimerNotStartedException _ignored_){}
+                        }catch(MemoryRequestTimerNotStartedException ignored){}
         if(last.isFinished()) { accesses.getFirst().removeLast(); }
     }
 }

@@ -15,7 +15,7 @@ public class Pipeline
     private MemoryModule nearestDataCache;
     private boolean[][] pendingRegisters;
     private int wordSize;
-    private PipelineStage dummyEndStage;  // This and dummyStartStage exist to prevent erroneous consecutation of actual pipeline stages
+    private PipelineStage endStage;  // This and dummyStartStage exist to prevent erroneous consecutation of actual pipeline stages
 
     public Pipeline(RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters,
                     RegisterFileModule callStack, RegisterFileModule reversalStack,
@@ -34,7 +34,7 @@ public class Pipeline
     public void setWordSize(int size)
     {
         wordSize = size;
-        PipelineStage currentStage = dummyEndStage;
+        PipelineStage currentStage = endStage;
         while(currentStage != null)
         {
             currentStage.setWordSize(size);
@@ -47,13 +47,12 @@ public class Pipeline
         return wordSize;
     }
 
-    // TODO : Call when cycling from the simulator
     public Instruction execute()
     {
         Instruction ret = null;
         try
         {
-            ret = this.dummyEndStage.execute(false);
+            ret = this.endStage.execute(false);
         }
         catch(MRAException e)
         {
@@ -73,7 +72,6 @@ public class Pipeline
         this.reversalStack = reversalStack;
         this.nearestInstructionCache = nearestInstructionCache;
         this.wordSize = wordSize;
-        PipelineStage dummyStartStage = new PipelineStage(wordSize, "dummy start");
         FetchStage fetch = new FetchStage(wordSize, "Fetch", internalRegisters, nearestInstructionCache);
         DecodeStage decode = new DecodeStage(wordSize, "Decode", indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
         ExecuteStage execute = new ExecuteStage(wordSize, "Execute", internalRegisters);
@@ -81,25 +79,25 @@ public class Pipeline
                                                          nearestInstructionCache, nearestDataCache);
         MemoryWritebackStage write = new MemoryWritebackStage(wordSize, "Write",
                                                               indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
-        this.dummyEndStage = new PipelineStage(wordSize, "dummy end");
-        PipelineStage.CONSECUTE(new PipelineStage[] { dummyStartStage, fetch, decode, execute, access, write, this.dummyEndStage });
+        this.endStage = write;
+        PipelineStage.CONSECUTE(new PipelineStage[] { fetch, decode, execute, access, write });
     }
 
     public void setNearestInstructionCache(MemoryModule module)
     {
         this.nearestInstructionCache = module;
-        dummyEndStage.setNearestInstructionCache(module);
+        endStage.setNearestInstructionCache(module);
     }
     public void setNearestDataCache(MemoryModule module)
     {
         this.nearestDataCache = module;
-        dummyEndStage.setNearestDataCache(module);
+        endStage.setNearestDataCache(module);
     }
 
 
     public String getDisplayText(int radix)
     {
-        return (dummyEndStage.previousStage == null) ? "No pipeline stages" : dummyEndStage.previousStage.getDisplayText(radix);
+        return (endStage.previousStage == null) ? "No pipeline stages" : endStage.getDisplayText(radix);
     }
 
     public void reset()

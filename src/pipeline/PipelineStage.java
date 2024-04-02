@@ -13,7 +13,7 @@ public class PipelineStage
     PipelineStage previousStage;
     Instruction heldInstruction;
     private PipelineStage nextStage;
-    private boolean blocked = false;
+    private boolean blocking = false;
 
     public PipelineStage(int wordSize, String name)
     {
@@ -59,29 +59,31 @@ public class PipelineStage
         }
     }
 
-    public boolean isBlocked()
+    protected Instruction getDefaultInstruction(int wordSize)
     {
-        return blocked;
+        return NOOP(wordSize);
+    }
+
+    public boolean isBlocking()
+    {
+        return blocking;
     }
 
     protected Instruction passUnblocked() throws MRAException
     {
-        heldInstruction.addAuxBits(AUX_FINISHED, AUX_FALSE);
-        Instruction ret = heldInstruction;
-        heldInstruction = previousStage.execute(false);
-        return ret;
+        blocking = false;
+        return heldInstruction;
     }
 
-    protected Instruction passBlocked() throws MRAException
+    protected Instruction passBlocked()
     {
-        heldInstruction.addAuxBits(AUX_FINISHED, AUX_TRUE);
-        previousStage.execute(true);
-        return heldInstruction.getHeader() == HEADER.STALL ? STALL(wordSize) : NOOP(wordSize);
+        blocking = false;
+        return STALL(wordSize);
     }
 
-    protected Instruction passBlocking() throws MRAException
+    protected Instruction passBlocking()
     {
-        previousStage.execute(true);
+        blocking = true;
         return STALL(wordSize);
     }
 
@@ -98,24 +100,36 @@ public class PipelineStage
     }
 
     /**
-     * SHOULD BE EXTENDED BY CHILD CLASSES
-     * @param nextStatus Blocked status of following stage in pipeline.
+     * SHOULD BE EXTENDED (and sometimes called at start of child.execute()) BY CHILD CLASSES.
+     * Should not be used as model behavior.
+     * @param nextIsBlocked Blocked status of following stage in pipeline.
      * @return STALL if this stage is blocked. If not, previousStage.execute() (default NOOP).
      */
-    protected Instruction execute(boolean nextStatus) throws MRAException
+    protected Instruction execute(boolean nextIsBlocked) throws MRAException
     {
-        Instruction ret = this.isBlocked() ? STALL(wordSize) : LOAD_PC(wordSize);
-        if(previousStage != null) { ret = previousStage.execute(this.isBlocked()); }
+        if(heldInstruction == null) { heldInstruction = getDefaultInstruction(wordSize); }
+        Instruction ret = heldInstruction;
+        heldInstruction = (previousStage != null) ? previousStage.execute(nextIsBlocked) : null;
         return ret;
     }
 
     public String getDisplayText(int radix)
     {
-        if(previousStage == null) { return ""; }
         StringBuilder ret = new StringBuilder();
 
-        String nameString = name + "  :  " + (isBlocked() ? "BLOCKED" : "AVAILABLE");
+        String nameString = name + "  :  " + (isBlocking() ? "BLOCKING" : "AVAILABLE");
         String wordString = (heldInstruction != null) ? SMART_TO_STRING(heldInstruction.wordNum(), radix) : "NONE";
+        if(!wordString.equals("NONE"))
+        {
+            int sizeDif = heldInstruction.wordLength() - wordString.length();
+            if(sizeDif > 0) { wordString = "0".repeat(sizeDif) + wordString; }
+            if(radix == 2)
+            {
+                wordString = wordString.substring(0, TYPECODE_SIZE) + " " +
+                        wordString.substring(TYPECODE_SIZE, TYPECODE_SIZE + OPCODE_SIZE) + " " +
+                        wordString.substring(TYPECODE_SIZE + OPCODE_SIZE);
+            }
+        }
         int valueLength = Math.max(nameString.length(), wordString.length());
         StringBuilder currentName = new StringBuilder();
         currentName.append("  ")
@@ -131,7 +145,7 @@ public class PipelineStage
 
         ret.append("  ").append("-".repeat(valueLength)).append("  ");
 
-        ret.append("\n").append(previousStage.getDisplayText(radix));
+        ret.append("\n").append((previousStage == null) ? "" : previousStage.getDisplayText(radix));
         return ret.toString();
     }
 

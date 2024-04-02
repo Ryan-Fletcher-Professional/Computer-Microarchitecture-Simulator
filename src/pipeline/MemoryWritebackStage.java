@@ -2,6 +2,7 @@ package pipeline;
 
 import instructions.Instruction;
 import memory.RegisterFileModule;
+
 import static instructions.Instructions.*;
 
 public class MemoryWritebackStage extends PipelineStage
@@ -26,7 +27,7 @@ public class MemoryWritebackStage extends PipelineStage
     }
 
     @Override
-    public Instruction execute(boolean nextStatus) throws MRAException
+    public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
         if(heldInstruction.getAuxBits(AUX_RESULT) != null)
         {
@@ -48,6 +49,9 @@ public class MemoryWritebackStage extends PipelineStage
         {
             // TODO : Record stall
         }
-        return pass(nextStatus);
+        Instruction ret = heldInstruction;
+        Instruction gotten = previousStage.execute(nextIsBlocked);
+        if(!nextIsBlocked) { heldInstruction = gotten; }
+        return ret;
     }
 }

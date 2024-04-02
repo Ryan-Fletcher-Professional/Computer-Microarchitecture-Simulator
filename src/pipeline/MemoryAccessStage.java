@@ -2,6 +2,9 @@ package pipeline;
 
 import instructions.Instruction;
 import memory.MemoryModule;
+
+import java.util.Objects;
+
 import static instructions.Instructions.*;
 
 public class MemoryAccessStage extends PipelineStage
@@ -31,7 +34,7 @@ public class MemoryAccessStage extends PipelineStage
     }
 
     @Override
-    public Instruction execute(boolean nextStatus) throws MRAException
+    public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
         if(MEMORY_INSTRUCTIONS.contains(heldInstruction.getHeader()))  // TODO : Instruction.execute() should be able to properly handle being called after AUX_FINISHED is marked as TRUE
         {
@@ -39,13 +42,18 @@ public class MemoryAccessStage extends PipelineStage
         }
         else
         {
-            heldInstruction.addAuxBits(AUX_FINISHED, AUX_TRUE);
+            heldInstruction.addAuxBits(AUX_FINISHED_MEMORY_ACCESS_STAGE, AUX_TRUE);
         }
 
-        if(AUX_TRUE(heldInstruction.getAuxBits(AUX_FINISHED)))  // TODO : Memory instructions should not mark their results until memory access requests are done cycling
+        Instruction ret = pass(nextIsBlocked);
+        if(!nextIsBlocked && (heldInstruction.isFinished() || AUX_TRUE(Objects.requireNonNullElse(heldInstruction.getAuxBits(AUX_FINISHED_MEMORY_ACCESS_STAGE), AUX_FALSE()))))  // TODO : Memory instructions should not mark their results until memory access requests are done cycling
         {
-            return pass(nextStatus);
+            heldInstruction = previousStage.execute(nextIsBlocked);
         }
-        return passBlocking();
+        else
+        {
+            previousStage.execute(true);
+        }
+        return ret;
     }
 }

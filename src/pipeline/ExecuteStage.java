@@ -1,7 +1,6 @@
 package pipeline;
 
 import instructions.Instruction;
-import instructions.Term;
 import memory.RegisterFileModule;
 
 import static instructions.Instructions.*;
@@ -32,7 +31,15 @@ public class ExecuteStage extends PipelineStage
     }
 
     @Override
-    public Instruction execute(boolean nextStatus) throws MRAException
+    protected Instruction pass(boolean nextIsBlocked) throws MRAException
+    {
+        Instruction ret = super.pass(nextIsBlocked);
+        heldInstruction = previousStage.execute(nextIsBlocked);
+        return ret;
+    }
+
+    @Override
+    public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
         if(ALU_INSTRUCTIONS.contains(heldInstruction.getHeader()))
         {
@@ -52,6 +59,6 @@ public class ExecuteStage extends PipelineStage
         {
             // TODO : Check condition, set flag
         }
-        return pass(nextStatus);
+        return pass(nextIsBlocked);
     }
 }

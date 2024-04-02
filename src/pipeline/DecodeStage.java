@@ -29,7 +29,7 @@ public class DecodeStage extends PipelineStage
     }
 
     @Override
-    public Instruction execute(boolean nextStatus) throws MRAException
+    public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
         /*
             Splitting instruction into fields is not simulated explicity.
@@ -38,12 +38,12 @@ public class DecodeStage extends PipelineStage
          */
 
         // TODO : getSourceRegs() returns an index for each source in the instruction, REGISTER OR NOT!
-        //  Non-register sources (and already-read sources) are set to index=-1 with no prefix
+        //  Non-register sources and already-read sources are set to index=-1 with no prefix
         String[] sourceRegs = heldInstruction.getSourceRegs();
         for(int i = 0; i < sourceRegs.length; i++)
         {
             int idx = Integer.parseInt(sourceRegs[i].substring(1));
-            if(sourceRegs[i].startsWith(RegisterFileModule.INDEXABLE_PREFIX) && (idx >= 0))
+            if((idx >= 0) && sourceRegs[i].startsWith(RegisterFileModule.INDEXABLE_PREFIX))
             {
                 if(!pendingRegisters[INDEXABLE_BANK_INDEX][idx])
                 {
@@ -56,7 +56,7 @@ public class DecodeStage extends PipelineStage
                     heldInstruction.addAuxBits(AUX_SOURCE(i) + READ, AUX_FALSE);
                 }
             }
-            else if(sourceRegs[i].startsWith(RegisterFileModule.INTERNAL_PREFIX) && (idx >= 0))
+            else if((idx >= 0) && sourceRegs[i].startsWith(RegisterFileModule.INTERNAL_PREFIX))
             {
                 if(!pendingRegisters[INTERNAL_BANK_INDEX][idx])
                 {
@@ -69,7 +69,7 @@ public class DecodeStage extends PipelineStage
                     heldInstruction.addAuxBits(AUX_SOURCE(i) + READ, AUX_FALSE);
                 }
             }
-            else if(sourceRegs[i].startsWith(RegisterFileModule.CALL_PREFIX) && (idx >= 0))
+            else if((idx >= 0) && sourceRegs[i].startsWith(RegisterFileModule.CALL_PREFIX))
             {
                 if(!pendingRegisters[CALL_STACK_INDEX][idx])
                 {
@@ -82,7 +82,7 @@ public class DecodeStage extends PipelineStage
                     heldInstruction.addAuxBits(AUX_SOURCE(i) + READ, AUX_FALSE);
                 }
             }
-            else if(sourceRegs[i].startsWith(RegisterFileModule.REVERSAL_PREFIX) && (idx >= 0))
+            else if((idx >= 0) && sourceRegs[i].startsWith(RegisterFileModule.REVERSAL_PREFIX))
             {
                 if(!pendingRegisters[REVERSAL_STACK_INDEX][idx])
                 {
@@ -105,9 +105,12 @@ public class DecodeStage extends PipelineStage
         {
             if(AUX_FALSE(heldInstruction.getAuxBits(AUX_SOURCE(i) + READ)))
             {
+                previousStage.execute(true);
                 return passBlocking();
             }
         }
-        return pass(nextStatus);
+        Instruction ret = passUnblocked();
+        heldInstruction = previousStage.execute(false);
+        return ret;
     }
 }
