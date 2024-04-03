@@ -11,12 +11,17 @@ public class Instructions
     public enum TYPECODE
     {
         LOAD_STORE,
+        BRANCH,
+        INT_ARITHMETIC,
         MISC,
         INTERNAL
     }
     public static Map<TYPECODE, String> TYPECODE_STRINGS = new HashMap<>() {{
 
         put(TYPECODE.LOAD_STORE, "000");
+        put(TYPECODE.BRANCH, "001");
+        put(TYPECODE.INT_ARITHMETIC, "010");
+        //
         put(TYPECODE.MISC, "110");
         put(TYPECODE.INTERNAL, "111");
 
@@ -32,6 +37,10 @@ public class Instructions
     {
         LOAD,
 
+        BRANCH_IF_NEGATIVE,
+
+        INT_ADD,
+
         HALT,
 
         NOOP,
@@ -43,6 +52,10 @@ public class Instructions
     public static Map<OPCODE, String> OPCODE_STRINGS = new HashMap<>() {{
 
         put(OPCODE.LOAD, "000");
+
+        put(OPCODE.BRANCH_IF_NEGATIVE, "010");
+
+        put(OPCODE.INT_ADD, "000");
 
         put(OPCODE.HALT, "101");
 
@@ -65,6 +78,10 @@ public class Instructions
     {
         LOAD,
 
+        BRANCH_IF_NEGATIVE,
+
+        INT_ADD,
+
         HALT,
 
         NOOP,
@@ -76,15 +93,19 @@ public class Instructions
     private static String MAKE_HEADER_STRING(TYPECODE type, OPCODE op) { return TYPECODE_STRINGS.get(type) + OPCODE_STRINGS.get(op); }
     public static Map<HEADER, String> HEADER_STRINGS = new HashMap<>() {{
 
-        put(HEADER.LOAD,            MAKE_HEADER_STRING( TYPECODE.LOAD_STORE, OPCODE.LOAD            ));
+        put(HEADER.LOAD,                    MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.LOAD            ));
 
-        put(HEADER.HALT,            MAKE_HEADER_STRING( TYPECODE.MISC,       OPCODE.HALT            ));
+        put(HEADER.BRANCH_IF_NEGATIVE,      MAKE_HEADER_STRING( TYPECODE.BRANCH,            OPCODE.BRANCH_IF_NEGATIVE  ));
 
-        put(HEADER.NOOP,            MAKE_HEADER_STRING( TYPECODE.INTERNAL,   OPCODE.NOOP            ));
-        put(HEADER.STALL,           MAKE_HEADER_STRING( TYPECODE.INTERNAL,   OPCODE.STALL           ));
-        put(HEADER.QUASH_SIZE_ERR,  MAKE_HEADER_STRING( TYPECODE.INTERNAL,   OPCODE.QUASH_SIZE_ERR  ));
-        put(HEADER.LOAD_PC,         MAKE_HEADER_STRING( TYPECODE.INTERNAL,   OPCODE.LOAD_PC         ));
-        put(HEADER.EXECUTION_ERR,   MAKE_HEADER_STRING( TYPECODE.INTERNAL,   OPCODE.EXECUTION_ERR   ));
+        put(HEADER.INT_ADD,                 MAKE_HEADER_STRING( TYPECODE.INT_ARITHMETIC,    OPCODE.INT_ADD     ));
+
+        put(HEADER.HALT,                    MAKE_HEADER_STRING( TYPECODE.MISC,              OPCODE.HALT            ));
+
+        put(HEADER.NOOP,                    MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.NOOP            ));
+        put(HEADER.STALL,                   MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.STALL           ));
+        put(HEADER.QUASH_SIZE_ERR,          MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.QUASH_SIZE_ERR  ));
+        put(HEADER.LOAD_PC,                 MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.LOAD_PC         ));
+        put(HEADER.EXECUTION_ERR,           MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.EXECUTION_ERR   ));
 
     }};
     public static Map<String, HEADER> HEADERS = new HashMap<>() {{
@@ -135,6 +156,9 @@ public class Instructions
     public static final String AUX_DEST_ = "destination address ";
     public static final String AUX_RESULT = "final result of execution";
     public static final String AUX_RESULTS_ = "final results of execution ";
+    public static final String AUX_SOURCE_DEST_TYPE_ = "source or destination type ";
+        public static final int AUX_SOURCE_DEST_TYPE_REG = 0;
+        public static final int AUX_SOURCE_DEST_TYPE_IMMEDIATE = 1;
     public static final String AUX_ERR_TYPE = "execution error type";
     public static final String AUX_FLAG_ = "flag ";
         public static final int ERR_TYPE_NOT_IMPLEMENTED = 0b00000000000000000000000001;  // For when trying to execute() an instruction that has been intentionally left unimplemented
@@ -146,6 +170,11 @@ public class Instructions
     public static String AUX_SOURCE(int idx)
     {
         return AUX_SOURCE_ + Integer.toString(idx);
+    }
+
+    public static String AUX_SOURCE_DEST_TYPE(int idx)
+    {
+        return AUX_SOURCE_DEST_TYPE_ + Integer.toString(idx);
     }
 
     public static String AUX_DEST(int idx)

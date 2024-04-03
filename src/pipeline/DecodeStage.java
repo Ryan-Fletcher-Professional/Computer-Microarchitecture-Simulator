@@ -4,6 +4,7 @@ import instructions.Instruction;
 import instructions.Term;
 import memory.RegisterFileModule;
 import static instructions.Instructions.*;
+import static instructions.Instructions.AUX_SOURCE_TYPE_REG;
 import static main.GLOBALS.*;
 
 public class DecodeStage extends PipelineStage
@@ -33,24 +34,57 @@ public class DecodeStage extends PipelineStage
     public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
         // TODO : Split flags and argument according to header and add as aux bits
+        int length = heldInstruction.wordLength();
+        long instruction = heldInstruction.wordNum();
+
         switch(heldInstruction.getHeader())
         {
             case HEADER.LOAD -> {
-                if(heldInstruction.wordLength() == WORD_SIZE_LONG)
-                    { heldInstruction.addAuxBits(FLAG(0), new Term(heldInstruction.wordNum() & MASK(5))); }
-                int start = heldInstruction.wordLength() == WORD_SIZE_LONG ? 56 : 24;
-                if((heldInstruction.wordLength() == WORD_SIZE_SHORT) || AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0))
+                if(length == WORD_SIZE_LONG)
+                    { heldInstruction.addAuxBits(FLAG(0), new Term(instruction & MASK(6))); }
+
+                int start = (length == WORD_SIZE_LONG) ? 56 : 24;
+                if((length == WORD_SIZE_SHORT) || AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0))
                 {
-                    heldInstruction.addAuxBits(AUX_SOURCE(0), heldInstruction.wordNum() & MASK_RANGE(start, start + 4));
+                    heldInstruction.addAuxBits(AUX_SOURCE(0), instruction & MASK_RANGE(start, start + 4));
+                    heldInstruction.addAuxBits(AUX_SOURCE_DEST_TYPE(0), new Term(AUX_SOURCE_DEST_TYPE_REG));
                 }
                 else
                 {
                     start -= (25 - 4);
-                    heldInstruction.addAuxBits(AUX_SOURCE(0), heldInstruction.wordNum() & MASK_RANGE(start, start + 25));
+                    heldInstruction.addAuxBits(AUX_SOURCE(0), instruction & MASK_RANGE(start, start + 25));
+                    heldInstruction.addAuxBits(AUX_SOURCE_DEST_TYPE(0), new Term(AUX_SOURCE_DEST_TYPE_IMMEDIATE));
                 }
                 start += 4;
-                heldInstruction.addAuxBits(AUX_DEST(0), heldInstruction.wordNum() & MASK_RANGE(start, start + 4));
+                heldInstruction.addAuxBits(AUX_DEST(0), instruction & MASK_RANGE(start, start + 4));
+                heldInstruction.addAuxBits(AUX_SOURCE_DEST_TYPE(0), new Term(AUX_SOURCE_DEST_TYPE_REG));
             }
+
+            case HEADER.BRANCH_IF_NEGATIVE -> {
+                heldInstruction.addAuxBits(FLAG(0), new Term(instruction & MASK(6)));
+
+                int start = length - 4;
+                heldInstruction.addAuxBits(AUX_SOURCE_DEST_TYPE(0), new Term(AUX_SOURCE_DEST_TYPE_REG));
+                if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 1)
+                {
+                    start -= (25 - 4);
+                    heldInstruction.addAuxBits(AUX_SOURCE_DEST_TYPE(0), new Term(AUX_SOURCE_DEST_TYPE_IMMEDIATE));
+                }
+                heldInstruction.addAuxBits(AUX_SOURCE(0), instruction & MASK_RANGE(start, length));
+            }
+
+//            case HEADER.INT_ADD -> {
+//                if(length == WORD_SIZE_SHORT)
+//                {
+//                    heldInstruction.addAuxBits(FLAG(0), new Term(instruction & MASK(6)));
+//
+//
+//                }
+//                else
+//                {
+//
+//                }
+//            }
         }
 
         // TODO : getSourceRegs() returns an index for each source in the instruction, REGISTER OR NOT!
