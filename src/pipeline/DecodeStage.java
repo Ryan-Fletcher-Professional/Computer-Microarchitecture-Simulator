@@ -1,6 +1,7 @@
 package pipeline;
 
 import instructions.Instruction;
+import instructions.Term;
 import memory.RegisterFileModule;
 import static instructions.Instructions.*;
 import static main.GLOBALS.*;
@@ -32,6 +33,25 @@ public class DecodeStage extends PipelineStage
     public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
         // TODO : Split flags and argument according to header and add as aux bits
+        switch(heldInstruction.getHeader())
+        {
+            case HEADER.LOAD -> {
+                if(heldInstruction.wordLength() == WORD_SIZE_LONG)
+                    { heldInstruction.addAuxBits(FLAG(0), new Term(heldInstruction.wordNum() & MASK(5))); }
+                int start = heldInstruction.wordLength() == WORD_SIZE_LONG ? 56 : 24;
+                if((heldInstruction.wordLength() == WORD_SIZE_SHORT) || AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0))
+                {
+                    heldInstruction.addAuxBits(AUX_SOURCE(0), heldInstruction.wordNum() & MASK_RANGE(start, start + 4));
+                }
+                else
+                {
+                    start -= (25 - 4);
+                    heldInstruction.addAuxBits(AUX_SOURCE(0), heldInstruction.wordNum() & MASK_RANGE(start, start + 25));
+                }
+                start += 4;
+                heldInstruction.addAuxBits(AUX_DEST(0), heldInstruction.wordNum() & MASK_RANGE(start, start + 4));
+            }
+        }
 
         // TODO : getSourceRegs() returns an index for each source in the instruction, REGISTER OR NOT!
         //  Non-register sources and already-read sources are set to index=-1 with no prefix

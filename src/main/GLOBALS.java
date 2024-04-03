@@ -28,6 +28,11 @@ public class GLOBALS
     public static final int[] REGISTER_BANK_INDECES = new int[] { INDEXABLE_BANK_INDEX, INTERNAL_BANK_INDEX, CALL_STACK_INDEX, REVERSAL_STACK_INDEX };
     public static final String PC = "PC";
     public static final String CC = "CC";
+    public static final int CC_NEGATIVE_POSITIVE_MASK = MASK(15);
+    public static boolean CC_NEGATIVE(int cc) { return !CC_POSITIVE(cc); }
+    public static boolean CC_POSITIVE(int cc) { return (cc & CC_NEGATIVE_POSITIVE_MASK) == CC_NEGATIVE_POSITIVE_MASK; }
+    public static final int CC_ZERO_MASK = MASK(14);
+    public static boolean C_ZERO(int cc) { return (cc & CC_ZERO_MASK) == CC_ZERO_MASK; }
     public static final String PRED_1 = "PRED 1";
     public static final String PRED_2 = "PRED 2";
     public static final String CALL = "CALL";
@@ -68,6 +73,8 @@ public class GLOBALS
         SHORT,
         LONG
     }
+    public static int WORD_SIZE_SHORT = 32;
+    public static int WORD_SIZE_LONG = 64;
 
     public enum WRITE_MODE
     {
@@ -129,6 +136,56 @@ public class GLOBALS
     public static String SMART_TO_STRING(long i, int radix)
     {
         return radix == 10 ? Long.toString(i, 10) : Long.toUnsignedString(i, radix);
+    }
+
+    /**
+     * Returns an int with a single bit in the given index from the left
+     * (i.e. MASK(2) = 0b00100000000000000000000000000000)
+     * @param idxFromLeft
+     * @return
+     */
+    public static int MASK(int idxFromLeft)
+    {
+        return 0b1 << (Integer.SIZE - 1 - idxFromLeft);
+    }
+
+    /**
+     * Returns a long with a single bit in the given index from the left
+     * (i.e. MASK_LONG(2) = 0b0010000000000000000000000000000000000000000000000000000000000000)
+     * @param idxFromLeft
+     * @return
+     */
+    public static long MASK_LONG(int idxFromLeft)
+    {
+        return 0b1L << (Long.SIZE - 1 - idxFromLeft);
+    }
+
+    /**
+     * Returns an int with bits in the given range, indexed from the left
+     * (i.e. MASK_RANGE(2, 5) = 0b00111000000000000000000000000000)
+     * @param startIdxFromLeft
+     * @param endIdxFromLeft
+     * @return
+     */
+    public static int MASK_RANGE(int startIdxFromLeft, int endIdxFromLeft)
+    {
+        return (((~0) << (startIdxFromLeft - 1))
+               >>> (startIdxFromLeft - 1 + (Integer.SIZE - endIdxFromLeft)))
+               << (Integer.SIZE - endIdxFromLeft);
+    }
+
+    /**
+     * Returns an int with bits in the given range, indexed from the left
+     * (i.e. MASK_LONG_RANGE(2, 5) = 0b0011100000000000000000000000000000000000000000000000000000000000)
+     * @param startIdxFromLeft
+     * @param endIdxFromLeft
+     * @return
+     */
+    public static long MASK_LONG_RANGE(int startIdxFromLeft, int endIdxFromLeft)
+    {
+        return (((~0L) << (startIdxFromLeft - 1))
+               >>> (startIdxFromLeft - 1 + (Long.SIZE - endIdxFromLeft)))
+               << (Long.SIZE - endIdxFromLeft);
     }
 
     public static boolean[][] NEW_PENDING_REGISTERS(RegisterFileModule[] banks)

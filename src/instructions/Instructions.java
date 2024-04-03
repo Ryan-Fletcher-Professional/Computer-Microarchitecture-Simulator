@@ -127,14 +127,16 @@ public class Instructions
     public static boolean AUX_TRUE(Term term) { return term.toInt() == AUX_TRUE; }
     public static final String AUX_FINISHED = "final result has just been written or instruction has been handled manually by pipeline";
     public static final String AUX_FINISHED_MEMORY_ACCESS_STAGE = "don't need to execute in memory access stage";
-    public static final String AUX_RESULT = "final result of execution";
     public static final String AUX_BRANCH = "branch";
     public static final String AUX_JSR = "jump to subroutine";
     public static final String AUX_JUMP_ADDRESS = "address to jump to";
     public static final String AUX_CURRENT_PC = "return address for JSR";
     public static final String AUX_SOURCE_ = "source value ";
-    public static final String AUX_DEST_ = "source value ";
+    public static final String AUX_DEST_ = "destination address ";
+    public static final String AUX_RESULT = "final result of execution";
+    public static final String AUX_RESULTS_ = "final results of execution ";
     public static final String AUX_ERR_TYPE = "execution error type";
+    public static final String AUX_FLAG_ = "flag ";
         public static final int ERR_TYPE_NOT_IMPLEMENTED = 0b00000000000000000000000001;  // For when trying to execute() an instruction that has been intentionally left unimplemented
 
     public static boolean AUX_EQUALS(Term term, String aux) { return (term != null) && term.toString().equals(aux); }
@@ -149,6 +151,16 @@ public class Instructions
     public static String AUX_DEST(int idx)
     {
         return AUX_DEST_ + Integer.toString(idx);
+    }
+
+    public static String AUX_RESULT(int idx)
+    {
+        return AUX_RESULTS_ + Integer.toString(idx);
+    }
+
+    public static String FLAG(int idx)
+    {
+        return AUX_FLAG_ + Integer.toString(idx);
     }
 
     private static String GET_FILLER(int size)
@@ -189,7 +201,7 @@ public class Instructions
     }
 
     /**
-     * Puts filler 0s between flags and args
+     * Note: Puts filler 0s between flags and args
      * @param size
      * @param type
      * @param op
@@ -203,7 +215,7 @@ public class Instructions
     }
 
     /**
-     * Puts filler 0s between flags and args
+     * Note: Puts filler 0s between flags and args
      * @param size
      * @param header
      * @param flags
@@ -216,14 +228,8 @@ public class Instructions
     }
 
     public static Instruction LOAD              (int size, String flags, String args) { return GET_INSTRUCTION(size, HEADER.LOAD, flags, args); }
-    public static Instruction NOOP              (int size)
-    {
-        return GET_INSTRUCTION(size, HEADER.NOOP, "", "");
-    }
-    public static Instruction STALL             (int size)
-    {
-        return GET_INSTRUCTION(size, HEADER.STALL, "", "");
-    }
+    public static Instruction NOOP              (int size) { return GET_INSTRUCTION(size, HEADER.NOOP, "", ""); }
+    public static Instruction STALL             (int size) { return GET_INSTRUCTION(size, HEADER.STALL, "", ""); }
     public static Instruction QUASH_SIZE_ERR    (int size) { return GET_INSTRUCTION(size, HEADER.QUASH_SIZE_ERR,"", ""); }
     public static Instruction LOAD_PC           (int size) { return GET_INSTRUCTION(size, HEADER.LOAD_PC, "", ""); }
     public static Instruction HALT              (int size) { return GET_INSTRUCTION(size, HEADER.HALT, "", ""); }
