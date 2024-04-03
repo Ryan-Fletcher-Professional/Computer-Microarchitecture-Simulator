@@ -32,11 +32,11 @@ public class GLOBALS
     public static boolean CC_NEGATIVE(int cc) { return !CC_POSITIVE(cc); }
     public static int NEW_CC_NEGATIVE(int cc) { return cc & (~CC_NEGATIVE_POSITIVE_MASK); }
     public static boolean CC_POSITIVE(int cc) { return (cc & CC_NEGATIVE_POSITIVE_MASK) == CC_NEGATIVE_POSITIVE_MASK; }
-    public static int NEW_CC_POSITIVE(int cc) { return cc & CC_NEGATIVE_POSITIVE_MASK; }
+    public static int NEW_CC_POSITIVE(int cc) { return cc | CC_NEGATIVE_POSITIVE_MASK; }
     public static final int CC_ZERO_MASK = MASK(14);
-    public static int NEW_CC_ZERO(int cc) { return cc & CC_ZERO_MASK; }
+    public static boolean CC_ZERO(int cc) { return (cc & CC_ZERO_MASK) == CC_ZERO_MASK; }
+    public static int NEW_CC_ZERO(int cc) { return cc | CC_ZERO_MASK; }
     public static int NEW_CC_NONZERO(int cc) { return cc & (~CC_ZERO_MASK); }
-    public static boolean C_ZERO(int cc) { return (cc & CC_ZERO_MASK) == CC_ZERO_MASK; }
     public static final String PRED_1 = "PRED 1";
     public static final String PRED_2 = "PRED 2";
     public static final String CALL = "CALL";
