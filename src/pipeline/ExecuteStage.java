@@ -60,9 +60,9 @@ public class ExecuteStage extends PipelineStage
             //  that bit in the corresponding register of CC, PRED_1, or PRED_2 must be set to 1 in order for branch to
             //  occur.
             int[] checks = heldInstruction.getPositiveConditionChecks();
-            if((internalRegisters.load(List.of(internalRegisters.names).indexOf(CC)) & checks[0]) == 0) { branch = false; }
-            if((internalRegisters.load(List.of(internalRegisters.names).indexOf(PRED_1)) & checks[1]) == 0) { branch = false; }
-            if((internalRegisters.load(List.of(internalRegisters.names).indexOf(PRED_1)) & checks[2]) == 0) { branch = false; }
+            if((internalRegisters.load(List.of(internalRegisters.names).indexOf(CC)) & checks[0]) != checks[0]) { branch = false; }
+            if((internalRegisters.load(List.of(internalRegisters.names).indexOf(PRED_1)) & checks[1]) != checks[1]) { branch = false; }
+            if((internalRegisters.load(List.of(internalRegisters.names).indexOf(PRED_1)) & checks[2]) != checks[2]) { branch = false; }
 
             // TODO : getNegativeConditionChecks() returns three (ordered) ints s.t. for each bit in the int that =1,
             //  that bit in the corresponding register of CC, PRED_1, or PRED_2 must be set to 0 in order for branch to

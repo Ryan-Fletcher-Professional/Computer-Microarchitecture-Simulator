@@ -64,9 +64,9 @@ public class DecodeStage extends PipelineStage
         for(int i = 0; i < sourceRegs.length; i++)
         {
             int idx = Integer.parseInt(sourceRegs[i].substring(1));
-            System.out.println(heldInstruction.getHeader() + " " + idx);
-            System.out.println(heldInstruction.getHeader() + " " + heldInstruction.getAuxBits(AUX_SOURCE(i)).toInt());
-            System.out.println(heldInstruction.getHeader() + " " + Objects.requireNonNullElse(heldInstruction.getAuxBits(AUX_SOURCE(i) + READ), new Term(2)).toInt());
+//            System.out.println(heldInstruction.getHeader() + " " + idx);
+//            System.out.println(heldInstruction.getHeader() + " " + heldInstruction.getAuxBits(AUX_SOURCE(i)).toInt());
+//            System.out.println(heldInstruction.getHeader() + " " + Objects.requireNonNullElse(heldInstruction.getAuxBits(AUX_SOURCE(i) + READ), new Term(2)).toInt());
             if((idx >= 0) && sourceRegs[i].startsWith(RegisterFileModule.INDEXABLE_PREFIX))
             {
                 if(!pendingRegisters[INDEXABLE_BANK_INDEX][idx])
@@ -312,6 +312,10 @@ public class DecodeStage extends PipelineStage
             }
             heldInstruction.addAuxBits(AUX_SOURCE(0), MASK_LONG(instruction, start, length));
         }
+
+        heldInstruction.addAuxBits(AUX_DEST(0), new Term(PC_INDEX));
+        heldInstruction.addAuxBits(AUX_DEST_TYPE(0), new Term(AUX_DEST_TYPE_REGISTER));
+        heldInstruction.addAuxBits(AUX_DEST_BANK(0), new Term(AUX_REG_BANK_INTERNALS));
     }
 
     private void decodeIntAdd(int length, long instruction)
@@ -409,15 +413,8 @@ public class DecodeStage extends PipelineStage
 
     private void decodeCompare(int length, long instruction)
     {
-        heldInstruction.addAuxBits(FLAG(0), new Term(MASK_LONG(instruction, 6)));
-        heldInstruction.addAuxBits(FLAG(1), new Term(MASK_LONG(instruction, 7)));
-
         if(length == WORD_SIZE_SHORT)
         {
-            heldInstruction.addAuxBits(FLAG(0), new Term(MASK((int)instruction, 6)));
-            heldInstruction.addAuxBits(FLAG(1), new Term(MASK((int)instruction, 7)));
-
-
             int start = 24;
 
             heldInstruction.addAuxBits(AUX_SOURCE(0), new Term(MASK((int)instruction, start, start + 4)));

@@ -2,9 +2,10 @@ package pipeline;
 
 import instructions.Instruction;
 import memory.RegisterFileModule;
-import static main.GLOBALS.*;
 
 import java.util.Arrays;
+
+import static main.GLOBALS.*;
 
 import static instructions.Instructions.*;
 
@@ -41,10 +42,15 @@ public class MemoryWritebackStage extends PipelineStage
         else if(heldInstruction.getResult(0) != null)
         {
             String[] destRegs = heldInstruction.getDestRegs();
-//            System.out.println(Arrays.toString(destRegs));
+//            System.out.println(header + Arrays.toString(destRegs));
+            boolean branched = false;
             for(int i = 0; heldInstruction.getAuxBits(AUX_RESULT(i)) != null; i++)
             {
-                System.out.println(i);
+                if(BRANCH_INSTRUCTIONS.contains(header))
+                {
+                    branched = true;
+                }
+                //System.out.println(i);
                 String dest = destRegs[i];
                 int idx = Integer.parseInt(dest.substring(1));
                 if(dest.startsWith(RegisterFileModule.INDEXABLE_PREFIX))
@@ -70,7 +76,18 @@ public class MemoryWritebackStage extends PipelineStage
             }
 
             Instruction ret = heldInstruction;
-            heldInstruction = previousStage.execute(nextIsBlocked);
+            if(!branched)
+            {
+                heldInstruction = previousStage.execute(nextIsBlocked);
+            }
+            else
+            {
+                heldInstruction = previousStage.quashFromBranch();
+                for(boolean[] bank : pendingRegisters)
+                {
+                    Arrays.fill(bank, false);
+                }
+            }
             return ret;
         }
         else if(header.equals(HEADER.NOOP))

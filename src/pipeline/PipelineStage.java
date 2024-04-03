@@ -99,6 +99,20 @@ public class PipelineStage
         }
     }
 
+    public Instruction quashFromBranch()
+    {
+        if(previousStage != null)
+        {
+            previousStage.quashFromBranch();
+            heldInstruction = QUASH_BRANCH(wordSize);
+        }
+        else
+        {
+            heldInstruction = null;
+        }
+        return QUASH_BRANCH(wordSize);
+    }
+
     /**
      * SHOULD BE EXTENDED (and sometimes called at start of child.execute()) BY CHILD CLASSES.
      * Should not be used as model behavior.

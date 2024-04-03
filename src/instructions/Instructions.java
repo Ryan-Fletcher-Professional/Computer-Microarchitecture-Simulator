@@ -53,6 +53,7 @@ public class Instructions
         NOOP,
         STALL,
         QUASH_SIZE_ERR,
+        QUASH_BRANCH,
         LOAD_PC,
         EXECUTION_ERR
     }
@@ -72,7 +73,8 @@ public class Instructions
         put(OPCODE.NOOP, "000");
         put(OPCODE.STALL, "001");
         put(OPCODE.QUASH_SIZE_ERR, "010");
-        put(OPCODE.LOAD_PC, "011");
+        put(OPCODE.QUASH_BRANCH, "011");
+        put(OPCODE.LOAD_PC, "100");
         //
         put(OPCODE.EXECUTION_ERR, "111");
 
@@ -100,6 +102,7 @@ public class Instructions
         NOOP,
         STALL,
         QUASH_SIZE_ERR,
+        QUASH_BRANCH,
         LOAD_PC,
         EXECUTION_ERR
     }
@@ -120,6 +123,7 @@ public class Instructions
         put(HEADER.NOOP,                    MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.NOOP                 ));
         put(HEADER.STALL,                   MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.STALL                ));
         put(HEADER.QUASH_SIZE_ERR,          MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.QUASH_SIZE_ERR       ));
+        put(HEADER.QUASH_BRANCH,            MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.QUASH_BRANCH       ));
         put(HEADER.LOAD_PC,                 MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.LOAD_PC              ));
         put(HEADER.EXECUTION_ERR,           MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.EXECUTION_ERR        ));
 
@@ -140,7 +144,8 @@ public class Instructions
     }));
     public static final List<HEADER> ALU_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {
-        HEADER.INT_ADD
+        HEADER.INT_ADD,
+        HEADER.COMPARE
     }));
     public static final List<HEADER> BRANCH_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {
@@ -303,6 +308,7 @@ public class Instructions
     public static Instruction NOOP              (int size) { return GET_INSTRUCTION(size, HEADER.NOOP, "", ""); }
     public static Instruction STALL             (int size) { return GET_INSTRUCTION(size, HEADER.STALL, "", ""); }
     public static Instruction QUASH_SIZE_ERR    (int size) { return GET_INSTRUCTION(size, HEADER.QUASH_SIZE_ERR,"", ""); }
+    public static Instruction QUASH_BRANCH      (int size) { return GET_INSTRUCTION(size, HEADER.QUASH_BRANCH,"", ""); }
     public static Instruction LOAD_PC           (int size) { return GET_INSTRUCTION(size, HEADER.LOAD_PC, "", ""); }
     public static Instruction HALT              (int size) { return GET_INSTRUCTION(size, HEADER.HALT, "", ""); }
     public static Instruction ERR               (int size, long errType)
