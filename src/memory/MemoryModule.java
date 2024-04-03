@@ -569,10 +569,11 @@ public class MemoryModule
                         {
                             if(bytesRead == 4)
                             {
-                                int value = (buffer[0] << 24) |
-                                            (buffer[1] << 16) |
-                                            (buffer[2] << 8) |
-                                             buffer[3];
+                                int value = 0;
+                                value = (value | (buffer[0] & 0b00000000000000000000000011111111)) << 8;
+                                value = (value | (buffer[1] & 0b00000000000000000000000011111111)) << 8;
+                                value = (value | (buffer[2] & 0b00000000000000000000000011111111)) << 8;
+                                value = (value | (buffer[3] & 0b00000000000000000000000011111111));
                                 words.add(value);
                             }
                             else
@@ -633,10 +634,10 @@ public class MemoryModule
                         byte[] data = new byte[4 * words.length];
                         for(int i = 0; i < words.length; i++)
                         {
-                            data[(4 * i) + 0] = (byte)(words[i] >> 24);
-                            data[(4 * i) + 1] = (byte)(words[i] >> 16);
-                            data[(4 * i) + 2] = (byte)(words[i] >> 8);
-                            data[(4 * i) + 3] = (byte)(words[i] >> 0);
+                            data[(4 * i) + 0] = (byte)(words[i] >>> 24);
+                            data[(4 * i) + 1] = (byte)(words[i] >>> 16);
+                            data[(4 * i) + 2] = (byte)(words[i] >>> 8);
+                            data[(4 * i) + 3] = (byte)(words[i] >>> 0);
                         }
                         System.out.println(Arrays.toString(data));
                         writer.write(data);

@@ -103,7 +103,7 @@ public class Simulator extends JFrame
                 }
                 else if(ERROR_INSTRUCTIONS.contains(output.getHeader()))
                 {
-                    System.out.println("ERROR ENCOUNTERED");
+                    System.out.println("ERROR ENCOUNTERED: " + output.word.toString());
                     break;
                 }
             }

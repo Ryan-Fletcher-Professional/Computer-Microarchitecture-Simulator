@@ -12,7 +12,7 @@ import static main.GLOBALS.*;
 public class Instruction
 {
     public int id;
-    private final Term word;
+    public final Term word;
     private Map<String, Term> auxBits;
     private LinkedList<MemoryRequest> activeRequest;
 
@@ -38,6 +38,7 @@ public class Instruction
         if((size != 32) && (size != 64)) {throw new IllegalArgumentException("Instruction word must be 32 or 64 bits long, not " + size); }
         if(HEADERS.get(word.toString().substring(0, TYPECODE_SIZE + OPCODE_SIZE)) == null)
         {
+            System.out.println("Null header");
             this.word = ERR(size, ERR_TYPE_NOT_IMPLEMENTED).word;
         }
         else
@@ -276,8 +277,6 @@ public class Instruction
         String KEY = "add_w_holding";
         //TODO: make more modular in line with ISA (currently only accepting register sources)
         //      Register values read in DecodeStage
-        System.out.println("a: " + getAuxBits(AUX_SOURCE(0)).toInt());
-        System.out.println("b: " + getAuxBits(AUX_SOURCE(1)).toInt());
         addAuxBits(AUX_RESULT(0), new Term(getAuxBits(AUX_SOURCE(0)).toInt() + getAuxBits(AUX_SOURCE(1)).toInt()));
         addAuxBits(AUX_FINISHED, AUX_TRUE);
     }

@@ -154,7 +154,8 @@ public class Instructions
     }));
     public static final List<HEADER> QUASH_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {
-        HEADER.QUASH_SIZE_ERR
+        HEADER.QUASH_SIZE_ERR,
+        HEADER.QUASH_BRANCH
     }));
     public static final List<HEADER> ERROR_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {
