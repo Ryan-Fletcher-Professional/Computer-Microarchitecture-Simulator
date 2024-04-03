@@ -46,7 +46,7 @@ public class Simulator extends JFrame
                          wordRadio, lineRadio, addressBinRadio, addressDecRadio, addressHexRadio,
                          valueBinRadio, valueDecRadio, valueHexRadio;
     private JList<MemoryModule>[] memoryLists;
-    private DefaultListModel<MemoryModule> unifiedMemoryModel;
+    private DefaultListModel<MemoryModule> unifiedMemoryModel, instructionCachesModel, dataCachesModel;
     private MemoryModule currentlySelectedMemory;
     private JPanel currentlyVisibleControls, currentlyInvisibleControls, stackPipelinePanel,
                    callStackDisplayPanel, reversalStackDisplayPanel, pipelineDisplayPanel;
@@ -365,8 +365,8 @@ public class Simulator extends JFrame
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
 
         unifiedMemoryModel = new DefaultListModel<>();
-        DefaultListModel<MemoryModule> dataCachesModel = new DefaultListModel<>();
-        DefaultListModel<MemoryModule> instructionCachesModel = new DefaultListModel<>();
+        dataCachesModel = new DefaultListModel<>();
+        instructionCachesModel = new DefaultListModel<>();
         JList<MemoryModule> unifiedMemoryList = new JList<>(unifiedMemoryModel);
         JList<MemoryModule> dataCachesList = new JList<>(dataCachesModel);
         JList<MemoryModule> instructionCachesList = new JList<>(instructionCachesModel);
@@ -631,11 +631,11 @@ public class Simulator extends JFrame
                 newModule.storeFiles(PATH_TO_INSTRUCTION_BINS, 0);
                 newModule.storeFiles(PATH_TO_DATA_FILES, DATA_STARTING_ADDRESS);
             }
-            if((next == null) || (type.equals(MEMORY_TYPE.INSTRUCTION) && kind.equals(MEMORY_KIND.CACHE)))
+            if((instructionCachesModel.isEmpty() && kind.equals(MEMORY_KIND.RAM)) || (type.equals(MEMORY_TYPE.INSTRUCTION) && kind.equals(MEMORY_KIND.CACHE)))
             {
                 pipeline.setNearestInstructionCache(newModule);
             }
-            if((next == null) || (type.equals(MEMORY_TYPE.DATA) && kind.equals(MEMORY_KIND.CACHE)))
+            if((dataCachesModel.isEmpty() && kind.equals(MEMORY_KIND.RAM)) || (type.equals(MEMORY_TYPE.DATA) && kind.equals(MEMORY_KIND.CACHE)))
             {
                 pipeline.setNearestDataCache(newModule);
             }
