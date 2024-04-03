@@ -156,9 +156,12 @@ public class Instructions
     public static final String AUX_DEST_ = "destination address ";
     public static final String AUX_RESULT = "final result of execution";
     public static final String AUX_RESULTS_ = "final results of execution ";
-    public static final String AUX_SOURCE_DEST_TYPE_ = "source or destination type ";
-        public static final int AUX_SOURCE_DEST_TYPE_REG = 0;
-        public static final int AUX_SOURCE_DEST_TYPE_IMMEDIATE = 1;
+    public static final String AUX_SOURCE_TYPE_ = "source type ";
+        public static final int AUX_SOURCE_TYPE_REG = 0;
+        public static final int AUX_SOURCE_TYPE_IMMEDIATE = 1;
+    public static final String AUX_DEST_TYPE_ = "destination type ";
+    public static final int AUX_DEST_TYPE_REG = 0;
+    public static final int AUX_DEST_TYPE_IMMEDIATE = 1;
     public static final String AUX_ERR_TYPE = "execution error type";
     public static final String AUX_FLAG_ = "flag ";
         public static final int ERR_TYPE_NOT_IMPLEMENTED = 0b00000000000000000000000001;  // For when trying to execute() an instruction that has been intentionally left unimplemented
@@ -172,14 +175,19 @@ public class Instructions
         return AUX_SOURCE_ + Integer.toString(idx);
     }
 
-    public static String AUX_SOURCE_DEST_TYPE(int idx)
+    public static String AUX_SOURCE_TYPE(int idx)
     {
-        return AUX_SOURCE_DEST_TYPE_ + Integer.toString(idx);
+        return AUX_SOURCE_TYPE_ + Integer.toString(idx);
     }
 
     public static String AUX_DEST(int idx)
     {
         return AUX_DEST_ + Integer.toString(idx);
+    }
+
+    public static String AUX_DEST_TYPE(int idx)
+    {
+        return AUX_DEST_TYPE_ + Integer.toString(idx);
     }
 
     public static String AUX_RESULT(int idx)
