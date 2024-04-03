@@ -1,6 +1,7 @@
 package pipeline;
 
 import instructions.Instruction;
+import instructions.Term;
 import memory.RegisterFileModule;
 import java.util.List;
 import static main.GLOBALS.*;
@@ -9,7 +10,7 @@ import static instructions.Instructions.*;
 
 public class ExecuteStage extends PipelineStage
 {
-    private final RegisterFileModule internalRegisters;
+    public final RegisterFileModule internalRegisters;
 
     public ExecuteStage(int wordSize, String name, RegisterFileModule internalRegisters)
     {
@@ -47,12 +48,7 @@ public class ExecuteStage extends PipelineStage
         {
             heldInstruction.execute(this);
         }
-        if(JUMP_INSTRUCTIONS.contains(heldInstruction.getHeader()))
-        {
-            int address = computeJumpAddress();
-            heldInstruction.addAuxBits(AUX_JUMP_ADDRESS, address);
-        }
-        if(AUX_TRUE(heldInstruction.getAuxBits(AUX_JSR)))
+        if(AUX_EQUALS(heldInstruction.getAuxBits(AUX_JSR), AUX_TRUE))
         {
             int address = computeCurrentPC();
             heldInstruction.addAuxBits(AUX_CURRENT_PC, address);
@@ -77,10 +73,14 @@ public class ExecuteStage extends PipelineStage
             if((internalRegisters.load(List.of(internalRegisters.names).indexOf(PRED_1)) & checks[1]) != 0) { branch = false; }
             if((internalRegisters.load(List.of(internalRegisters.names).indexOf(PRED_1)) & checks[2]) != 0) { branch = false; }
 
+            Term destination = heldInstruction.getAuxBits(AUX_SOURCE(0));  // All branching instructions have main dest as first source
             // TODO : Implement and use computeTargetAddress() when appropriate
-            //  DecodeStage will add aux bits corresponding to branch destinations in AUX_RESULT
+            //  DecodeStage will add aux bits corresponding to branch destinations in AUX_RESULT (???)
 
-            heldInstruction.addAuxBits(AUX_BRANCH, branch ? AUX_TRUE() : AUX_FALSE());
+            if(branch)
+            {
+                heldInstruction.addAuxBits(AUX_RESULT(0), destination);
+            }
         }
         Instruction ret = pass(nextIsBlocked);
         Instruction next = previousStage.execute(nextIsBlocked);

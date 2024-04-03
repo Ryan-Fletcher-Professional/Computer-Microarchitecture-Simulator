@@ -1,6 +1,7 @@
 package pipeline;
 
 import instructions.Instruction;
+import static instructions.Instructions.*;
 import memory.MemoryModule;
 import memory.RegisterFileModule;
 
@@ -49,7 +50,7 @@ public class MemoryAccessStage extends PipelineStage
         }
 
         Instruction ret = pass(nextIsBlocked);
-        if(!nextIsBlocked && (heldInstruction.isFinished() || AUX_TRUE(Objects.requireNonNullElse(heldInstruction.getAuxBits(AUX_FINISHED_MEMORY_ACCESS_STAGE), AUX_FALSE()))))
+        if(!nextIsBlocked && (heldInstruction.isFinished() || AUX_EQUALS(heldInstruction.getAuxBits(AUX_FINISHED_MEMORY_ACCESS_STAGE), AUX_TRUE)))
         {
             heldInstruction = previousStage.execute(nextIsBlocked);
             if(heldInstruction.id != ret.id) { heldInstruction.execute(this); }

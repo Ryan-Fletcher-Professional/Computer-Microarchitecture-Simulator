@@ -7,6 +7,9 @@ import java.util.stream.Collectors;
 
 public class Term implements Cloneable
 {
+    public static final boolean NO_PAD = false;
+    public static final boolean YES_PAD = true;
+
     private final int[] bits;
 
     /**
@@ -109,6 +112,7 @@ public class Term implements Cloneable
                 bitsList.add(bits[i]);
             }
         }
+        if(bitsList.isEmpty()) { bitsList.add(0); }
         this.bits = bitsList.stream().mapToInt(i->i).toArray();
     }
 

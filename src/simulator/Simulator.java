@@ -96,7 +96,16 @@ public class Simulator extends JFrame
                     }
                 }
                 Instruction output = pipeline.execute();
-                if(output.getHeader().equals(HEADER.HALT) || ERROR_INSTRUCTIONS.contains(output.getHeader())) { break; }
+                if(output.getHeader().equals(HEADER.HALT))
+                {
+                    System.out.println("HALT ENCOUNTERED");
+                    break;
+                }
+                else if(ERROR_INSTRUCTIONS.contains(output.getHeader()))
+                {
+                    System.out.println("ERROR ENCOUNTERED");
+                    break;
+                }
             }
             countLabel.setText("Cycles: " + CURRENT_TICK);
             updateDisplay();

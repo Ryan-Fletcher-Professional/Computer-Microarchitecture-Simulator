@@ -29,7 +29,9 @@ public class MemoryWritebackStage extends PipelineStage
     @Override
     public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
-        if(AUX_TRUE(heldInstruction.getAuxBits(AUX_JSR)))
+        HEADER header = heldInstruction.getHeader();
+
+        if(AUX_EQUALS(heldInstruction.getAuxBits(AUX_JSR), AUX_TRUE))
         {
             // TODO : Handle jump to subroutine
         }
@@ -62,11 +64,11 @@ public class MemoryWritebackStage extends PipelineStage
             heldInstruction = previousStage.execute(nextIsBlocked);
             return ret;
         }
-        else if(heldInstruction.getHeader().equals(HEADER.NOOP))
+        else if(header.equals(HEADER.NOOP))
         {
             // TODO : Record NOOP
         }
-        else if(heldInstruction.getHeader().equals(HEADER.STALL))
+        else if(header.equals(HEADER.STALL))
         {
             // TODO : Record stall
         }

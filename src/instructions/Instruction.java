@@ -2,12 +2,7 @@ package instructions;
 
 import memory.MemoryModule;
 import memory.MemoryRequest;
-import memory.RegisterFileModule;
-import pipeline.FetchStage;
-import pipeline.MRAException;
-import pipeline.MemoryAccessStage;
-import pipeline.PipelineStage;
-import pipeline.ExecuteStage;
+import pipeline.*;
 
 import java.util.*;
 
@@ -107,16 +102,37 @@ public class Instruction
         return HEADERS.get(word.toString().substring(0, TYPECODE_SIZE + OPCODE_SIZE));
     }
 
+    public static final int MAX_REG_ARGS = 16;  // Should never be more than (3? 4?)
+
     public String[] getSourceRegs()
     {
         // IN SIGNED BASE 10
-        return new String[0]; // TODO
+        List<String> retList = new ArrayList<>();
+        for(int i = 0; i < MAX_REG_ARGS; i++)
+        {
+            Term sourceTerm = getAuxBits(AUX_SOURCE(i));
+            if(sourceTerm == null) { break; }
+
+            String prefix = AUX_EQUALS(getAuxBits(AUX_SOURCE_TYPE(i)), AUX_SOURCE_TYPE_REGISTER) ? prefixes.get(getAuxBits(AUX_SOURCE_BANK(i)).toInt()) : "";
+            if(AUX_EQUALS(getAuxBits(AUX_SOURCE(i) + DecodeStage.READ), AUX_TRUE)) { prefix = ""; }
+            retList.add(prefix + Integer.toString(sourceTerm.toInt()));
+        }
+        return retList.toArray(new String[] {});
     }
 
     public String[] getDestRegs()
     {
         // IN SIGNED BASE 10
-        return new String[0]; // TODO
+        List<String> retList = new ArrayList<>();
+        for(int i = 0; i < MAX_REG_ARGS; i++)
+        {
+            Term destTerm = getAuxBits(AUX_DEST(i));
+            if(destTerm == null) { break; }
+
+            String prefix = prefixes.get(getAuxBits(AUX_DEST_BANK(i)).toInt());
+            retList.add(prefix + Integer.toString(destTerm.toInt()));
+        }
+        return retList.toArray(new String[] {});
     }
 
     public void setResult(Term term)
@@ -124,7 +140,7 @@ public class Instruction
         addAuxBits(AUX_RESULT, term);
     }
 
-    public void setResult(Term term, int idx)
+    public void setResult(int idx, Term term)
     {
         addAuxBits(AUX_RESULT(idx), term);
     }
@@ -144,18 +160,34 @@ public class Instruction
     public int[] getPositiveConditionChecks()
     {
         // bitmasks
-        return new int[3]; // TODO later
+        int[] ret = new int[3]; // TODO : Add others
+        return ret;
     }
 
     public int[] getNegativeConditionChecks()
     {
         // bitmasks
-        return new int[3]; // TODO later
+        int[] ret = new int[3]; // TODO : Add others
+        if(getHeader().equals(HEADER.BRANCH_IF_NEGATIVE))
+        {
+            ret[0] = CC_NEGATIVE_POSITIVE_MASK;
+        }
+        return ret;
+    }
+
+    public void setFinished()
+    {
+        setFinished(true);
+    }
+
+    public void setFinished(boolean status)
+    {
+        addAuxBits(AUX_FINISHED, status ? AUX_TRUE : AUX_FALSE);
     }
 
     public boolean isFinished()
     {
-        return AUX_TRUE(Objects.requireNonNullElse(getAuxBits(AUX_FINISHED), AUX_FALSE()));
+        return AUX_EQUALS(getAuxBits(AUX_FINISHED), AUX_TRUE);
     }
 
     public void execute(PipelineStage invoker)
@@ -165,6 +197,13 @@ public class Instruction
         switch(header)
         {
             case HEADER.LOAD -> executeLoad((MemoryAccessStage)invoker);
+            case HEADER.STORE -> executeStore((MemoryAccessStage)invoker);
+
+            case HEADER.BRANCH_IF_NEGATIVE -> executeBranchIfNegative((ExecuteStage)invoker);  // Should never be called
+
+            case HEADER.INT_ADD -> executeIntAdd((ExecuteStage)invoker);
+
+            case HEADER.COMPARE -> executeCompare((ExecuteStage)invoker);
 
             case HEADER.LOAD_PC -> executeLoadPC((FetchStage)invoker);
             case HEADER.EXECUTION_ERR -> executeError(invoker);
@@ -214,120 +253,64 @@ public class Instruction
         }
     }
 
-    public int[] executeStore(MemoryAccessStage stage) {
-        String KEY = "store_w_holding";
+    public void executeStore(MemoryAccessStage stage)
+    {
         MemoryModule cache = stage.nearestDataCache;
-        int[] result = new int[2];
 
         if (activeRequest == null) {
-            //memory request with AUX_SOURCE and AUX_DEST values and store it
             activeRequest = new LinkedList<>(List.of(
                 new MemoryRequest(id, cache.getID(),
                                   MEMORY_TYPE.DATA, REQUEST_TYPE.STORE,
-                                  new Object[]{getAuxBits(AUX_SOURCE(0)).toInt(),
-                                      getAuxBits(AUX_DEST(0)).toInt()})));
+                                  new Object[]{ getAuxBits(AUX_SOURCE(1)).toInt(),
+                                                new int[] { getAuxBits(AUX_SOURCE(0)).toInt() } })));
             cache.store(activeRequest);
         }
-        if (activeRequest.isEmpty() && !isFinished()) {
+        if(activeRequest.isEmpty() && !isFinished())
+        {
             addAuxBits(AUX_FINISHED, AUX_TRUE);
         }
-        result[0] = getAuxBits(AUX_SOURCE(0)).toInt();
-        result[1] = getAuxBits(AUX_DEST(0)).toInt();
-
-        return result;
     }
 
-    // public void executeStore(MemoryAccessStage stage) {
-    //     String KEY = "store_w_holding";
-    //     MemoryModule cache = stage.nearestDataCache;
-
-    //     if (activeRequest == null) {
-    //         activeRequest = new LinkedList<>(List.of(
-    //             //memory request
-    //             //TODO: check MemoryModule switch source and dest and put the value in an array
-    //             new MemoryRequest(id, cache.getID(),
-    //                     MEMORY_TYPE.DATA, REQUEST_TYPE.STORE,
-    //                     new Object[]{getAuxBits(AUX_DEST(0)).toInt(),
-    //                             getAuxBits(AUX_SOURCE(0)).toInt()})));
-    //     cache.store(activeRequest);
-    //     }
-    //     if (activeRequest.isEmpty() && !isFinished()) {
-    //     addAuxBits(AUX_FINISHED, AUX_TRUE);
-    //     }
-    // }
-
-    public void executeAdd() {
+    public void executeIntAdd(ExecuteStage stage)
+    {
         String KEY = "add_w_holding";
         //TODO: make more modular in line with ISA (currently only accepting register sources)
-        //get the source and destination registers
-        int srcReg2 = Integer.parseInt(getAuxBits(AUX_SOURCE(1)).toString().subtring(1));
-        int srcReg = Integer.parseInt(getAuxBits(AUX_SOURCE(0)).toString().subtring(1));
-        int destReg = Integer.parseInt(getAuxBits(AUX_DEST(0)).toString().substring(1));
-        //get values from source registers
-        int operand1 = stage.indexableRegisters.load(srcReg);
-        int operand2 = stage.indexableRegisters.load(srcReg2);
-        //     operand2 = stage.indexableRegisters.load(Integer.parseInt(getAuxBits(AUX_SOURCE(1)).toString()));
-        //     operand2 = Integer.parseInt(getAuxBits(AUX_IMMEDIATE(0)).toString());
-
-        int result = operand1 + operand2;
-
-        addAuxBits(AUX_RESULT, new Term(result));
+        //      Register values read in DecodeStage
+        addAuxBits(AUX_RESULT, new Term(getAuxBits(AUX_SOURCE(0)).toInt() + getAuxBits(AUX_SOURCE(1)).toInt()));
         addAuxBits(AUX_FINISHED, AUX_TRUE);
     }
 
-    public void executeSubtract(){
-        String KEY = "subtract_w_holding";
-        int srcReg = Integer.parseInt(getAuxBits(AUX_SOURCE(0)).toString().substring(1));
-        int destReg = Integer.parseInt(getAuxBits(AUX_DEST(0)).toString().substring(1));
-        //get the values from source registers
-        int operand1 = stage.indexableRegisters.load(srcReg);
-        int operand2;
-        //     operand2 = stage.indexableRegisters.load(Integer.parseInt(getAuxBits(AUX_SOURCE(1)).toString()));
-        //     operand2 = Integer.parseInt(getAuxBits(AUX_IMMEDIATE(0)).toString());
-        int result = operand1 - operand2;
-        addAuxBits(AUX_RESULT, new Term(result));
-        addAuxBits(AUX_FINISHED, AUX_TRUE);
+//    public void executeSubtract(){
+//        String KEY = "subtract_w_holding";
+//        int srcReg = Integer.parseInt(getAuxBits(AUX_SOURCE(0)).toString().substring(1));
+//        int destReg = Integer.parseInt(getAuxBits(AUX_DEST(0)).toString().substring(1));
+//        //get the values from source registers
+//        int operand1 = stage.indexableRegisters.load(srcReg);
+//        int operand2;
+//        //     operand2 = stage.indexableRegisters.load(Integer.parseInt(getAuxBits(AUX_SOURCE(1)).toString()));
+//        //     operand2 = Integer.parseInt(getAuxBits(AUX_IMMEDIATE(0)).toString());
+//        int result = operand1 - operand2;
+//        addAuxBits(AUX_RESULT, new Term(result));
+//        addAuxBits(AUX_FINISHED, AUX_TRUE);
+//    }
+
+    public void executeBranchIfNegative(ExecuteStage stage)
+    {
+        return;  // Should never be called
     }
-    // public void executeBranch() {
-    //     //get memory address/offset
-    //     int address = Integer.parseInt(getAuxBits(AUX_IMMEDIATE(0)).toString());
 
-    //     //TODO:
-    //     //determine branch condition based on flags or registers
-    //     boolean condition =
-
-    //     //if condition is true, update program counter
-    //     if (condition) {
-    //         stage.internalRegisters.store(PC_INDEX, stage.internalRegisters.load(PC_INDEX) + address);
-    //     }
-    //     addAuxBits(AUX_FINISHED, AUX_TRUE);
-    // }
-
-    //execute compare
-    //define condition bit in execute compare
-    //branch 0
-    //branch is negative and compare have them look at the same condition bit
-    //will return the correct condition code
-    // will return an array of masks
     public void executeCompare(ExecuteStage stage)
     {
-        //define the condition bit
-        boolean condition = false;
-        //set the condition bit in internal register bank
-        stage.internalRegisters.setConditionBit(condition);
-        //branch condition
-        boolean branchCondition = condition && (stage.internalRegisters.getConditionBit() == 0);
-        int conditionCode = getConditionCode(condition, branchCondition);
+        int src0 = getAuxBits(AUX_SOURCE(0)).toInt();
+        int src1 = getAuxBits(AUX_SOURCE(1)).toInt();
 
-        // TODO: find negative condition helper method
-        int[] masks = (stage.internalRegisters.getConditionBit());
-        //update
-        addAuxBits(AUX_CONDITION_CODE, new Term(conditionCode, false));
-        addAuxBits(AUX_NEGATIVE_CODE_MASKS, new Term(masks));
+        int result = src0 - src1;
 
-        // could set the selected bit as 1 or 0?
-        //int selectedBit = one of the bits in the condition register
-        // stage.internalRegisters.setRegisterBit(selectedBit, condition ? 1 : 0);
+        int newCC = (int)stage.internalRegisters.load(CC_INDEX);
+        newCC = (result == 0) ? NEW_CC_ZERO(newCC) : NEW_CC_NONZERO(newCC);
+        newCC = (result < 0) ? NEW_CC_NEGATIVE(newCC) : NEW_CC_POSITIVE(newCC);
+
+        setResult(0, new Term(newCC, false));
     }
 
     public void executeError(PipelineStage ignored)

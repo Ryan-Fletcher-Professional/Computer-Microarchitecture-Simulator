@@ -166,12 +166,12 @@ public class GLOBALS
 
     /**
      * Returns an int with bits in the given range, indexed from the left
-     * (i.e. MASK_RANGE(2, 5) = 0b00111000000000000000000000000000)
+     * (i.e. MASK(2, 5) = 0b00111000000000000000000000000000)
      * @param startIdxFromLeft
      * @param endIdxFromLeft
      * @return
      */
-    public static int MASK_RANGE(int startIdxFromLeft, int endIdxFromLeft)
+    public static int MASK(int startIdxFromLeft, int endIdxFromLeft)
     {
         return (((~0) << (startIdxFromLeft - 1))
                >>> (startIdxFromLeft - 1 + (Integer.SIZE - endIdxFromLeft)))
@@ -180,12 +180,12 @@ public class GLOBALS
 
     /**
      * Returns an int with bits in the given range, indexed from the left
-     * (i.e. MASK_LONG_RANGE(2, 5) = 0b0011100000000000000000000000000000000000000000000000000000000000)
+     * (i.e. MASK_LONG(2, 5) = 0b0011100000000000000000000000000000000000000000000000000000000000)
      * @param startIdxFromLeft
      * @param endIdxFromLeft
      * @return
      */
-    public static long MASK_LONG_RANGE(int startIdxFromLeft, int endIdxFromLeft)
+    public static long MASK_LONG(int startIdxFromLeft, int endIdxFromLeft)
     {
         return (((~0L) << (startIdxFromLeft - 1))
                >>> (startIdxFromLeft - 1 + (Long.SIZE - endIdxFromLeft)))
