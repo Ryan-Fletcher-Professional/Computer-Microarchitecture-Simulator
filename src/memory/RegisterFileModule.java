@@ -85,6 +85,7 @@ public class RegisterFileModule
         {
             if(index < 0 || index >= getNumRegisters())
             {
+                System.out.println("Bad index: " + index);
                 throw new IllegalArgumentException("Register address out of range.");
             }
             return memory[index];

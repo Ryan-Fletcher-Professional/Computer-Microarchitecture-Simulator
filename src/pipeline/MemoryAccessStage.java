@@ -53,7 +53,8 @@ public class MemoryAccessStage extends PipelineStage
         if(!nextIsBlocked && (heldInstruction.isFinished() || AUX_EQUALS(heldInstruction.getAuxBits(AUX_FINISHED_MEMORY_ACCESS_STAGE), AUX_TRUE)))
         {
             heldInstruction = previousStage.execute(nextIsBlocked);
-            if(heldInstruction.id != ret.id) { heldInstruction.execute(this); }
+            if((heldInstruction.id != ret.id) && MEMORY_INSTRUCTIONS.contains(heldInstruction.getHeader()))
+                { heldInstruction.execute(this); }
         }
         else
         {

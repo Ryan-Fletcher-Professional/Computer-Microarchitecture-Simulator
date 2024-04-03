@@ -2,6 +2,9 @@ package pipeline;
 
 import instructions.Instruction;
 import memory.RegisterFileModule;
+import static main.GLOBALS.*;
+
+import java.util.Arrays;
 
 import static instructions.Instructions.*;
 
@@ -38,25 +41,31 @@ public class MemoryWritebackStage extends PipelineStage
         else if(heldInstruction.getResult(0) != null)
         {
             String[] destRegs = heldInstruction.getDestRegs();
+//            System.out.println(Arrays.toString(destRegs));
             for(int i = 0; heldInstruction.getAuxBits(AUX_RESULT(i)) != null; i++)
             {
+                System.out.println(i);
                 String dest = destRegs[i];
                 int idx = Integer.parseInt(dest.substring(1));
                 if(dest.startsWith(RegisterFileModule.INDEXABLE_PREFIX))
                 {
                     indexableRegisters.store(idx, heldInstruction.getResult(i).toInt());
+                    pendingRegisters[INDEXABLE_BANK_INDEX][idx] = false;
                 }
                 else if(dest.startsWith(RegisterFileModule.INTERNAL_PREFIX))
                 {
                     internalRegisters.store(idx, heldInstruction.getResult(i).toInt());
+                    pendingRegisters[INTERNAL_BANK_INDEX][idx] = false;
                 }
                 else if(dest.startsWith(RegisterFileModule.CALL_PREFIX))
                 {
                     callStack.store(idx, heldInstruction.getResult(i).toInt());
+                    pendingRegisters[CALL_STACK_INDEX][idx] = false;
                 }
                 else if(dest.startsWith(RegisterFileModule.REVERSAL_PREFIX))
                 {
                     reversalStack.store(idx, heldInstruction.getResult(i).toInt());
+                    pendingRegisters[REVERSAL_STACK_INDEX][idx] = false;
                 }
             }
 

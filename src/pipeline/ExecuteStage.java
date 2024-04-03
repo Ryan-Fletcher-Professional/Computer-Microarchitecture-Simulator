@@ -37,7 +37,6 @@ public class ExecuteStage extends PipelineStage
     protected Instruction pass(boolean nextIsBlocked) throws MRAException
     {
         Instruction ret = super.pass(nextIsBlocked);
-        heldInstruction = previousStage.execute(nextIsBlocked);
         return ret;
     }
 

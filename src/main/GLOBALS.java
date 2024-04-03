@@ -28,12 +28,12 @@ public class GLOBALS
     public static final int[] REGISTER_BANK_INDECES = new int[] { INDEXABLE_BANK_INDEX, INTERNAL_BANK_INDEX, CALL_STACK_INDEX, REVERSAL_STACK_INDEX };
     public static final String PC = "PC";
     public static final String CC = "CC";
-    public static final int CC_NEGATIVE_POSITIVE_MASK = MASK(15);
+    public static final int CC_NEGATIVE_POSITIVE_MASK = MASK((~0), 15);
     public static boolean CC_NEGATIVE(int cc) { return !CC_POSITIVE(cc); }
     public static int NEW_CC_NEGATIVE(int cc) { return cc & (~CC_NEGATIVE_POSITIVE_MASK); }
     public static boolean CC_POSITIVE(int cc) { return (cc & CC_NEGATIVE_POSITIVE_MASK) == CC_NEGATIVE_POSITIVE_MASK; }
     public static int NEW_CC_POSITIVE(int cc) { return cc | CC_NEGATIVE_POSITIVE_MASK; }
-    public static final int CC_ZERO_MASK = MASK(14);
+    public static final int CC_ZERO_MASK = MASK((~0), 14);
     public static boolean CC_ZERO(int cc) { return (cc & CC_ZERO_MASK) == CC_ZERO_MASK; }
     public static int NEW_CC_ZERO(int cc) { return cc | CC_ZERO_MASK; }
     public static int NEW_CC_NONZERO(int cc) { return cc & (~CC_ZERO_MASK); }
@@ -144,13 +144,13 @@ public class GLOBALS
 
     /**
      * Returns an int with a single bit in the given index from the left
-     * (i.e. MASK(2) = 0b00100000000000000000000000000000)
+     * (i.e. MASK(2) = 0b00100000000000000000000000000000) OUTDATED DESCRIPTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      * @param idxFromLeft
      * @return
      */
-    public static int MASK(int idxFromLeft)
+    public static int MASK(int subject, int idxFromLeft)
     {
-        return 0b1 << (Integer.SIZE - 1 - idxFromLeft);
+        return (subject & (0b1 << (Integer.SIZE - 1 - idxFromLeft))) >>> (Integer.SIZE - 1 - idxFromLeft);
     }
 
     /**
@@ -159,9 +159,9 @@ public class GLOBALS
      * @param idxFromLeft
      * @return
      */
-    public static long MASK_LONG(int idxFromLeft)
+    public static long MASK_LONG(long subject, int idxFromLeft)
     {
-        return 0b1L << (Long.SIZE - 1 - idxFromLeft);
+        return (subject & (0b1L << (Long.SIZE - 1 - idxFromLeft))) >>> (Long.SIZE - 1 - idxFromLeft);
     }
 
     /**
@@ -171,11 +171,10 @@ public class GLOBALS
      * @param endIdxFromLeft
      * @return
      */
-    public static int MASK(int startIdxFromLeft, int endIdxFromLeft)
+    public static int MASK(int subject, int startIdxFromLeft, int endIdxFromLeft)
     {
-        return (((~0) << (startIdxFromLeft - 1))
-               >>> (startIdxFromLeft - 1 + (Integer.SIZE - endIdxFromLeft)))
-               << (Integer.SIZE - endIdxFromLeft);
+        int right = Integer.SIZE - endIdxFromLeft;
+        return (subject >>> right) & (((~0) << startIdxFromLeft) >>> (startIdxFromLeft + right));
     }
 
     /**
@@ -185,11 +184,10 @@ public class GLOBALS
      * @param endIdxFromLeft
      * @return
      */
-    public static long MASK_LONG(int startIdxFromLeft, int endIdxFromLeft)
+    public static long MASK_LONG(long subject, int startIdxFromLeft, int endIdxFromLeft)
     {
-        return (((~0L) << (startIdxFromLeft - 1))
-               >>> (startIdxFromLeft - 1 + (Long.SIZE - endIdxFromLeft)))
-               << (Long.SIZE - endIdxFromLeft);
+        int right = Long.SIZE - endIdxFromLeft;
+        return (subject >>> right) & (((~0L) << startIdxFromLeft) >>> (startIdxFromLeft + right));
     }
 
     public static boolean[][] NEW_PENDING_REGISTERS(RegisterFileModule[] banks)

@@ -115,7 +115,7 @@ public class Instruction
 
             String prefix = AUX_EQUALS(getAuxBits(AUX_SOURCE_TYPE(i)), AUX_SOURCE_TYPE_REGISTER) ? prefixes.get(getAuxBits(AUX_SOURCE_BANK(i)).toInt()) : "";
             if(AUX_EQUALS(getAuxBits(AUX_SOURCE(i) + DecodeStage.READ), AUX_TRUE)) { prefix = ""; }
-            retList.add(prefix + Integer.toString(sourceTerm.toInt()));
+            retList.add(prefix.isEmpty() ? " -1" : (prefix + Integer.toString(sourceTerm.toInt())));
         }
         return retList.toArray(new String[] {});
     }
@@ -248,7 +248,7 @@ public class Instruction
         }
         if (activeRequest.isEmpty() && !isFinished()) {
             //store the loaded value in aux_result
-            addAuxBits(AUX_RESULT, getAuxBits(KEY));
+            addAuxBits(AUX_RESULT(0), getAuxBits(KEY));
             addAuxBits(AUX_FINISHED, AUX_TRUE);
         }
     }
@@ -276,7 +276,9 @@ public class Instruction
         String KEY = "add_w_holding";
         //TODO: make more modular in line with ISA (currently only accepting register sources)
         //      Register values read in DecodeStage
-        addAuxBits(AUX_RESULT, new Term(getAuxBits(AUX_SOURCE(0)).toInt() + getAuxBits(AUX_SOURCE(1)).toInt()));
+        System.out.println("a: " + getAuxBits(AUX_SOURCE(0)).toInt());
+        System.out.println("b: " + getAuxBits(AUX_SOURCE(1)).toInt());
+        addAuxBits(AUX_RESULT(0), new Term(getAuxBits(AUX_SOURCE(0)).toInt() + getAuxBits(AUX_SOURCE(1)).toInt()));
         addAuxBits(AUX_FINISHED, AUX_TRUE);
     }
 

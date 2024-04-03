@@ -164,6 +164,7 @@ public class Instructions
     public static boolean AUX_TRUE(Term term) { return term.toInt() == AUX_TRUE; }
     public static final String AUX_FINISHED = "final result has just been written or instruction has been handled manually by pipeline";
     public static final String AUX_FINISHED_MEMORY_ACCESS_STAGE = "don't need to execute in memory access stage";
+    public static final String AUX_DECODED = "don't need to decode again";
     public static final String AUX_BRANCH = "branch";
     public static final String AUX_JSR = "jump to subroutine";
     public static final String AUX_JUMP_ADDRESS = "address to jump to";
