@@ -15,7 +15,7 @@ import static main.GLOBALS.*;
 
 public class Instruction
 {
-    private int id;
+    public int id;
     private final Term word;
     private Map<String, Term> auxBits;
     private LinkedList<MemoryRequest> activeRequest;
@@ -111,7 +111,26 @@ public class Instruction
 
     public String[] getSourceRegs()
     {
-        return new String[0];  // TODO : Instruction-specific code
+        // IN SIGNED BASE 10
+        return new String[0]; // TODO
+    }
+
+    public String[] getDestRegs()
+    {
+        // IN SIGNED BASE 10
+        return new String[0]; // TODO
+    }
+
+    public int[] getPositiveConditionChecks()
+    {
+        // bitmasks
+        return new int[3]; // TODO later
+    }
+
+    public int[] getNegativeConditionChecks()
+    {
+        // bitmasks
+        return new int[3]; // TODO later
     }
 
     public boolean isFinished()
@@ -127,33 +146,33 @@ public class Instruction
         {
             case HEADER.LOAD -> executeLoad((MemoryAccessStage)invoker);
 
+            case HEADER.LOAD_PC -> executeLoadPC((FetchStage)invoker);
             case HEADER.EXECUTION_ERR -> executeError(invoker);
         }
 
 
-
-
-
-
-        // TODO Others
         // TODO : NOTE: All memory-accessing instructions must have execute() called when they're received into the
         //              appropriate PipelineStage AND again when that stage begins its next execution!
-        if(header.equals(HEADER.LOAD_PC))
+        //              This is performed in the PipelineStages. Make sure to account for it here!
+    }
+
+    public void executeLoadPC(FetchStage stage)
+    {
+        String KEY = "load_pc_holding";
+
+        MemoryModule cache = stage.nearestInstructionCache;
+        if(activeRequest == null)
         {
-            MemoryModule cache = ((FetchStage)invoker).nearestInstructionCache;
-            if(activeRequest == null)
-            {
-                activeRequest = new LinkedList<>(List.of(
+            activeRequest = new LinkedList<>(List.of(
                     new MemoryRequest(id, cache.getID(),
-                                      MEMORY_TYPE.INSTRUCTION, REQUEST_TYPE.LOAD,
-                                      new Object[]{(int)(((FetchStage)invoker).internalRegisters.load(PC_INDEX)), false})));
-                addAuxBits("load_pc_holding", new Term(cache.load(activeRequest)[0], false, 32));
-            }
-            if(activeRequest.isEmpty() && !isFinished())
-            {
-                addAuxBits(AUX_RESULT, getAuxBits("load_pc_holding"));
-                addAuxBits(AUX_FINISHED, AUX_TRUE);
-            }
+                            MEMORY_TYPE.INSTRUCTION, REQUEST_TYPE.LOAD,
+                            new Object[]{(int)(stage.internalRegisters.load(PC_INDEX)), false})));
+            addAuxBits(KEY, new Term(cache.load(activeRequest)[0], false, 32));
+        }
+        if(activeRequest.isEmpty() && !isFinished())
+        {
+            addAuxBits(AUX_RESULT, getAuxBits(KEY));
+            addAuxBits(AUX_FINISHED, AUX_TRUE);
         }
     }
 

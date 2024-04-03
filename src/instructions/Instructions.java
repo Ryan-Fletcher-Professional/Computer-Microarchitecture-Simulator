@@ -137,6 +137,10 @@ public class Instructions
     public static final String AUX_ERR_TYPE = "execution error type";
         public static final int ERR_TYPE_NOT_IMPLEMENTED = 0b00000000000000000000000001;  // For when trying to execute() an instruction that has been intentionally left unimplemented
 
+    public static boolean AUX_EQUALS(Term term, String aux) { return (term != null) && term.toString().equals(aux); }
+
+    public static boolean AUX_EQUALS(Term term, int aux) { return (term != null) && (term.toInt() == aux); }
+
     public static String AUX_SOURCE(int idx)
     {
         return AUX_SOURCE_ + Integer.toString(idx);

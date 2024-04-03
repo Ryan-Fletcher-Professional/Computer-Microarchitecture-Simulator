@@ -45,7 +45,6 @@ public class DecodeStage extends PipelineStage
                 {
                     heldInstruction.addAuxBits(AUX_SOURCE(i), indexableRegisters.load(idx));
                     heldInstruction.addAuxBits(AUX_SOURCE(i) + READ, AUX_TRUE);
-                    pendingRegisters[INDEXABLE_BANK_INDEX][idx] = true;
                 }
                 else
                 {
@@ -58,7 +57,6 @@ public class DecodeStage extends PipelineStage
                 {
                     heldInstruction.addAuxBits(AUX_SOURCE(i), internalRegisters.load(idx));
                     heldInstruction.addAuxBits(AUX_SOURCE(i) + READ, AUX_TRUE);
-                    pendingRegisters[INTERNAL_BANK_INDEX][idx] = true;
                 }
                 else
                 {
@@ -73,7 +71,6 @@ public class DecodeStage extends PipelineStage
                     // Memory instructions will need to pop from stack later.
                     heldInstruction.addAuxBits(AUX_SOURCE(i), callStack.peek(idx + 1));
                     heldInstruction.addAuxBits(AUX_SOURCE(i) + READ, AUX_TRUE);
-                    pendingRegisters[CALL_STACK_INDEX][idx] = true;
                 }
                 else
                 {
@@ -88,7 +85,6 @@ public class DecodeStage extends PipelineStage
                     // Memory instructions will need to pop from stack later.
                     heldInstruction.addAuxBits(AUX_SOURCE(i), reversalStack.peek(idx));
                     heldInstruction.addAuxBits(AUX_SOURCE(i) + READ, AUX_TRUE);
-                    pendingRegisters[REVERSAL_STACK_INDEX][idx] = true;
                 }
                 else
                 {
@@ -100,7 +96,6 @@ public class DecodeStage extends PipelineStage
                 heldInstruction.addAuxBits(AUX_SOURCE(i) + READ, AUX_TRUE);
             }
         }
-
         for(int i = 0; i < sourceRegs.length; i++)
         {
             if(AUX_FALSE(heldInstruction.getAuxBits(AUX_SOURCE(i) + READ)))
@@ -109,8 +104,36 @@ public class DecodeStage extends PipelineStage
                 return passBlocking();
             }
         }
-        Instruction ret = passUnblocked();
-        heldInstruction = previousStage.execute(false);
-        return ret;
+
+        Instruction next = previousStage.execute(nextIsBlocked);
+
+        if(!nextIsBlocked)
+        {
+            String[] destRegs = heldInstruction.getDestRegs();
+            for(int i = 0; i < destRegs.length; i++)
+            {
+                int idx = Integer.parseInt(destRegs[i].substring(1));
+                if((idx >= 0) && destRegs[i].startsWith(RegisterFileModule.INDEXABLE_PREFIX))
+                {
+                    pendingRegisters[INDEXABLE_BANK_INDEX][idx] = true;
+                }
+                else if((idx >= 0) && destRegs[i].startsWith(RegisterFileModule.INTERNAL_PREFIX))
+                {
+                    pendingRegisters[INTERNAL_BANK_INDEX][idx] = true;
+                }
+                else if((idx >= 0) && destRegs[i].startsWith(RegisterFileModule.CALL_PREFIX))
+                {
+                    pendingRegisters[CALL_STACK_INDEX][idx] = true;
+                }
+                else if((idx >= 0) && destRegs[i].startsWith(RegisterFileModule.REVERSAL_PREFIX))
+                {
+                    pendingRegisters[REVERSAL_STACK_INDEX][idx] = true;
+                }
+            }
+            Instruction ret = passUnblocked();
+            heldInstruction = next;
+            return ret;
+        }
+        return passBlocked();
     }
 }

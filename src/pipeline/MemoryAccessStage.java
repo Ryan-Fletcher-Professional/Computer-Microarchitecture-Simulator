@@ -39,7 +39,7 @@ public class MemoryAccessStage extends PipelineStage
     @Override
     public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
-        if(MEMORY_INSTRUCTIONS.contains(heldInstruction.getHeader()))  // TODO : Instruction.execute() should be able to properly handle being called after AUX_FINISHED is marked as TRUE
+        if(MEMORY_INSTRUCTIONS.contains(heldInstruction.getHeader()))
         {
             heldInstruction.execute(this);
         }
@@ -49,12 +49,14 @@ public class MemoryAccessStage extends PipelineStage
         }
 
         Instruction ret = pass(nextIsBlocked);
-        if(!nextIsBlocked && (heldInstruction.isFinished() || AUX_TRUE(Objects.requireNonNullElse(heldInstruction.getAuxBits(AUX_FINISHED_MEMORY_ACCESS_STAGE), AUX_FALSE()))))  // TODO : Memory instructions should not mark their results until memory access requests are done cycling
+        if(!nextIsBlocked && (heldInstruction.isFinished() || AUX_TRUE(Objects.requireNonNullElse(heldInstruction.getAuxBits(AUX_FINISHED_MEMORY_ACCESS_STAGE), AUX_FALSE()))))
         {
             heldInstruction = previousStage.execute(nextIsBlocked);
+            if(heldInstruction.id != ret.id) { heldInstruction.execute(this); }
         }
         else
         {
+            ret = nextIsBlocked ? ret : passBlocking();
             previousStage.execute(true);
         }
         return ret;
