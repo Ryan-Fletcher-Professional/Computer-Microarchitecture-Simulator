@@ -36,7 +36,7 @@ public class Instruction
         id = GET_ID();
         int size = word.length();
         if((size != 32) && (size != 64)) {throw new IllegalArgumentException("Instruction word must be 32 or 64 bits long, not " + size); }
-        if(HEADERS.get(word.toString().substring(0, TYPECODE_SIZE + OPCODE_SIZE)) == null)
+        if(HEADERS_FROM_BITSTRINGS.get(word.toString().substring(0, TYPECODE_SIZE + OPCODE_SIZE)) == null)
         {
             System.out.println("Null header");
             this.word = ERR(size, ERR_TYPE_NOT_IMPLEMENTED).word;
@@ -100,25 +100,85 @@ public class Instruction
 
     public HEADER getHeader()
     {
-        return HEADERS.get(word.toString().substring(0, TYPECODE_SIZE + OPCODE_SIZE));
+        return HEADERS_FROM_BITSTRINGS.get(word.toString().substring(0, TYPECODE_SIZE + OPCODE_SIZE));
+    }
+
+    public void addFlags(int numFlags)
+    {
+        for(int i = 0; i < numFlags; i++)
+        {
+            addAuxBits(FLAG(0), new Term((wordLength() == WORD_SIZE_SHORT) ?
+                                             MASK((int)wordNum(), 6 + i) :
+                                             MASK_LONG(wordNum(), 6 + i)));
+        }
+    }
+
+    public void addSource(int idx, int start, int end, int sourceType, int registerBank)
+    {
+        addSD(true, idx, start, end, sourceType, registerBank);
+    }
+
+    public void addSourceManual(int idx, Term term, int sourceType, int registerBank)
+    {
+        addSDManual(true, idx, term, sourceType, registerBank);
+    }
+
+    public void addDest(int idx, int start, int end, int destType, int registerBank)
+    {
+        addSD(false, idx, start, end, destType, registerBank);
+    }
+
+    public void addDestManual(int idx, Term term, int destType, int registerBank)
+    {
+        addSDManual(false, idx, term, destType, registerBank);
+    }
+
+    public void addSD(boolean source, int idx, int start, int end, int type, int registerBank)
+    {
+        addSDManual(source, idx,
+                    new Term((wordLength() == WORD_SIZE_SHORT) ?
+                                   MASK((int)wordNum(), start, end) :
+                                   MASK_LONG(wordNum(), start, end)),
+                    type, registerBank);
+    }
+
+    public void addSDManual(boolean source, int idx, Term term, int type, int registerBank)
+    {
+        addAuxBits(source ? AUX_SOURCE(idx) : AUX_DEST(idx), term);
+        addAuxBits(source ? AUX_SOURCE_TYPE(idx) : AUX_DEST_TYPE(idx), new Term(type));
+        if(type == AUX_SD_TYPE_REGISTER) { addAuxBits(source ? AUX_SOURCE_BANK(idx) : AUX_DEST_BANK(idx), new Term(registerBank)); }
     }
 
     public static final int MAX_REG_ARGS = 16;  // Should never be more than (3? 4?)
 
     public String[] getSourceRegs()
     {
-        // IN SIGNED BASE 10
-        List<String> retList = new ArrayList<>();
-        for(int i = 0; i < MAX_REG_ARGS; i++)
-        {
-            Term sourceTerm = getAuxBits(AUX_SOURCE(i));
-            if(sourceTerm == null) { break; }
+        try
+        {// IN SIGNED BASE 10
+            List<String> retList = new ArrayList<>();
+            for(int i = 0; i < MAX_REG_ARGS; i++)
+            {
+                Term sourceTerm = getAuxBits(AUX_SOURCE(i));
+                if(sourceTerm == null)
+                {
+                    break;
+                }
 
-            String prefix = AUX_EQUALS(getAuxBits(AUX_SOURCE_TYPE(i)), AUX_SOURCE_TYPE_REGISTER) ? prefixes.get(getAuxBits(AUX_SOURCE_BANK(i)).toInt()) : "";
-            if(AUX_EQUALS(getAuxBits(AUX_SOURCE(i) + DecodeStage.READ), AUX_TRUE)) { prefix = ""; }
-            retList.add(prefix.isEmpty() ? " -1" : (prefix + Integer.toString(sourceTerm.toInt())));
+                String prefix = AUX_EQUALS(getAuxBits(AUX_SOURCE_TYPE(i)), AUX_SD_TYPE_REGISTER) ? prefixes.get(getAuxBits(AUX_SOURCE_BANK(i)).toInt()) : "";
+                if(AUX_EQUALS(getAuxBits(AUX_SOURCE(i) + DecodeStage.READ), AUX_TRUE))
+                {
+                    prefix = "";
+                }
+                retList.add(prefix.isEmpty() ? " -1" : (prefix + Integer.toString(sourceTerm.toInt())));
+            }
+            return retList.toArray(new String[]{});
         }
-        return retList.toArray(new String[] {});
+        catch(NullPointerException e)
+        {
+            System.out.println(getHeader());
+            System.out.println(wordNum());
+            throw e;
+        }
     }
 
     public String[] getDestRegs()

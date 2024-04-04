@@ -16,6 +16,8 @@ public class Main
 {
     public static void main(String[] args)
     {
+        System.out.println("\n!!!!!!!!    Running simulator    !!!!!!!!\n");
+
         int[] startingParams = FIND_START_PARAMS(PATH_TO_INSTRUCTION_BINS);
 
         RegisterFileModule[] registerBanks = new RegisterFileModule[REGISTER_BANK_INDECES.length];
@@ -46,13 +48,16 @@ public class Main
         }
         registerBanks[INDEXABLE_BANK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, indexableLengths, indexableNames);
         registerBanks[INTERNAL_BANK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, internalLengths, internalNames);
-        int startingPC = (startingParams[0] == 32) ? 0b10 : 0b01;
+        int startingPC = (startingParams[0] == 32) ? 3 : 2;
         registerBanks[INTERNAL_BANK_INDEX].store(List.of(INTERNAL_REGISTER_NAMES).indexOf(PC), startingPC);
         registerBanks[CALL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK, callStackLengths, callStackNames);
         registerBanks[REVERSAL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK_CIRCULAR, reversalStackLengths, reversalStackNames);
-        int[] pendingRegisterLengths = new int[indexableLengths.length];
-        Arrays.fill(pendingRegisterLengths, 5);
-        new Simulator(GET_ID(), registerBanks, new Pipeline(registerBanks[INDEXABLE_BANK_INDEX], registerBanks[INTERNAL_BANK_INDEX], registerBanks[CALL_STACK_INDEX], registerBanks[REVERSAL_STACK_INDEX], null, null, NEW_PENDING_REGISTERS(registerBanks), startingParams[0]), JFrame.MAXIMIZED_BOTH, startingPC);
+        boolean[][] pendingRegisters = NEW_PENDING_REGISTERS(registerBanks);
+        registerBanks[INDEXABLE_BANK_INDEX].pendings = pendingRegisters[INDEXABLE_BANK_INDEX];
+        registerBanks[INTERNAL_BANK_INDEX].pendings = pendingRegisters[INTERNAL_BANK_INDEX];
+        registerBanks[CALL_STACK_INDEX].pendings = pendingRegisters[CALL_STACK_INDEX];
+        registerBanks[REVERSAL_STACK_INDEX].pendings = pendingRegisters[REVERSAL_STACK_INDEX];
+        new Simulator(GET_ID(), registerBanks, new Pipeline(registerBanks[INDEXABLE_BANK_INDEX], registerBanks[INTERNAL_BANK_INDEX], registerBanks[CALL_STACK_INDEX], registerBanks[REVERSAL_STACK_INDEX], null, null, pendingRegisters, startingParams[0]), JFrame.MAXIMIZED_BOTH, startingPC);
     }
 
     private static int[] FIND_START_PARAMS(String path)

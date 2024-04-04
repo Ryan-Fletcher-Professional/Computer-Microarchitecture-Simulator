@@ -9,6 +9,8 @@ public class MemoryModule
 {
     private static final Logger logger = Logger.getLogger(MemoryModule.class.getName());
 
+    private final static int BYTE_MASK = 0b00000000000000000000000011111111;
+
     private final int id;                       // ID of this MemoryModule
     private final MEMORY_KIND kind;             // CACHE/RAM
     private final MEMORY_TYPE type;             // DATA/INSTRUCTION
@@ -570,10 +572,10 @@ public class MemoryModule
                             if(bytesRead == 4)
                             {
                                 int value = 0;
-                                value = (value | (buffer[0] & 0b00000000000000000000000011111111)) << 8;
-                                value = (value | (buffer[1] & 0b00000000000000000000000011111111)) << 8;
-                                value = (value | (buffer[2] & 0b00000000000000000000000011111111)) << 8;
-                                value = (value | (buffer[3] & 0b00000000000000000000000011111111));
+                                value = (value | (buffer[0] & BYTE_MASK)) << 8;
+                                value = (value | (buffer[1] & BYTE_MASK)) << 8;
+                                value = (value | (buffer[2] & BYTE_MASK)) << 8;
+                                value = (value | (buffer[3] & BYTE_MASK));
                                 words.add(value);
                             }
                             else
@@ -594,7 +596,7 @@ public class MemoryModule
         }
         else
         {
-            System.out.println("The specified directory is empty or does not exist.");
+            System.out.printf("The specified directory \"%s\" is empty or does not exist.%n", path);
         }
 
         int[] line = new int[lineSize];

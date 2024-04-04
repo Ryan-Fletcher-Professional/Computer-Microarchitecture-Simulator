@@ -21,6 +21,7 @@ public class RegisterFileModule
     private final int id;
     private int currentRegisterIndex = -1;
     private final REGISTER_FILE_MODE mode;
+    public boolean[] pendings;
 
     public RegisterFileModule(int id, REGISTER_FILE_MODE mode, int[] registerLengths, String[] names)
     {
@@ -140,23 +141,24 @@ public class RegisterFileModule
     {
         StringBuilder ret = new StringBuilder();
         ret.append("  ");
+        int[] valueLengths = new int[names.length];
         for(int i = 0; i < names.length; i++)
         {
-            int valueLength = Math.max(names[i].length(), SMART_TO_STRING(masks[i], radix).length());
+            valueLengths[i] = Math.max(names[i].length() + (PENDING_INDICATOR.length() * 2), SMART_TO_STRING(masks[i], radix).length());
             StringBuilder currentName = new StringBuilder();
-            currentName.append(" ".repeat((valueLength - names[i].length()) / 2))
-                       .append(names[i])
-                       .append(" ".repeat(valueLength - currentName.length()));
+            String pendingIndicator = pendings[i] ? PENDING_INDICATOR : "";
+            currentName.append(" ".repeat((valueLengths[i] - names[i].length()) / 2))
+                       .append(pendingIndicator).append(names[i]).append(pendingIndicator)
+                       .append(" ".repeat(valueLengths[i] - currentName.length()));
             ret.append(currentName)
                .append("  |  ");
         }
         ret.setCharAt(ret.length() - "|  ".length(), '\n');
         for(int i = 0; i < getNumRegisters(); i++)
         {
-            int valueLength = Math.max(names[i].length(), SMART_TO_STRING(masks[i], radix).length());
             String value = SMART_TO_STRING(memory[i] & masks[i], radix);
             StringBuilder currentValue = new StringBuilder();
-            currentValue.append("0".repeat(valueLength - value.length()))
+            currentValue.append("0".repeat(valueLengths[i] - value.length()))
                         .append(value)
                         .append("  |  ");
             ret.append(currentValue);

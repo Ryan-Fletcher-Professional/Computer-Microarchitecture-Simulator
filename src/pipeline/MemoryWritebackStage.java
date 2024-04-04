@@ -50,7 +50,7 @@ public class MemoryWritebackStage extends PipelineStage
                 {
                     branched = true;
                 }
-                //System.out.println(i);
+                //System.out.println(header + " " + i);
                 String dest = destRegs[i];
                 int idx = Integer.parseInt(dest.substring(1));
                 if(dest.startsWith(RegisterFileModule.INDEXABLE_PREFIX))

@@ -4,11 +4,8 @@ import instructions.Instruction;
 import instructions.Term;
 import memory.RegisterFileModule;
 
-import java.util.Arrays;
-import java.util.Objects;
-
 import static instructions.Instructions.*;
-import static instructions.Instructions.AUX_SOURCE_TYPE_REGISTER;
+import static instructions.Instructions.AUX_SD_TYPE_REGISTER;
 import static main.GLOBALS.*;
 
 public class DecodeStage extends PipelineStage
@@ -38,21 +35,20 @@ public class DecodeStage extends PipelineStage
     public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
         // Split flags and argument according to header and add as aux bits
-        int length = heldInstruction.wordLength();
-        long instruction = heldInstruction.wordNum();
-
         if(!AUX_EQUALS(heldInstruction.getAuxBits(AUX_DECODED), AUX_TRUE))
         {
             switch(heldInstruction.getHeader())
             {
-                case HEADER.LOAD -> decodeLoad(length, instruction);
-                case HEADER.STORE -> decodeStore(length, instruction);
+                case HEADER.LOAD -> decodeLoad();
+                case HEADER.STORE -> decodeStore();
 
-                case HEADER.BRANCH_IF_NEGATIVE -> decodeBranchIfNegative(length, instruction);
+                case HEADER.BRANCH_IF_NEGATIVE -> decodeBranchIfNegative();
 
-                case HEADER.INT_ADD -> decodeIntAdd(length, instruction);
+                case HEADER.INT_ADD -> decodeIntAdd();
 
-                case HEADER.COMPARE -> decodeCompare(length, instruction);
+                case HEADER.COMPARE -> decodeCompare();
+
+                case HEADER.COPY -> decodeCopy();
             }
             heldInstruction.addAuxBits(AUX_DECODED, AUX_TRUE());
         }
@@ -166,68 +162,54 @@ public class DecodeStage extends PipelineStage
         return passBlocked();
     }
 
-    private void decodeLoad(int length, long instruction)
+    private void decodeLoad()
     {
-        if(length == WORD_SIZE_SHORT)
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
         {
             int start = 24;
 
-            heldInstruction.addAuxBits(AUX_SOURCE(0), MASK((int)instruction, start, start + 4));
-            heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_REGISTER));
-            heldInstruction.addAuxBits(AUX_SOURCE_BANK(0), new Term(AUX_REG_BANK_INDEXABLES));
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
-            heldInstruction.addAuxBits(AUX_DEST(0), MASK((int)instruction, start, start + 4));
-            heldInstruction.addAuxBits(AUX_DEST_TYPE(0), new Term(AUX_DEST_TYPE_REGISTER));
-            heldInstruction.addAuxBits(AUX_DEST_BANK(0), new Term(AUX_REG_BANK_INDEXABLES));
+            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
         }
         else  // LONG word
         {
-            heldInstruction.addAuxBits(FLAG(0), new Term(MASK_LONG(instruction, 6)));
+            heldInstruction.addFlags(1);
 
 
             int start = 56;
             if(AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0))
             {
-                heldInstruction.addAuxBits(AUX_SOURCE(0), MASK_LONG(instruction, start, start + 4));
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_REGISTER));
-                heldInstruction.addAuxBits(AUX_SOURCE_BANK(0), new Term(AUX_REG_BANK_INDEXABLES));
+                heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
             }
             else
             {
                 start -= (25 - 4);
-                heldInstruction.addAuxBits(AUX_SOURCE(0), MASK_LONG(instruction, start, start + 25));
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_IMMEDIATE));
+                heldInstruction.addSource(0, start, start + 25, AUX_SD_TYPE_IMMEDIATE, -1);
             }
             start += 4;
 
-            heldInstruction.addAuxBits(AUX_DEST(0), MASK_LONG(instruction, start, start + 4));
-            heldInstruction.addAuxBits(AUX_DEST_TYPE(0), new Term(AUX_DEST_TYPE_REGISTER));
-            heldInstruction.addAuxBits(AUX_DEST_BANK(0), new Term(AUX_REG_BANK_INDEXABLES));
+            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
         }
     }
 
-    private void decodeStore(int length, long instruction)
+    private void decodeStore()
     {
-        if(length == WORD_SIZE_SHORT)
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
         {
             int start = 24;
 
-            heldInstruction.addAuxBits(AUX_SOURCE(0), new Term(MASK((int)instruction, start, start + 4)));
-            heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_REGISTER));
-            heldInstruction.addAuxBits(AUX_SOURCE_BANK(0), new Term(AUX_REG_BANK_INDEXABLES));
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
-            heldInstruction.addAuxBits(AUX_SOURCE(1), new Term(MASK((int)instruction, start, start + 4)));
-            heldInstruction.addAuxBits(AUX_SOURCE_TYPE(1), new Term(AUX_SOURCE_TYPE_REGISTER));
-            heldInstruction.addAuxBits(AUX_SOURCE_BANK(1), new Term(AUX_REG_BANK_INDEXABLES));
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
         }
         else  // LONG word
         {
-            heldInstruction.addAuxBits(FLAG(0), new Term(MASK_LONG(instruction, 6)));
-            heldInstruction.addAuxBits(FLAG(1), new Term(MASK_LONG(instruction, 7)));
+            heldInstruction.addFlags(2);
             if(((heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) &&
-                    (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1)))
+                (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1)))
             {
                 (new MRAException("Long STR has 2x 1-flags")).printStackTrace();
                 heldInstruction = ERR(WORD_SIZE_LONG, ERR_TYPE_INVALID_FLAGS);
@@ -240,125 +222,78 @@ public class DecodeStage extends PipelineStage
                 {
                     int start = 28;
 
-                    heldInstruction.addAuxBits(AUX_SOURCE(0), new Term(MASK_LONG(instruction, start, start + 32)));
-                    heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_IMMEDIATE));
+                    heldInstruction.addSource(0, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
                     start += 32;
 
-                    heldInstruction.addAuxBits(AUX_SOURCE(1), new Term(MASK_LONG(instruction, start, start + 4)));
-                    heldInstruction.addAuxBits(AUX_SOURCE_TYPE(1), new Term(AUX_SOURCE_TYPE_REGISTER));
-                    heldInstruction.addAuxBits(AUX_SOURCE_BANK(1), new Term(AUX_REG_BANK_INDEXABLES));
+                    heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
                 }
                 else
                 {
                     int start = 35;
 
-                    heldInstruction.addAuxBits(AUX_SOURCE(0), new Term(MASK_LONG(instruction, start, start + 4)));
-                    heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_REGISTER));
-                    heldInstruction.addAuxBits(AUX_SOURCE_BANK(0), new Term(AUX_REG_BANK_INDEXABLES));
+                    heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
                     start += 4;
 
                     if(heldInstruction.getAuxBits(FLAG(1)).toInt() == 0)
                     {
                         start += (25 - 4);
-                        heldInstruction.addAuxBits(AUX_SOURCE(1), new Term(MASK_LONG(instruction, start, start + 4)));
-                        heldInstruction.addAuxBits(AUX_SOURCE_TYPE(1), new Term(AUX_SOURCE_TYPE_REGISTER));
-                        heldInstruction.addAuxBits(AUX_SOURCE_BANK(1), new Term(AUX_REG_BANK_INDEXABLES));
+                        heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
                     }
                     else
                     {
-                        heldInstruction.addAuxBits(AUX_SOURCE(1), new Term(MASK_LONG(instruction, start, start + 25)));
-                        heldInstruction.addAuxBits(AUX_SOURCE_TYPE(1), new Term(AUX_SOURCE_TYPE_IMMEDIATE));
+                        heldInstruction.addSource(1, start, start + 25, AUX_SD_TYPE_IMMEDIATE, -1);
                     }
                 }
             }
         }
     }
 
-    private void decodeBranchIfNegative(int length, long instruction)
+    private void decodeBranchIfNegative()
     {
-        if(length == WORD_SIZE_SHORT)
+        heldInstruction.addFlags(1);
+
+
+        int start = heldInstruction.wordLength() - 4;
+        int type = AUX_SD_TYPE_REGISTER;
+        if(heldInstruction.getAuxBits(FLAG(0)).toInt() != 0)
         {
-            heldInstruction.addAuxBits(FLAG(0), new Term(MASK((int)instruction, 6)));
-
-
-            int start = length - 4;
-            if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
-            {
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_REGISTER));
-                heldInstruction.addAuxBits(AUX_SOURCE_BANK(0), new Term(AUX_REG_BANK_INDEXABLES));
-            }
-            else
-            {
-                start -= (25 - 4);
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_IMMEDIATE));
-            }
-            heldInstruction.addAuxBits(AUX_SOURCE(0), MASK((int)instruction, start, length));
+            start -= (25 - 4);
+            type = AUX_SD_TYPE_IMMEDIATE;
         }
-        else  // LONG word
-        {
-            heldInstruction.addAuxBits(FLAG(0), new Term(MASK_LONG(instruction, 6)));
+        heldInstruction.addSource(0, start, heldInstruction.wordLength(), type, AUX_REG_BANK_INDEXABLES);
 
-
-            int start = length - 4;
-            if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
-            {
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_REGISTER));
-                heldInstruction.addAuxBits(AUX_SOURCE_BANK(0), new Term(AUX_REG_BANK_INDEXABLES));
-            }
-            else
-            {
-                start -= (25 - 4);
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_IMMEDIATE));
-            }
-            heldInstruction.addAuxBits(AUX_SOURCE(0), MASK_LONG(instruction, start, length));
-        }
-
-        heldInstruction.addAuxBits(AUX_DEST(0), new Term(PC_INDEX));
-        heldInstruction.addAuxBits(AUX_DEST_TYPE(0), new Term(AUX_DEST_TYPE_REGISTER));
-        heldInstruction.addAuxBits(AUX_DEST_BANK(0), new Term(AUX_REG_BANK_INTERNALS));
+        heldInstruction.addDestManual(0, new Term(PC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
     }
 
-    private void decodeIntAdd(int length, long instruction)
+    private void decodeIntAdd()
     {
-        if(length == WORD_SIZE_SHORT)
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
         {
-            heldInstruction.addAuxBits(FLAG(0), new Term(MASK_LONG(instruction, 6)));
+            heldInstruction.addFlags(1);
 
 
             int start = 16;
-            heldInstruction.addAuxBits(AUX_SOURCE(0), new Term(MASK((int)instruction, start, start + 4)));
-            heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_REGISTER));
-            heldInstruction.addAuxBits(AUX_SOURCE_BANK(0), new Term(AUX_REG_BANK_INDEXABLES));
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
-            heldInstruction.addAuxBits(AUX_SOURCE(1), new Term(MASK((int)instruction, start, start + 4)));
-            heldInstruction.addAuxBits(AUX_SOURCE_TYPE(1), new Term(AUX_SOURCE_TYPE_REGISTER));
-            heldInstruction.addAuxBits(AUX_SOURCE_BANK(1), new Term(AUX_REG_BANK_INDEXABLES));
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
-            heldInstruction.addAuxBits(AUX_DEST(0), new Term(MASK((int)instruction, start, start + 4)));
-            heldInstruction.addAuxBits(AUX_DEST_TYPE(0), new Term(AUX_DEST_TYPE_REGISTER));
-            heldInstruction.addAuxBits(AUX_DEST_BANK(0), new Term(AUX_REG_BANK_INDEXABLES));
+            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
             if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
             {
-                heldInstruction.addAuxBits(AUX_SOURCE(2), new Term(MASK((int)instruction, start, start + 4)));
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(2), new Term(AUX_SOURCE_TYPE_IMMEDIATE));
+                heldInstruction.addSource(2, start, start + 4, AUX_SD_TYPE_IMMEDIATE, -1);
             }
             else
             {
-                heldInstruction.addAuxBits(AUX_SOURCE(2), new Term(MASK((int)instruction, start, start + 4)));
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(2), new Term(AUX_SOURCE_TYPE_REGISTER));
-                heldInstruction.addAuxBits(AUX_SOURCE_BANK(2), new Term(AUX_REG_BANK_INDEXABLES));
+                heldInstruction.addSource(2, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
             }
         }
         else  // LONG word
         {
-            heldInstruction.addAuxBits(FLAG(0), new Term(MASK_LONG(instruction, 6)));
-            heldInstruction.addAuxBits(FLAG(1), new Term(MASK_LONG(instruction, 7)));
-            heldInstruction.addAuxBits(FLAG(2), new Term(MASK_LONG(instruction, 8)));
-
+            heldInstruction.addFlags(3);
 
             int start = (heldInstruction.getAuxBits(FLAG(0)).toInt() == 0) ||
                 (heldInstruction.getAuxBits(FLAG(1)).toInt() == 0)
@@ -366,70 +301,51 @@ public class DecodeStage extends PipelineStage
 
             if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
             {
-                heldInstruction.addAuxBits(AUX_SOURCE(0), new Term(MASK_LONG(instruction, start, start + 4)));
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_REGISTER));
-                heldInstruction.addAuxBits(AUX_SOURCE_BANK(0), new Term(AUX_REG_BANK_INDEXABLES));
+                heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
                 start += 4;
             }
             else
             {
-                heldInstruction.addAuxBits(AUX_SOURCE(0), new Term(MASK_LONG(instruction, start, start + 32)));
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_IMMEDIATE));
+                heldInstruction.addSource(0, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
                 start += 32;
             }
 
             if(heldInstruction.getAuxBits(FLAG(1)).toInt() == 0)
             {
-                heldInstruction.addAuxBits(AUX_SOURCE(1), new Term(MASK_LONG(instruction, start, start + 4)));
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(1), new Term(AUX_SOURCE_TYPE_REGISTER));
-                heldInstruction.addAuxBits(AUX_SOURCE_BANK(1), new Term(AUX_REG_BANK_INDEXABLES));
+                heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
                 start += 4;
             }
             else
             {
-                heldInstruction.addAuxBits(AUX_SOURCE(1), new Term(MASK_LONG(instruction, start, start + 32)));
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(1), new Term(AUX_SOURCE_TYPE_IMMEDIATE));
+                heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_IMMEDIATE, -1);
                 start += 32;
             }
 
-            heldInstruction.addAuxBits(AUX_DEST(0), new Term(MASK_LONG(instruction, start, start + 4)));
-            heldInstruction.addAuxBits(AUX_DEST_TYPE(0), new Term(AUX_DEST_TYPE_REGISTER));
-            heldInstruction.addAuxBits(AUX_DEST_BANK(0), new Term(AUX_REG_BANK_INDEXABLES));
+            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
-            if(heldInstruction.getAuxBits(FLAG(2)).toInt() == 0)
-            {
-                heldInstruction.addAuxBits(AUX_SOURCE(2), new Term(MASK_LONG(instruction, start, start + 4)));
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(2), new Term(AUX_SOURCE_TYPE_IMMEDIATE));
-            }
-            else
-            {
-                heldInstruction.addAuxBits(AUX_SOURCE(2), new Term(MASK_LONG(instruction, start, start + 4)));
-                heldInstruction.addAuxBits(AUX_SOURCE_TYPE(2), new Term(AUX_SOURCE_TYPE_REGISTER));
-                heldInstruction.addAuxBits(AUX_SOURCE_BANK(2), new Term(AUX_REG_BANK_INDEXABLES));
-            }
+            heldInstruction.addSource(2, start, start + 4,
+                                      (heldInstruction.getAuxBits(FLAG(2)).toInt() == 0) ?
+                                          AUX_SD_TYPE_IMMEDIATE :
+                                          AUX_SD_TYPE_REGISTER,
+                                      AUX_REG_BANK_INDEXABLES);
         }
     }
 
-    private void decodeCompare(int length, long instruction)
+    private void decodeCompare()
     {
-        if(length == WORD_SIZE_SHORT)
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
         {
             int start = 24;
 
-            heldInstruction.addAuxBits(AUX_SOURCE(0), new Term(MASK((int)instruction, start, start + 4)));
-            heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_REGISTER));
-            heldInstruction.addAuxBits(AUX_SOURCE_BANK(0), new Term(AUX_REG_BANK_INDEXABLES));
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
-            heldInstruction.addAuxBits(AUX_SOURCE(1), new Term(MASK((int)instruction, start, start + 4)));
-            heldInstruction.addAuxBits(AUX_SOURCE_TYPE(1), new Term(AUX_SOURCE_TYPE_REGISTER));
-            heldInstruction.addAuxBits(AUX_SOURCE_BANK(1), new Term(AUX_REG_BANK_INDEXABLES));
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
         }
-        else  // LONG word
+        else
         {
-            heldInstruction.addAuxBits(FLAG(0), new Term(MASK_LONG(instruction, 6)));
-            heldInstruction.addAuxBits(FLAG(1), new Term(MASK_LONG(instruction, 7)));
+            heldInstruction.addFlags(2);
             if(((heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) &&
                 (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1)))
             {
@@ -446,33 +362,70 @@ public class DecodeStage extends PipelineStage
 
                 if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
                 {
-                    heldInstruction.addAuxBits(AUX_SOURCE(0), new Term(MASK_LONG(instruction, start, start + 4)));
-                    heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_REGISTER));
+                    heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
                     start += 4;
                 }
                 else
                 {
-                    heldInstruction.addAuxBits(AUX_SOURCE(0), new Term(MASK_LONG(instruction, start, start + 32)));
-                    heldInstruction.addAuxBits(AUX_SOURCE_TYPE(0), new Term(AUX_SOURCE_TYPE_IMMEDIATE));
+                    heldInstruction.addSource(0, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
                     start += 32;
                 }
 
                 if(heldInstruction.getAuxBits(FLAG(1)).toInt() == 0)
                 {
-                    heldInstruction.addAuxBits(AUX_SOURCE(1), new Term(MASK_LONG(instruction, start, start + 4)));
-                    heldInstruction.addAuxBits(AUX_SOURCE_TYPE(1), new Term(AUX_SOURCE_TYPE_REGISTER));
+                    heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
                 }
                 else
                 {
-                    heldInstruction.addAuxBits(AUX_SOURCE(1), new Term(MASK_LONG(instruction, start, start + 32)));
-                    heldInstruction.addAuxBits(AUX_SOURCE_TYPE(1), new Term(AUX_SOURCE_TYPE_IMMEDIATE));
+                    heldInstruction.addSource(1, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
                 }
             }
         }
 
+        heldInstruction.addDestManual(0, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+    }
 
-        heldInstruction.addAuxBits(AUX_DEST(0), new Term(CC_INDEX));
-        heldInstruction.addAuxBits(AUX_DEST_TYPE(0), new Term(AUX_DEST_TYPE_REGISTER));
-        heldInstruction.addAuxBits(AUX_DEST_BANK(0), new Term(AUX_REG_BANK_INTERNALS));
+    public void decodeCopy()
+    {
+        int length = heldInstruction.wordLength();
+
+        if(length == WORD_SIZE_SHORT)
+        {
+            int start = 24;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+        }
+        else
+        {
+            heldInstruction.addFlags(1);
+
+
+            int start = 28;
+            int end = start + 32;
+
+            int type = AUX_SD_TYPE_IMMEDIATE;
+            if(AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0))
+            {
+                start += (32 - 4);
+                type = AUX_SD_TYPE_REGISTER;
+            }
+            heldInstruction.addSource(0, start, end, type, AUX_REG_BANK_INDEXABLES);
+            start = end;
+
+            type = AUX_SD_TYPE_REGISTER;
+            heldInstruction.addDest(0, start, end, type, AUX_REG_BANK_INDEXABLES);
+        }
+
+        if(((length == WORD_SIZE_SHORT) || AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0)) &&
+            (AUX_EQUALS(heldInstruction.getAuxBits(AUX_SOURCE(0)), heldInstruction.getAuxBits(AUX_DEST(0)).toInt())))
+        {
+            (new MRAException("COPY writes to same register it reads")).printStackTrace();
+            heldInstruction = ERR(length, ERR_TYPE_INVALID_ARGS);
+            heldInstruction.addAuxBits(new Term(ERR_TYPE_INVALID_ARGS, false, length - HEADER_SIZE).toString(),
+                                       new Term(HEADER_STRINGS.get(heldInstruction.getHeader()), false));
+        }
     }
 }

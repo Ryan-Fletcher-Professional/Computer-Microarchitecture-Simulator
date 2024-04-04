@@ -3,6 +3,8 @@ package pipeline;
 import instructions.Instruction;
 import memory.MemoryModule;
 
+import java.util.Objects;
+
 import static instructions.Instructions.*;
 import static main.GLOBALS.SMART_TO_STRING;
 
@@ -139,8 +141,10 @@ public class PipelineStage
             if(sizeDif > 0) { wordString = "0".repeat(sizeDif) + wordString; }
             if(radix == 2)
             {
-                wordString = wordString.substring(0, TYPECODE_SIZE) + " " +
-                        wordString.substring(TYPECODE_SIZE, TYPECODE_SIZE + OPCODE_SIZE) + " " +
+                String mnemonic = Objects.requireNonNullElse(MNEMONICS.get(heldInstruction.getHeader()),
+                                          Objects.requireNonNullElse(INTERNAL_MNEMONICS.get(heldInstruction.getHeader()),
+                                                  "UNRECOGNIZED"));
+                wordString = mnemonic + " " +
                         wordString.substring(TYPECODE_SIZE + OPCODE_SIZE);
             }
         }

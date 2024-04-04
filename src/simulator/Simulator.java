@@ -241,8 +241,13 @@ public class Simulator extends JFrame
         // Memory manipulation
         JPanel memoryOperationsPanel = new JPanel(new GridLayout(0, 1));  // 0 rows means "as many as needed"
         JPanel entryPanel = new JPanel( new GridLayout(3, 2));
+        JPanel addressPanel = new JPanel(new BorderLayout());
         addressField = new JTextField(1);
+        addressPanel.add(addressField, BorderLayout.NORTH);
+        JPanel valuePanel = new JPanel(new BorderLayout());
         valueField = new JTextField(1);
+        valuePanel.add(valueField, BorderLayout.NORTH);
+        valueField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         JPanel addressRadioPanel = new JPanel(new GridLayout(1, 2));
         addressBinRadio = new JRadioButton("Bin");
         addressDecRadio = new JRadioButton("Dec");
@@ -275,8 +280,8 @@ public class Simulator extends JFrame
         valueRadioPanel.add(valueHexRadio);
         entryPanel.add(new JLabel("Address"));
         entryPanel.add(new JLabel("Argument"));
-        entryPanel.add(addressField);
-        entryPanel.add(valueField);
+        entryPanel.add(addressPanel);
+        entryPanel.add(valuePanel);
         entryPanel.add(addressRadioPanel);
         entryPanel.add(valueRadioPanel);
 

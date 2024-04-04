@@ -16,6 +16,7 @@ public class Instructions
         BRANCH,
         INT_ARITHMETIC,
         INT_LOGIC,
+        CONTROL,
         MISC,
         INTERNAL
     }
@@ -25,6 +26,7 @@ public class Instructions
         put(TYPECODE.BRANCH, "001");
         put(TYPECODE.INT_ARITHMETIC, "010");
         put(TYPECODE.INT_LOGIC, "011");
+        put(TYPECODE.CONTROL, "100");
         //
         put(TYPECODE.MISC, "110");
         put(TYPECODE.INTERNAL, "111");
@@ -48,11 +50,13 @@ public class Instructions
 
         COMPARE,
 
+        COPY,
+
         HALT,
 
         NOOP,
         STALL,
-        QUASH_SIZE_ERR,
+        QUASH_SIZE,
         QUASH_BRANCH,
         LOAD_PC,
         EXECUTION_ERR
@@ -68,11 +72,13 @@ public class Instructions
 
         put(OPCODE.COMPARE, "100");
 
+        put(OPCODE.COPY, "100");
+
         put(OPCODE.HALT, "101");
 
         put(OPCODE.NOOP, "000");
         put(OPCODE.STALL, "001");
-        put(OPCODE.QUASH_SIZE_ERR, "010");
+        put(OPCODE.QUASH_SIZE, "010");
         put(OPCODE.QUASH_BRANCH, "011");
         put(OPCODE.LOAD_PC, "100");
         //
@@ -97,11 +103,13 @@ public class Instructions
 
         COMPARE,
 
+        COPY,
+
         HALT,
 
         NOOP,
         STALL,
-        QUASH_SIZE_ERR,
+        QUASH_SIZE,
         QUASH_BRANCH,
         LOAD_PC,
         EXECUTION_ERR
@@ -118,20 +126,56 @@ public class Instructions
 
         put(HEADER.COMPARE,                 MAKE_HEADER_STRING( TYPECODE.INT_LOGIC,         OPCODE.COMPARE              ));
 
+        put(HEADER.COPY,                    MAKE_HEADER_STRING( TYPECODE.CONTROL,           OPCODE.COPY                 ));
+
         put(HEADER.HALT,                    MAKE_HEADER_STRING( TYPECODE.MISC,              OPCODE.HALT                 ));
 
         put(HEADER.NOOP,                    MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.NOOP                 ));
         put(HEADER.STALL,                   MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.STALL                ));
-        put(HEADER.QUASH_SIZE_ERR,          MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.QUASH_SIZE_ERR       ));
-        put(HEADER.QUASH_BRANCH,            MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.QUASH_BRANCH       ));
+        put(HEADER.QUASH_SIZE,              MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.QUASH_SIZE           ));
+        put(HEADER.QUASH_BRANCH,            MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.QUASH_BRANCH         ));
         put(HEADER.LOAD_PC,                 MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.LOAD_PC              ));
         put(HEADER.EXECUTION_ERR,           MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.EXECUTION_ERR        ));
 
     }};
-    public static Map<String, HEADER> HEADERS = new HashMap<>() {{
+    public static Map<String, HEADER> HEADERS_FROM_BITSTRINGS = new HashMap<>() {{
         for(HEADER code : HEADER_STRINGS.keySet())
         {
             put(HEADER_STRINGS.get(code), code);
+        }
+    }};
+    public static Map<HEADER, String> MNEMONICS = new HashMap<>() {{
+        put(HEADER.LOAD,                    "LOAD");
+        put(HEADER.STORE,                   "STR");
+
+        put(HEADER.BRANCH_IF_NEGATIVE,      "BRN");
+
+        put(HEADER.INT_ADD,                 "ADD");
+
+        put(HEADER.COMPARE,                 "CMP");
+
+        put(HEADER.COPY,                    "COPY");
+
+        put(HEADER.HALT,                    "HALT");
+    }};
+    public static Map<String, HEADER> HEADERS_FROM_MNEMONICS = new HashMap<>() {{
+        for(HEADER code : MNEMONICS.keySet())
+        {
+            put(MNEMONICS.get(code), code);
+        }
+    }};
+    public static Map<HEADER, String> INTERNAL_MNEMONICS = new HashMap<>() {{
+        put(HEADER.NOOP,                    "_NOOP_");
+        put(HEADER.STALL,                   "_STALL_");
+        put(HEADER.QUASH_SIZE, "_QUASH_SIZE_");
+        put(HEADER.QUASH_BRANCH,            "_QUASH_BR_");
+        put(HEADER.LOAD_PC,                 "_LOAD_PC_");
+        put(HEADER.EXECUTION_ERR,           "_EXEC_ERR_");
+    }};
+    public static Map<String, HEADER> HEADERS_FROM_INTERNAL_MNEMONICS = new HashMap<>() {{
+        for(HEADER code : INTERNAL_MNEMONICS.keySet())
+        {
+            put(INTERNAL_MNEMONICS.get(code), code);
         }
     }};
 
@@ -142,7 +186,7 @@ public class Instructions
 
         // HEADER.LOAD_PC  // NOT THIS!
     }));
-    public static final List<HEADER> ALU_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
+    public static final List<HEADER> ALU_EXECUTE_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {
         HEADER.INT_ADD,
         HEADER.COMPARE
@@ -154,7 +198,7 @@ public class Instructions
     }));
     public static final List<HEADER> QUASH_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {
-        HEADER.QUASH_SIZE_ERR,
+        HEADER.QUASH_SIZE,
         HEADER.QUASH_BRANCH
     }));
     public static final List<HEADER> ERROR_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
@@ -171,7 +215,6 @@ public class Instructions
     public static final String AUX_FINISHED = "final result has just been written or instruction has been handled manually by pipeline";
     public static final String AUX_FINISHED_MEMORY_ACCESS_STAGE = "don't need to execute in memory access stage";
     public static final String AUX_DECODED = "don't need to decode again";
-    public static final String AUX_BRANCH = "branch";
     public static final String AUX_JSR = "jump to subroutine";
     public static final String AUX_JUMP_ADDRESS = "address to jump to";
     public static final String AUX_CURRENT_PC = "return address for JSR";
@@ -180,11 +223,9 @@ public class Instructions
     public static final String AUX_RESULT = "final result of execution";
     public static final String AUX_RESULTS_ = "final results of execution ";
     public static final String AUX_SOURCE_TYPE_ = "source type ";
-        public static final int AUX_SOURCE_TYPE_REGISTER = 0;
-        public static final int AUX_SOURCE_TYPE_IMMEDIATE = 1;
     public static final String AUX_DEST_TYPE_ = "destination type ";
-        // TODO : Factor these two into the source types
-        public static final int AUX_DEST_TYPE_REGISTER = 0;  // No such thing as a destination non-register; such descriptions in the ISA Spec are treated as sources
+        public static final int AUX_SD_TYPE_REGISTER = 0;  // No such thing as a destination non-register; such descriptions in the ISA Spec are treated as sources
+        public static final int AUX_SD_TYPE_IMMEDIATE = 1;
     public static final String AUX_SOURCE_BANK_ = "source bank ";
     public static final String AUX_DEST_BANK_ = "destination bank ";
     public static final List<String> prefixes = List.of(new String[] { RegisterFileModule.INDEXABLE_PREFIX, RegisterFileModule.INTERNAL_PREFIX, RegisterFileModule.CALL_PREFIX, RegisterFileModule.REVERSAL_PREFIX });
@@ -192,10 +233,10 @@ public class Instructions
     public static final int AUX_REG_BANK_INTERNALS = prefixes.indexOf(RegisterFileModule.INTERNAL_PREFIX);
     public static final int AUX_REG_BANK_CALL = prefixes.indexOf(RegisterFileModule.CALL_PREFIX);
     public static final int AUX_REG_BANK_REVERSAL = prefixes.indexOf(RegisterFileModule.REVERSAL_PREFIX);
-    public static final String AUX_ERR_TYPE = "execution error type";
     public static final String AUX_FLAG_ = "flag ";
         public static final int ERR_TYPE_NOT_IMPLEMENTED =  0b00000000000000000000000001;  // For when trying to execute() an instruction that has been intentionally left unimplemented
         public static final int ERR_TYPE_INVALID_FLAGS =    0b00000000000000000000000010;  // Also do <err instruction>.addAuxBits(new Term(ERR_TYPE_INVALID_FLAGS, false, <word size> - HEADER_SIZE).toString(), new Term(HEADER_STRINGS.get(<err instruction>.getHeader()), false))
+        public static final int ERR_TYPE_INVALID_ARGS =     0b00000000000000000000000011;  // Also do <err instruction>.addAuxBits(new Term(ERR_TYPE_INVALID_ARGS, false, <word size> - HEADER_SIZE).toString(), new Term(HEADER_STRINGS.get(<err instruction>.getHeader()), false))
 
     public static boolean AUX_EQUALS(Term term, String aux) { return (term != null) && term.toString().equals(aux); }
 
@@ -211,14 +252,14 @@ public class Instructions
         return AUX_SOURCE_TYPE_ + Integer.toString(idx);
     }
 
-    public static String AUX_DEST(int idx)
-    {
-        return AUX_DEST_ + Integer.toString(idx);
-    }
-
     public static String AUX_DEST_TYPE(int idx)
     {
         return AUX_DEST_TYPE_ + Integer.toString(idx);
+    }
+
+    public static String AUX_DEST(int idx)
+    {
+        return AUX_DEST_ + Integer.toString(idx);
     }
 
     public static String AUX_SOURCE_BANK(int idx)
@@ -305,10 +346,9 @@ public class Instructions
         return new Instruction((GET_INSTRUCTION_TERM(size, header, flags, args)));
     }
 
-    public static Instruction LOAD              (int size, String flags, String args) { return GET_INSTRUCTION(size, HEADER.LOAD, flags, args); }
     public static Instruction NOOP              (int size) { return GET_INSTRUCTION(size, HEADER.NOOP, "", ""); }
     public static Instruction STALL             (int size) { return GET_INSTRUCTION(size, HEADER.STALL, "", ""); }
-    public static Instruction QUASH_SIZE_ERR    (int size) { return GET_INSTRUCTION(size, HEADER.QUASH_SIZE_ERR,"", ""); }
+    public static Instruction QUASH_SIZE_ERR    (int size) { return GET_INSTRUCTION(size, HEADER.QUASH_SIZE, "", ""); }
     public static Instruction QUASH_BRANCH      (int size) { return GET_INSTRUCTION(size, HEADER.QUASH_BRANCH,"", ""); }
     public static Instruction LOAD_PC           (int size) { return GET_INSTRUCTION(size, HEADER.LOAD_PC, "", ""); }
     public static Instruction HALT              (int size) { return GET_INSTRUCTION(size, HEADER.HALT, "", ""); }

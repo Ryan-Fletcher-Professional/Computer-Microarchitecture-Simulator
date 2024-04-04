@@ -43,7 +43,7 @@ public class ExecuteStage extends PipelineStage
     @Override
     public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
-        if(ALU_INSTRUCTIONS.contains(heldInstruction.getHeader()))
+        if(ALU_EXECUTE_INSTRUCTIONS.contains(heldInstruction.getHeader()))
         {
             heldInstruction.execute(this);
         }
