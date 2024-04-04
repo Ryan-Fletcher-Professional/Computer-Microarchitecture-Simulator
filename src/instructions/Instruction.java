@@ -149,7 +149,7 @@ public class Instruction
         if(type == AUX_SD_TYPE_REGISTER) { addAuxBits(source ? AUX_SOURCE_BANK(idx) : AUX_DEST_BANK(idx), new Term(registerBank)); }
     }
 
-    public static final int MAX_REG_ARGS = 16;  // Should never be more than (3? 4?)
+    public static final int MAX_REG_ARGS = 16;  // Should never actually be more than (3? 4?)
 
     public String[] getSourceRegs()
     {
@@ -260,7 +260,7 @@ public class Instruction
             case HEADER.LOAD -> executeLoad((MemoryAccessStage)invoker);
             case HEADER.STORE -> executeStore((MemoryAccessStage)invoker);
 
-            case HEADER.BRANCH_IF_NEGATIVE -> executeBranchIfNegative((ExecuteStage)invoker);  // Should never be called
+            case HEADER.BRANCH_IF_NEGATIVE -> {}  // Nothing to execute; logic in getNegativeConditionChecks()
 
             case HEADER.INT_ADD -> executeIntAdd((ExecuteStage)invoker);
 
@@ -291,6 +291,7 @@ public class Instruction
         }
         if(activeRequest.isEmpty() && !isFinished())
         {
+            // IMPORTANT: For other instructions, use AUX_RESULT(int), not AUX_RESULT
             addAuxBits(AUX_RESULT, getAuxBits(KEY));
             addAuxBits(AUX_FINISHED, AUX_TRUE);
         }
@@ -354,11 +355,6 @@ public class Instruction
 //        addAuxBits(AUX_RESULT, new Term(result));
 //        addAuxBits(AUX_FINISHED, AUX_TRUE);
 //    }
-
-    public void executeBranchIfNegative(ExecuteStage stage)
-    {
-        return;  // Should never be called
-    }
 
     public void executeCompare(ExecuteStage stage)
     {
