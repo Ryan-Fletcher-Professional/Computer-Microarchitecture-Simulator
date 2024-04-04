@@ -12,22 +12,14 @@ import static instructions.Instructions.*;
 public class MemoryAccessStage extends PipelineStage
 {
     public RegisterFileModule indexableRegisters;
-    private MemoryModule nearestInstructionCache;
     public MemoryModule nearestDataCache;
+    private int oldID = -1;
 
-    public MemoryAccessStage(int wordSize, String name, RegisterFileModule indexableRegisters, MemoryModule nearestInstructionCache, MemoryModule nearestDataCache)
+    public MemoryAccessStage(int wordSize, String name, RegisterFileModule indexableRegisters, MemoryModule nearestDataCache)
     {
         super(wordSize, name);
         this.indexableRegisters = indexableRegisters;
-        this.nearestInstructionCache = nearestInstructionCache;
         this.nearestDataCache = nearestDataCache;
-    }
-
-    @Override
-    public void setNearestInstructionCache(MemoryModule module)
-    {
-        this.nearestInstructionCache = module;
-        super.setNearestInstructionCache(module);
     }
 
     @Override
@@ -35,6 +27,12 @@ public class MemoryAccessStage extends PipelineStage
     {
         this.nearestDataCache = module;
         super.setNearestDataCache(module);
+    }
+
+    public void preExecute()
+    {
+        if((heldInstruction.id != oldID) && MEMORY_INSTRUCTIONS.contains(heldInstruction.getHeader()))
+            { heldInstruction.execute(this); }
     }
 
     @Override
@@ -53,8 +51,7 @@ public class MemoryAccessStage extends PipelineStage
         if(!nextIsBlocked && (heldInstruction.isFinished() || AUX_EQUALS(heldInstruction.getAuxBits(AUX_FINISHED_MEMORY_ACCESS_STAGE), AUX_TRUE)))
         {
             heldInstruction = previousStage.execute(nextIsBlocked);
-            if((heldInstruction.id != ret.id) && MEMORY_INSTRUCTIONS.contains(heldInstruction.getHeader()))
-                { heldInstruction.execute(this); }
+            oldID = ret.id;
         }
         else
         {

@@ -88,23 +88,27 @@ public class Simulator extends JFrame
             for(int i = 0; i < numTicks; i++)
             {
                 CURRENT_TICK += 1;
-                for(JList<MemoryModule> list : memoryLists)
-                {
-                    for(int j = 0; j < list.getModel().getSize(); j++)
-                    {
-                        list.getModel().getElementAt(j).tick();
-                    }
-                }
-                Instruction output = pipeline.execute();
+                Instruction output = pipeline.preExecute();  // Happens before memory cycled, so memory cycling can be "in-line" with pipeline cycling
                 if(output.getHeader().equals(HEADER.HALT))
                 {
                     System.out.println("HALT ENCOUNTERED");
                     break;
                 }
-                else if(ERROR_INSTRUCTIONS.contains(output.getHeader()))
+                else
                 {
-                    System.out.println("ERROR ENCOUNTERED: " + output.word.toString());
-                    break;
+                    for(JList<MemoryModule> list : memoryLists)
+                    {
+                        for(int j = 0; j < list.getModel().getSize(); j++)
+                        {
+                            list.getModel().getElementAt(j).tick();
+                        }
+                    }
+                    output = pipeline.execute();
+                    if(ERROR_INSTRUCTIONS.contains(output.getHeader()))
+                    {
+                        System.out.println("ERROR ENCOUNTERED: " + output.word.toString());
+                        break;
+                    }
                 }
             }
             countLabel.setText("Cycles: " + CURRENT_TICK);

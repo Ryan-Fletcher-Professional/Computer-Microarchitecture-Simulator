@@ -716,7 +716,7 @@ public class MemoryModule
                 }
                 else
                 {
-                    WARN(logger, "Unexpected behavior: Lowest level of memory did not have requested virtual address in storage.");
+                    WARN(logger, "Unexpected behavior: Lowest level of memory did not have requested virtual address in storage: " + virtualAddress);
                 }
                 if(writeMode.equals(WRITE_MODE.BACK) && isDirty(line))
                 {

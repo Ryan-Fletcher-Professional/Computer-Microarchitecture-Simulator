@@ -30,26 +30,40 @@ public class MemoryWritebackStage extends PipelineStage
         this.pendingRegisters = pendingRegisters;
     }
 
+    public Object[] preExecute()
+    {
+        // Return whether will branch this cycle
+        boolean branching = false;
+        if(AUX_EQUALS(heldInstruction.getAuxBits(AUX_JSR), AUX_TRUE) ||
+            ((heldInstruction.getResult(0) != null) && BRANCH_INSTRUCTIONS.contains(heldInstruction.getHeader())))
+        {
+            branching = true;
+        }
+        return new Object[] { branching, heldInstruction };
+    }
+
     @Override
     public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
         HEADER header = heldInstruction.getHeader();
+        boolean branched = false;
 
         if(AUX_EQUALS(heldInstruction.getAuxBits(AUX_JSR), AUX_TRUE))
         {
             // TODO : Handle jump to subroutine
+            branched = true;
         }
         else if(heldInstruction.getResult(0) != null)
         {
             String[] destRegs = heldInstruction.getDestRegs();
 //            System.out.println(header + Arrays.toString(destRegs));
-            boolean branched = false;
+            if(BRANCH_INSTRUCTIONS.contains(header))
+            {
+                branched = true;
+            }
+
             for(int i = 0; heldInstruction.getAuxBits(AUX_RESULT(i)) != null; i++)
             {
-                if(BRANCH_INSTRUCTIONS.contains(header))
-                {
-                    branched = true;
-                }
                 //System.out.println(header + " " + i);
                 String dest = destRegs[i];
                 int idx = Integer.parseInt(dest.substring(1));

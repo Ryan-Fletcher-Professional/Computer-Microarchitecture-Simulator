@@ -4,6 +4,7 @@ import instructions.Instruction;
 import memory.MemoryModule;
 import memory.RegisterFileModule;
 import static main.GLOBALS.*;
+import static instructions.Instructions.*;
 
 public class Pipeline
 {
@@ -15,6 +16,9 @@ public class Pipeline
     private MemoryModule nearestDataCache;
     private boolean[][] pendingRegisters;
     private int wordSize;
+    private FetchStage fetch;
+    private MemoryAccessStage access;
+    private MemoryWritebackStage write;
     private PipelineStage endStage;  // This and dummyStartStage exist to prevent erroneous consecutation of actual pipeline stages
 
     public Pipeline(RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters,
@@ -47,6 +51,24 @@ public class Pipeline
         return wordSize;
     }
 
+    public Instruction preExecute()
+    {
+        Object[] ret = write.preExecute();
+        if((!(boolean)ret[0]) && !((Instruction)ret[1]).getHeader().equals(HEADER.HALT))  // ret[0] = branching
+        {
+            try
+            {
+                fetch.preExecute();
+            }
+            catch(MRAException e)
+            {
+                e.printStackTrace();
+            }
+            access.preExecute();
+        }
+        return (Instruction)ret[1];
+    }
+
     public Instruction execute()
     {
         Instruction ret = null;
@@ -61,6 +83,7 @@ public class Pipeline
         return ret;
     }
 
+
     private void initialize(RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters,
                             RegisterFileModule callStack, RegisterFileModule reversalStack,
                             MemoryModule nearestInstructionCache, MemoryModule nearestDataCache, boolean[][] pendingRegisters,
@@ -72,12 +95,11 @@ public class Pipeline
         this.reversalStack = reversalStack;
         this.nearestInstructionCache = nearestInstructionCache;
         this.wordSize = wordSize;
-        FetchStage fetch = new FetchStage(wordSize, "Fetch", internalRegisters, nearestInstructionCache);
+        fetch = new FetchStage(wordSize, "Fetch", internalRegisters, nearestInstructionCache);
         DecodeStage decode = new DecodeStage(wordSize, "Decode", indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
         ExecuteStage execute = new ExecuteStage(wordSize, "Execute", internalRegisters);
-        MemoryAccessStage access = new MemoryAccessStage(wordSize, "Access", indexableRegisters,
-                                                         nearestInstructionCache, nearestDataCache);
-        MemoryWritebackStage write = new MemoryWritebackStage(wordSize, "Write",
+        access = new MemoryAccessStage(wordSize, "Access", indexableRegisters, nearestDataCache);
+        write = new MemoryWritebackStage(wordSize, "Write",
                                                               indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
         this.endStage = write;
         PipelineStage.CONSECUTE(new PipelineStage[] { fetch, decode, execute, access, write });

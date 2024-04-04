@@ -59,6 +59,12 @@ public class FetchStage extends PipelineStage
         return passBlocked();
     }
 
+    public void preExecute() throws MRAException
+    {
+        heldInstruction = super.execute(false);
+        heldInstruction.execute(this);
+    }
+
     @Override
     public Instruction execute(boolean nextIsBlocked) throws MRAException
     {
@@ -69,7 +75,6 @@ public class FetchStage extends PipelineStage
         Instruction ret = pass(nextIsBlocked);
         heldInstruction = super.execute(nextIsBlocked);
         if(!heldInstruction.getHeader().equals(HEADER.LOAD_PC)) { throw new MRAException("Fetch was given an instruction besides LOAD_PC: " + HEADER_STRINGS.get(heldInstruction.getHeader())); }
-        heldInstruction.execute(this);
         return ret;
     }
 }
