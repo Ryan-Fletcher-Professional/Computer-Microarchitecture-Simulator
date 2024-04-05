@@ -224,6 +224,10 @@ public class Instruction
     {
         // bitmasks
         int[] ret = new int[3]; // TODO : Add others
+        if(getHeader().equals(HEADER.BRANCH_IF_NEGATIVE))
+        {
+            ret[0] = CC_NEGATIVE_MASK;
+        }
         return ret;
     }
 
@@ -231,10 +235,6 @@ public class Instruction
     {
         // bitmasks
         int[] ret = new int[3]; // TODO : Add others
-        if(getHeader().equals(HEADER.BRANCH_IF_NEGATIVE))
-        {
-            ret[0] = CC_NEGATIVE_POSITIVE_MASK;
-        }
         return ret;
     }
 
@@ -379,7 +379,8 @@ public class Instruction
 
         int newCC = (int)stage.internalRegisters.load(CC_INDEX);
         newCC = (result == 0) ? NEW_CC_ZERO(newCC) : NEW_CC_NONZERO(newCC);
-        newCC = (result < 0) ? NEW_CC_NEGATIVE(newCC) : NEW_CC_POSITIVE(newCC);
+        newCC = (result < 0) ? NEW_CC_NEGATIVE(newCC) : NEW_CC_NONNEGATIVE(newCC);
+        newCC = (result > 0) ? NEW_CC_POSITIVE(newCC) : NEW_CC_NONPOSITIVE(newCC);
 
         setResult(0, new Term(newCC, false));
     }
