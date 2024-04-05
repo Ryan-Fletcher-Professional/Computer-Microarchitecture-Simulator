@@ -11,6 +11,8 @@ import static main.GLOBALS.*;
 
 public class Instruction
 {
+    private static final long BYTE_MASK = 0b0000000000000000000000000000000011111111111111111111111111111111L;
+
     public int id;
     public final Term word;
     private Map<String, Term> auxBits;
@@ -266,14 +268,13 @@ public class Instruction
 
             case HEADER.COMPARE -> executeCompare((ExecuteStage)invoker);
 
+            case HEADER.COPY -> executeCopy((ExecuteStage)invoker);
+
+            case HEADER.HALT -> executeHalt((ExecuteStage)invoker);
+
             case HEADER.LOAD_PC -> executeLoadPC((FetchStage)invoker);
             case HEADER.EXECUTION_ERR -> executeError(invoker);
         }
-
-
-        // TODO : NOTE: All memory-accessing instructions must have execute() called when they're received into the
-        //              appropriate PipelineStage AND again when that stage begins its next execution!
-        //              This is performed in the PipelineStages. Make sure to account for it here!
     }
 
     public void executeLoadPC(FetchStage stage)
@@ -287,12 +288,15 @@ public class Instruction
                     new MemoryRequest(id, cache.getID(),
                             MEMORY_TYPE.INSTRUCTION, REQUEST_TYPE.LOAD,
                             new Object[]{(int)(stage.internalRegisters.load(PC_INDEX)), false})));
-            addAuxBits(KEY, new Term(cache.load(activeRequest)[0], false, 32));
+            int[] words = cache.load(activeRequest);
+            addAuxBits(KEY + "0", new Term(words[0], false, 32));
+            if(wordLength() == WORD_SIZE_LONG)
+                { addAuxBits(KEY + "1", new Term(words[1], false, 32)); }
         }
         if(activeRequest.isEmpty() && !isFinished())
         {
             // IMPORTANT: For other instructions, use AUX_RESULT(int), not AUX_RESULT
-            addAuxBits(AUX_RESULT, getAuxBits(KEY));
+            addAuxBits(AUX_RESULT, new Term(getAuxBits(KEY + "0").toString() + ((getAuxBits(KEY + "0") != null) ? getAuxBits(KEY + "0").toString() : ""), false, wordLength()));
             addAuxBits(AUX_FINISHED, AUX_TRUE);
         }
     }
@@ -336,9 +340,19 @@ public class Instruction
     public void executeIntAdd(ExecuteStage stage)
     {
         String KEY = "add_w_holding";
-        //TODO: make more modular in line with ISA (currently only accepting register sources)
-        //      Register values read in DecodeStage
-        addAuxBits(AUX_RESULT(0), new Term(getAuxBits(AUX_SOURCE(0)).toInt() + getAuxBits(AUX_SOURCE(1)).toInt()));
+        int operand1 = getAuxBits(AUX_SOURCE(0)).toInt();
+        int operand2 = getAuxBits(AUX_SOURCE(1)).toInt();
+        int result = operand1 + operand2;
+        long longResult = ((long)result) & BYTE_MASK;
+        long longOperand1 = ((long)operand1) & BYTE_MASK;
+        long longOperand2 = ((long)operand2) & BYTE_MASK;
+        if(AUX_EQUALS(getAuxBits(FLAG((wordLength() == WORD_SIZE_SHORT) ? 0 : 2)), 1))
+        {
+            int newCC = (int)stage.internalRegisters.load(CC_INDEX);
+            newCC = (longResult != (longOperand1 + longOperand2)) ? NEW_CC_CARRY(newCC) : NEW_CC_NOCARRY(newCC);
+            addAuxBits(AUX_RESULT(1), new Term(newCC, false));
+        }
+        addAuxBits(AUX_RESULT(0), new Term(result));
         addAuxBits(AUX_FINISHED, AUX_TRUE);
     }
 
@@ -368,6 +382,17 @@ public class Instruction
         newCC = (result < 0) ? NEW_CC_NEGATIVE(newCC) : NEW_CC_POSITIVE(newCC);
 
         setResult(0, new Term(newCC, false));
+    }
+
+    public void executeCopy(ExecuteStage stage)
+    {
+        setResult(0, new Term(getAuxBits(AUX_SOURCE(0)).toInt(), false));
+    }
+
+    public void executeHalt(ExecuteStage stage)
+    {
+        // Just copies the result value. Does not cease
+        setResult(0, new Term(getAuxBits(AUX_SOURCE(0)).toInt(), false));
     }
 
     public void executeError(PipelineStage ignored)

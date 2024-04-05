@@ -88,27 +88,24 @@ public class Simulator extends JFrame
             for(int i = 0; i < numTicks; i++)
             {
                 CURRENT_TICK += 1;
-                Instruction output = pipeline.preExecute();  // Happens before memory cycled, so memory cycling can be "in-line" with pipeline cycling
-                if(output.getHeader().equals(HEADER.HALT))
+                boolean aboutToHalt = pipeline.preExecute();  // Happens before memory cycled, so memory cycling can be "in-line" with pipeline cycling
+                for(JList<MemoryModule> list : memoryLists)
+                {
+                    for(int j = 0; j < list.getModel().getSize(); j++)
+                    {
+                        list.getModel().getElementAt(j).tick();
+                    }
+                }
+                if(aboutToHalt)
                 {
                     System.out.println("HALT ENCOUNTERED");
                     break;
                 }
-                else
+                Instruction output = pipeline.execute();
+                if(ERROR_INSTRUCTIONS.contains(output.getHeader()))
                 {
-                    for(JList<MemoryModule> list : memoryLists)
-                    {
-                        for(int j = 0; j < list.getModel().getSize(); j++)
-                        {
-                            list.getModel().getElementAt(j).tick();
-                        }
-                    }
-                    output = pipeline.execute();
-                    if(ERROR_INSTRUCTIONS.contains(output.getHeader()))
-                    {
-                        System.out.println("ERROR ENCOUNTERED: " + output.word.toString());
-                        break;
-                    }
+                    System.out.println("ERROR ENCOUNTERED: " + output.word.toString());
+                    break;
                 }
             }
             countLabel.setText("Cycles: " + CURRENT_TICK);
@@ -731,7 +728,7 @@ public class Simulator extends JFrame
     /**
      * Stores value in argument text field or corresponding register to given address in selected MemoryModule.
      */
-    private void storeInCurrentMemoryModule()  // TODO : Add second value word field when 64-bit cache is selected
+    private void storeInCurrentMemoryModule()
     {
         try
         {

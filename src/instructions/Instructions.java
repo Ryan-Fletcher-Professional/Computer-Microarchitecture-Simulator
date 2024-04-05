@@ -167,7 +167,7 @@ public class Instructions
     public static Map<HEADER, String> INTERNAL_MNEMONICS = new HashMap<>() {{
         put(HEADER.NOOP,                    "_NOOP_");
         put(HEADER.STALL,                   "_STALL_");
-        put(HEADER.QUASH_SIZE, "_QUASH_SIZE_");
+        put(HEADER.QUASH_SIZE,              "_QUASH_SIZE_");
         put(HEADER.QUASH_BRANCH,            "_QUASH_BR_");
         put(HEADER.LOAD_PC,                 "_LOAD_PC_");
         put(HEADER.EXECUTION_ERR,           "_EXEC_ERR_");
@@ -189,7 +189,9 @@ public class Instructions
     public static final List<HEADER> ALU_EXECUTE_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {
         HEADER.INT_ADD,
-        HEADER.COMPARE
+        HEADER.COMPARE,
+        HEADER.COPY,
+        HEADER.HALT
     }));
     public static final List<HEADER> BRANCH_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {

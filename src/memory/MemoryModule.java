@@ -333,7 +333,6 @@ public class MemoryModule
         memory = new int[Math.min(GET_ACTUAL_MAX_SIZE(type), columnSize * lineSize) / lineSize]
                         [WORD_INDECES.length - 1 + lineSize];
 
-        // TODO : Remove this? (Would need to change accessNext())
         if(next == null)
         {
             for(int i = 0; i < memory.length; i++)

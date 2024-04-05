@@ -49,12 +49,12 @@ public class DecodeStage extends PipelineStage
                 case HEADER.COMPARE -> decodeCompare();
 
                 case HEADER.COPY -> decodeCopy();
+
+                case HEADER.HALT -> decodeHalt();
             }
             heldInstruction.addAuxBits(AUX_DECODED, AUX_TRUE());
         }
 
-        // TODO : getSourceRegs() returns an index for each source in the instruction, REGISTER OR NOT!
-        //  Non-register sources and already-read sources are sent as " -1" with no prefix
         String[] sourceRegs = heldInstruction.getSourceRegs();
         //System.out.println(heldInstruction.getHeader() + " " + Arrays.toString(sourceRegs));
         for(int i = 0; i < sourceRegs.length; i++)
@@ -330,6 +330,8 @@ public class DecodeStage extends PipelineStage
                                           AUX_SD_TYPE_REGISTER,
                                       AUX_REG_BANK_INDEXABLES);
         }
+
+        heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
     }
 
     private void decodeCompare()
@@ -391,12 +393,23 @@ public class DecodeStage extends PipelineStage
 
         if(length == WORD_SIZE_SHORT)
         {
-            int start = 24;
+            heldInstruction.addFlags(1);
 
-            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
-            start += 4;
 
-            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            int start = 7;
+            int end = start + 21;
+
+            int type = AUX_SD_TYPE_IMMEDIATE;
+            if(AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0))
+            {
+                start += (21 - 4);
+                type = AUX_SD_TYPE_REGISTER;
+            }
+
+            heldInstruction.addSource(0, start, end, type, AUX_REG_BANK_INDEXABLES);
+            start = end;
+
+            heldInstruction.addDest(0, start, start + 4, type, AUX_REG_BANK_INDEXABLES);
         }
         else
         {
@@ -416,7 +429,7 @@ public class DecodeStage extends PipelineStage
             start = end;
 
             type = AUX_SD_TYPE_REGISTER;
-            heldInstruction.addDest(0, start, end, type, AUX_REG_BANK_INDEXABLES);
+            heldInstruction.addDest(0, start, start + 4, type, AUX_REG_BANK_INDEXABLES);
         }
 
         if(((length == WORD_SIZE_SHORT) || AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0)) &&
@@ -427,5 +440,31 @@ public class DecodeStage extends PipelineStage
             heldInstruction.addAuxBits(new Term(ERR_TYPE_INVALID_ARGS, false, length - HEADER_SIZE).toString(),
                                        new Term(HEADER_STRINGS.get(heldInstruction.getHeader()), false));
         }
+    }
+
+    private void decodeHalt()
+    {
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            heldInstruction.addFlags(1);
+
+            int start = 28;
+
+            int type = AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0) ? AUX_SD_TYPE_REGISTER : AUX_SD_TYPE_IMMEDIATE;
+
+            heldInstruction.addSource(0, start, start + 4, type, AUX_REG_BANK_INDEXABLES);
+        }
+        else
+        {
+            heldInstruction.addFlags(1);
+
+            int start = 60;
+
+            int type = AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0) ? AUX_SD_TYPE_REGISTER : AUX_SD_TYPE_IMMEDIATE;
+
+            heldInstruction.addSource(0, start, start + 4, type, AUX_REG_BANK_INDEXABLES);
+        }
+
+        heldInstruction.addDestManual(0, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
     }
 }

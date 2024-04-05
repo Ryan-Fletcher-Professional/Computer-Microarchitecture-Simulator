@@ -17,6 +17,7 @@ public class Pipeline
     private boolean[][] pendingRegisters;
     private int wordSize;
     private FetchStage fetch;
+    private ExecuteStage execute;
     private MemoryAccessStage access;
     private MemoryWritebackStage write;
     private PipelineStage endStage;  // This and dummyStartStage exist to prevent erroneous consecutation of actual pipeline stages
@@ -51,14 +52,23 @@ public class Pipeline
         return wordSize;
     }
 
-    public Instruction preExecute()
+    public boolean preExecute()
     {
-        Object[] ret = write.preExecute();
-        if((!(boolean)ret[0]) && !((Instruction)ret[1]).getHeader().equals(HEADER.HALT))  // ret[0] = branching
+        Object[] writeRet = write.preExecute();
+        boolean branching = (boolean)writeRet[0];
+        Instruction aboutToWrite = (Instruction)writeRet[1];
+        boolean aboutToWriteHalt = aboutToWrite.getHeader().equals(HEADER.HALT);
+        Instruction aboutToAccess = access.heldInstruction;
+        Instruction aboutToExecute = execute.heldInstruction;
+        boolean waitingOnHalt = aboutToWriteHalt || aboutToAccess.getHeader().equals(HEADER.HALT) || aboutToExecute.getHeader().equals(HEADER.HALT);
+        if(!branching && !aboutToWriteHalt)
         {
             try
             {
-                fetch.preExecute();
+                if(!waitingOnHalt)
+                {
+                    fetch.preExecute();
+                }
             }
             catch(MRAException e)
             {
@@ -66,7 +76,7 @@ public class Pipeline
             }
             access.preExecute();
         }
-        return (Instruction)ret[1];
+        return aboutToWriteHalt;
     }
 
     public Instruction execute()
@@ -97,7 +107,7 @@ public class Pipeline
         this.wordSize = wordSize;
         fetch = new FetchStage(wordSize, "Fetch", internalRegisters, nearestInstructionCache);
         DecodeStage decode = new DecodeStage(wordSize, "Decode", indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
-        ExecuteStage execute = new ExecuteStage(wordSize, "Execute", internalRegisters);
+        execute = new ExecuteStage(wordSize, "Execute", internalRegisters);
         access = new MemoryAccessStage(wordSize, "Access", indexableRegisters, nearestDataCache);
         write = new MemoryWritebackStage(wordSize, "Write",
                                                               indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
