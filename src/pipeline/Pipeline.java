@@ -52,6 +52,11 @@ public class Pipeline
         return wordSize;
     }
 
+    public void openWrite()
+    {
+        write.heldInstruction = NOOP(wordSize);
+    }
+
     public boolean preExecute()
     {
         Object[] writeRet = write.preExecute();

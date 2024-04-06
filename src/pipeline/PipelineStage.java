@@ -89,9 +89,9 @@ public class PipelineStage
         return STALL(wordSize);
     }
 
-    protected Instruction pass(boolean nextStatus) throws MRAException
+    protected Instruction pass(boolean obstructed) throws MRAException
     {
-        if(!nextStatus)
+        if(!obstructed)
         {
             return passUnblocked();
         }

@@ -78,6 +78,16 @@ public class Assembler
     private static void ASSEMBLE(String text, File destinationDirectory, int num, boolean dataMode, Map<String, Integer> labels) throws AssemblyError
     {
         String[] lines = text.split("\\r?\\n|\\r", -1);  // Preserves empty lines for line indexing purposes
+        for(int i = 0; i < lines.length; i++)
+        {
+            int start = 0;
+            while((start < lines[i].length()) && ((lines[i].charAt(start) == ' ') || (lines[i].charAt(start) == '\t')))
+            {
+                start++;
+            }
+            lines[i] = lines[i].substring(start);
+        }
+
         List<Integer> words = new ArrayList<>();
 
         int wordSize = WORD_SIZE_SHORT;
@@ -184,7 +194,10 @@ public class Assembler
             {
                 String line = lines[i - 1];
 
-                if(line.isEmpty() || (line.charAt(0) == LABEL_DEFINE) || (line.charAt(0) == COMMENT))
+                int firstNonWhitespace = 0;
+                while(!line.isEmpty() && ((line.charAt(firstNonWhitespace) == ' ') || (line.charAt(firstNonWhitespace) == '\t')))
+                    { firstNonWhitespace++; }
+                if(line.isEmpty() || (line.charAt(firstNonWhitespace) == LABEL_DEFINE) || (line.charAt(firstNonWhitespace) == COMMENT))
                 {
                     long instruction = NOOP(wordSize).wordNum();
                     if(wordSize == WORD_SIZE_LONG) { words.add((int)(instruction >>> (Long.SIZE - Integer.SIZE))); }
@@ -192,7 +205,14 @@ public class Assembler
                     continue;
                 }
 
-                List<String> tokensAll = List.of(line.split(" "));
+                List<String> tokensAll = new ArrayList<>();
+                for(String unit : line.split(COMMENT + "")[0].split("\t"))
+                {
+                    for(String atom : unit.split(" "))
+                    {
+                        if(!atom.isEmpty()) { tokensAll.add(atom); }
+                    }
+                }
                 List<String> tokensList = new ArrayList<>();
                 for(String token : tokensAll)
                 {

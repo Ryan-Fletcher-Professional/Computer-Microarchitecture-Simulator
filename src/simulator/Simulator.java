@@ -99,6 +99,7 @@ public class Simulator extends JFrame
                 if(aboutToHalt)
                 {
                     System.out.println("HALT ENCOUNTERED");
+                    pipeline.openWrite();
                     break;
                 }
                 Instruction output = pipeline.execute();
@@ -134,18 +135,18 @@ public class Simulator extends JFrame
             currentlyInvisibleControls = temp;
             updateDisplay();
         });
-        JPanel bankPanel = new JPanel();
-        JButton bankToggle = new JButton("Toggle Register Bank View");
-        bankToggle.setMinimumSize(new Dimension(300, 30));
-        bankToggle.setMaximumSize(new Dimension(300, 30));
-        bankToggle.addActionListener(e -> {
-            bankPanel.remove(currentlyVisibleBank);
-            bankPanel.add(currentlyInvisibleBank);
-            JScrollPane temp = currentlyVisibleBank;
-            currentlyVisibleBank = currentlyInvisibleBank;
-            currentlyInvisibleBank = temp;
-            updateDisplay();
-        });
+        JPanel bankPanel = new JPanel(new GridLayout(1, 1));
+//        JButton bankToggle = new JButton("Toggle Register Bank View");
+//        bankToggle.setMinimumSize(new Dimension(300, 30));
+//        bankToggle.setMaximumSize(new Dimension(300, 30));
+//        bankToggle.addActionListener(e -> {
+//            bankPanel.remove(currentlyVisibleBank);
+//            bankPanel.add(currentlyInvisibleBank);
+//            JScrollPane temp = currentlyVisibleBank;
+//            currentlyVisibleBank = currentlyInvisibleBank;
+//            currentlyInvisibleBank = temp;
+//            updateDisplay();
+//        });
         JButton saveButton = new JButton("Save to File");
         saveButton.setMinimumSize(new Dimension(300, 30));
         saveButton.setMaximumSize(new Dimension(300, 30));
@@ -175,7 +176,7 @@ public class Simulator extends JFrame
             pipeline.reset();
         });
         Component[] toolBarComponents = new Component[] { countLabel, tickButton, tickField, stackPipelineToggle,
-                                                          bankToggle, controlsToggle, saveButton };
+                                                          /*bankToggle, */controlsToggle, saveButton };
         int leftSize = 0;
         for(Component component : toolBarComponents)
         {
@@ -433,6 +434,7 @@ public class Simulator extends JFrame
         JScrollPane internalDisplayPane = new JScrollPane(internalBankDisplayText);
         internalDisplayPane.setPreferredSize(new Dimension(frameWidth, 90));
         bankPanel.add(indexableDisplayPane);
+        bankPanel.setPreferredSize(new Dimension(width, 125));
         currentlyVisibleBank = indexableDisplayPane;
         currentlyInvisibleBank = internalDisplayPane;
 
@@ -533,8 +535,9 @@ public class Simulator extends JFrame
         callStackDisplayText.setText(registerBanks[CALL_STACK_INDEX].getDisplayText(1, radix));
         reversalStackDisplayText.setText(registerBanks[REVERSAL_STACK_INDEX].getDisplayText(1, radix));
         pipelineDisplayText.setText(pipeline.getDisplayText((radix != 10) ? radix : 2));
-        indexableBankDisplayText.setText(registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(8, radix));
-        internalBankDisplayText.setText(registerBanks[INTERNAL_BANK_INDEX].getDisplayText(8, radix));
+        indexableBankDisplayText.setText(registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(16, radix) +
+                                             "\n\n" + registerBanks[INTERNAL_BANK_INDEX].getDisplayText(16, radix));
+        //internalBankDisplayText.setText(registerBanks[INTERNAL_BANK_INDEX].getDisplayText(8, radix));
         if(currentlySelectedMemory != null)
             { memoryDisplayText.setText(currentlySelectedMemory.getMemoryDisplay(getRadices()[0], radix)); }
 

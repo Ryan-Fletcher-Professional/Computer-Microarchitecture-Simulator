@@ -31,7 +31,7 @@ public class FetchStage extends PipelineStage
     protected Instruction passUnblocked() throws MRAException
     {
         // Increment PC then return unblocked
-        internalRegisters.store(PC_INDEX, internalRegisters.load(PC_INDEX) + ((wordSize == 32) ? 1 : 2));
+        internalRegisters.store(PC_INDEX, internalRegisters.load(PC_INDEX) + ((wordSize == WORD_SIZE_SHORT) ? 1 : 2));
         Instruction ret = super.passUnblocked();
         return ret;
     }

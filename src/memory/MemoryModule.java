@@ -92,7 +92,7 @@ public class MemoryModule
             .append(itemDelim)
             .append("Mode:")
             .append(itemGap)
-            .append(wordLength.equals(WORD_LENGTH.SHORT) ? 32 : 64)
+            .append(wordLength.equals(WORD_LENGTH.SHORT) ? WORD_SIZE_SHORT : WORD_SIZE_LONG)
             .append(" - ")
             .append(writeMode)
             .append(itemDelim)
@@ -677,8 +677,6 @@ public class MemoryModule
      * Performs requested load operation immediately, then queues access delay.
      * If currently in write-back mode and this operation has to replace a dirty line, it first creates a new access
      *  request to the next level of memory to write the dirty line.
-     * TODO: MAKE SURE THAT CODE FROM PIPELINE FOR INSTRUCTION MEMORY ACCESSES DOUBLES THE ADDRESSES DURING 64-BIT MODE!
-     *       MemoryModule does not translate such addresses!
      * @param chain Chain of LOAD MemoryRequests, last of which targets this device. That request must be instantiated
      *              but not started.
      * @return Length 1 (wordLength SHORT) or 2 (wordLength LONG) int array if request arg wholeLine is false.

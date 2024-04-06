@@ -109,7 +109,7 @@ public class Instruction
     {
         for(int i = 0; i < numFlags; i++)
         {
-            addAuxBits(FLAG(0), new Term((wordLength() == WORD_SIZE_SHORT) ?
+            addAuxBits(FLAG(i), new Term((wordLength() == WORD_SIZE_SHORT) ?
                                              MASK((int)wordNum(), 6 + i) :
                                              MASK_LONG(wordNum(), 6 + i)));
         }
@@ -289,14 +289,20 @@ public class Instruction
                             MEMORY_TYPE.INSTRUCTION, REQUEST_TYPE.LOAD,
                             new Object[]{(int)(stage.internalRegisters.load(PC_INDEX)), false})));
             int[] words = cache.load(activeRequest);
-            addAuxBits(KEY + "0", new Term(words[0], false, 32));
-            if(wordLength() == WORD_SIZE_LONG)
-                { addAuxBits(KEY + "1", new Term(words[1], false, 32)); }
+            for(int i = 0; i < words.length; i++)
+            {
+                addAuxBits(KEY + i, new Term(words[i], false, 32));
+            }
         }
         if(activeRequest.isEmpty() && !isFinished())
         {
+            StringBuilder wordBuilder = new StringBuilder();
+            for(int i = 0; getAuxBits(KEY + i) != null; i++)
+            {
+                wordBuilder.append(getAuxBits(KEY + i).toString());
+            }
             // IMPORTANT: For other instructions, use AUX_RESULT(int), not AUX_RESULT
-            addAuxBits(AUX_RESULT, new Term(getAuxBits(KEY + "0").toString() + ((getAuxBits(KEY + "0") != null) ? getAuxBits(KEY + "0").toString() : ""), false, wordLength()));
+            addAuxBits(AUX_RESULT, new Term(wordBuilder.toString(), false, wordLength()));
             addAuxBits(AUX_FINISHED, AUX_TRUE);
         }
     }

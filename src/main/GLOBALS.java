@@ -29,23 +29,23 @@ public class GLOBALS
     public static final int[] REGISTER_BANK_INDECES = new int[] { INDEXABLE_BANK_INDEX, INTERNAL_BANK_INDEX, CALL_STACK_INDEX, REVERSAL_STACK_INDEX };
     public static final String PC = "PC";
     public static final String CC = "CC";
-    public static final int CC_NEGATIVE_MASK = MASK((~0), 15);
+    public static final int CC_NEGATIVE_MASK = 0b1 << 0;
     public static boolean CC_NEGATIVE(int cc) { return (cc & CC_NEGATIVE_MASK) == CC_NEGATIVE_MASK; }
     public static int NEW_CC_NEGATIVE(int cc) { return cc | CC_NEGATIVE_MASK; }
     public static int NEW_CC_NONNEGATIVE(int cc) { return cc & (~CC_NEGATIVE_MASK); }
-    public static final int CC_POSITIVE_MASK = MASK((~0), 14);
+    public static final int CC_POSITIVE_MASK = 0b1 << 1;
     public static boolean CC_POSITIVE(int cc) { return (cc & CC_POSITIVE_MASK) == CC_POSITIVE_MASK; }
     public static int NEW_CC_POSITIVE(int cc) { return cc | CC_POSITIVE_MASK; }
     public static int NEW_CC_NONPOSITIVE(int cc) { return cc & (~CC_POSITIVE_MASK); }
-    public static final int CC_ZERO_MASK = MASK((~0), 13);
+    public static final int CC_ZERO_MASK = 0b1 << 2;
     public static boolean CC_ZERO(int cc) { return (cc & CC_ZERO_MASK) == CC_ZERO_MASK; }
     public static int NEW_CC_ZERO(int cc) { return cc | CC_ZERO_MASK; }
     public static int NEW_CC_NONZERO(int cc) { return cc & (~CC_ZERO_MASK); }
-    public static final int CC_CARRY_MASK = MASK((~0), 12);
+    public static final int CC_CARRY_MASK = 0b1 << 3;
     public static boolean CC_CARRY(int cc) { return (cc & CC_CARRY_MASK) == CC_CARRY_MASK; }
     public static int NEW_CC_CARRY(int cc) { return cc | CC_CARRY_MASK; }
     public static int NEW_CC_NOCARRY(int cc) { return cc & (~CC_CARRY_MASK); }
-    public static final int CC_HALT_MASK = MASK((~0), 9, 12);
+    public static final int CC_HALT_MASK = 0b1 << 4;
     public static int NEW_CC_HALT(int cc) { return cc | CC_HALT_MASK; }
     public static final String PRED_1 = "PRED 1";
     public static final String PRED_2 = "PRED 2";

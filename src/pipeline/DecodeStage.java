@@ -188,7 +188,7 @@ public class DecodeStage extends PipelineStage
                 start -= (25 - 4);
                 heldInstruction.addSource(0, start, start + 25, AUX_SD_TYPE_IMMEDIATE, -1);
             }
-            start += 4;
+            start = 60;
 
             heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
         }
@@ -262,6 +262,8 @@ public class DecodeStage extends PipelineStage
         }
         heldInstruction.addSource(0, start, heldInstruction.wordLength(), type, AUX_REG_BANK_INDEXABLES);
 
+        heldInstruction.addSourceManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+
         heldInstruction.addDestManual(0, new Term(PC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
     }
 
@@ -290,13 +292,18 @@ public class DecodeStage extends PipelineStage
             {
                 heldInstruction.addSource(2, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
             }
+
+            if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 1)
+            {
+                heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+            }
         }
         else  // LONG word
         {
             heldInstruction.addFlags(3);
 
-            int start = (heldInstruction.getAuxBits(FLAG(0)).toInt() == 0) ||
-                (heldInstruction.getAuxBits(FLAG(1)).toInt() == 0)
+            int start = (heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) ||
+                (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1)
                 ? 20 : 48;
 
             if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
@@ -317,7 +324,7 @@ public class DecodeStage extends PipelineStage
             }
             else
             {
-                heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_IMMEDIATE, -1);
+                heldInstruction.addSource(1, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
                 start += 32;
             }
 
@@ -328,10 +335,13 @@ public class DecodeStage extends PipelineStage
                                       (heldInstruction.getAuxBits(FLAG(2)).toInt() == 0) ?
                                           AUX_SD_TYPE_IMMEDIATE :
                                           AUX_SD_TYPE_REGISTER,
-                                      AUX_REG_BANK_INDEXABLES);
-        }
+                                       AUX_REG_BANK_INDEXABLES);
 
-        heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+            if(heldInstruction.getAuxBits(FLAG(2)).toInt() == 1)
+            {
+                heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+            }
+        }
     }
 
     private void decodeCompare()

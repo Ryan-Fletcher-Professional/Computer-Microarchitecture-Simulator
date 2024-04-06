@@ -207,6 +207,13 @@ public class Instructions
     {
         HEADER.EXECUTION_ERR,       // Should have flag matching errType
     }));
+    public static final List<HEADER> DISPOSABLE_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
+    {
+        HEADER.NOOP,
+        HEADER.STALL,
+        HEADER.QUASH_SIZE,
+        HEADER.QUASH_BRANCH
+    }));
 
     public static final int AUX_FALSE = 0;
     public static Term AUX_FALSE() { return new Term(AUX_FALSE, false); }
