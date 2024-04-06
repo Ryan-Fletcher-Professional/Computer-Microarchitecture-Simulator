@@ -16,9 +16,7 @@ public class GLOBALS
     public static final int DEFAULT_UI_HEIGHT = screenSize.height - 100;
 
     public static final String PATH_TO_FILES = "src/files/";
-    public static final String PATH_TO_DATA_FILES = PATH_TO_FILES + "data/";
-    public static final int DATA_STARTING_ADDRESS = 0b100000000000000000000;  // 1MB
-    public static final String PATH_TO_INSTRUCTION_BINS = PATH_TO_FILES + "bin/";
+    public static final String PATH_TO_BINARIES = PATH_TO_FILES + "bin/";
 
     public static final  String PENDING_INDICATOR = "*";
     public static final int INDEXABLE_BANK_SIZE = 16;

@@ -27,7 +27,7 @@ public class Assembler
     {
         String assemblyPath = System.getProperty("user.dir") + "/src/files/assembly/";
         String binaryPath = System.getProperty("user.dir") + "/src/files/bin/";
-        subMain(new String[] { "-s", assemblyPath + "testInstr.txt", "--data", assemblyPath + "testData.txt", "-d", binaryPath });
+        subMain(new String[] { "-s", assemblyPath + "instructionAssembly.txt", "--data", assemblyPath + "dataAssembly.txt", "-d", binaryPath });
     }
 
     public static void subMain(String[] args) throws AssemblyError

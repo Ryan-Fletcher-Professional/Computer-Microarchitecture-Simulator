@@ -637,8 +637,7 @@ public class Simulator extends JFrame
             model.addElement(newModule);
             if(next == null)
             {
-                newModule.storeFiles(PATH_TO_INSTRUCTION_BINS, 0);
-                newModule.storeFiles(PATH_TO_DATA_FILES, DATA_STARTING_ADDRESS);
+                newModule.storeFiles(PATH_TO_BINARIES, 0);
             }
             if((instructionCachesModel.isEmpty() && kind.equals(MEMORY_KIND.RAM)) || (type.equals(MEMORY_TYPE.INSTRUCTION) && kind.equals(MEMORY_KIND.CACHE)))
             {

@@ -6,8 +6,6 @@ import simulator.Simulator;
 
 import javax.swing.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static main.GLOBALS.*;
@@ -18,7 +16,7 @@ public class Main
     {
         System.out.println("\n!!!!!!!!    Running simulator    !!!!!!!!\n");
 
-        int[] startingParams = FIND_START_PARAMS(PATH_TO_INSTRUCTION_BINS);
+        int[] startingParams = FIND_START_PARAMS(PATH_TO_BINARIES);
 
         RegisterFileModule[] registerBanks = new RegisterFileModule[REGISTER_BANK_INDECES.length];
         int[] indexableLengths = new int[INDEXABLE_BANK_SIZE];
