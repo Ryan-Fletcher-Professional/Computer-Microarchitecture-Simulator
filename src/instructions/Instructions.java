@@ -53,6 +53,7 @@ public class Instructions
         COMPARE,
 
         COPY,
+        SWAP,
 
         // FP here if implement
 
@@ -78,6 +79,7 @@ public class Instructions
         put(OPCODE.COMPARE, "100");
 
         put(OPCODE.COPY, "100");
+        put(OPCODE.SWAP, "101");
 
         // FP here if implement
 
@@ -112,6 +114,7 @@ public class Instructions
         COMPARE,
 
         COPY,
+        SWAP,
 
         // FP here if implement
 
@@ -138,6 +141,7 @@ public class Instructions
         put(HEADER.COMPARE,                 MAKE_HEADER_STRING( TYPECODE.INT_LOGIC,         OPCODE.COMPARE              ));
 
         put(HEADER.COPY,                    MAKE_HEADER_STRING(TYPECODE.INT_CONTROL,        OPCODE.COPY                 ));
+        put(HEADER.SWAP,                    MAKE_HEADER_STRING(TYPECODE.INT_CONTROL,        OPCODE.SWAP                 ));
 
         // FP here if implement
 
@@ -169,6 +173,7 @@ public class Instructions
         put(HEADER.COMPARE,                 "CMP");
 
         put(HEADER.COPY,                    "COPY");
+        put(HEADER.SWAP,                    "SWAP");
 
         // FP here if implement
 
@@ -208,6 +213,7 @@ public class Instructions
         HEADER.INT_SUBTRACT,
         HEADER.COMPARE,
         HEADER.COPY,
+        HEADER.SWAP,
         HEADER.HALT
     }));
     public static final List<HEADER> BRANCH_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]

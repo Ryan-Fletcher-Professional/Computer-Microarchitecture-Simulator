@@ -50,6 +50,7 @@ public class DecodeStage extends PipelineStage
                 case HEADER.COMPARE -> decodeCompare();
 
                 case HEADER.COPY -> decodeCopy();
+                case HEADER.SWAP -> decodeSwap();
 
                 case HEADER.HALT -> decodeHalt();
             }
@@ -529,6 +530,19 @@ public class DecodeStage extends PipelineStage
             heldInstruction.addAuxBits(new Term(ERR_TYPE_INVALID_ARGS, false, length - HEADER_SIZE).toString(),
                                        new Term(HEADER_STRINGS.get(heldInstruction.getHeader()), false));
         }
+    }
+
+    public void decodeSwap()
+    {
+        int start = heldInstruction.wordLength() - 8;
+
+        heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+        start += 4;
+        heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+        // Swap is done in execute, not here
+        heldInstruction.addDest(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+        start -= 4;
+        heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
     }
 
     private void decodeHalt()

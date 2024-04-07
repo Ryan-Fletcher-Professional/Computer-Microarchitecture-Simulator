@@ -270,6 +270,7 @@ public class Instruction
             case HEADER.COMPARE -> executeCompare((ExecuteStage)invoker);
 
             case HEADER.COPY -> executeCopy((ExecuteStage)invoker);
+            case HEADER.SWAP -> executeSwap((ExecuteStage)invoker);
 
             case HEADER.HALT -> executeHalt((ExecuteStage)invoker);
 
@@ -398,6 +399,12 @@ public class Instruction
     public void executeCopy(ExecuteStage stage)
     {
         setResult(0, new Term(getAuxBits(AUX_SOURCE(0)).toInt(), false));
+    }
+
+    public void executeSwap(ExecuteStage stage)
+    {
+        setResult(0, new Term(getAuxBits(AUX_SOURCE(1)).toInt(), false));
+        setResult(1, new Term(getAuxBits(AUX_SOURCE(0)).toInt(), false));
     }
 
     public void executeHalt(ExecuteStage stage)

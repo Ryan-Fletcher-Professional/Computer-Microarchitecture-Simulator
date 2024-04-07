@@ -429,8 +429,11 @@ public class Assembler
             case HEADER.COMPARE -> word = parseCompare(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
             case HEADER.COPY -> word = parseCopy(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.SWAP -> word = parseSwap(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
             case HEADER.HALT -> word = parseHalt(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+
+            default -> throw new AssemblyError("UNPARSED INSTRUCTION at line " + lineNum);
         }
         return word;
     }
@@ -742,6 +745,33 @@ public class Assembler
 
             return word | (flag << (wordSize - 7)) | (src << srcShift) | dest;
         }
+    }
+
+    private static long parseSwap(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {
+        if(tokens.length != 3)
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <src reg>, <dest reg>"); }
+        if(!tokens[1].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+        if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <reg 1> is not a register"); }
+        if(!tokens[2].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <reg 2> is not a register"); }
+
+        long src0 = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+        long src1 = SAFE(PARSE_TOKEN(tokens[2], lineNum, labels), 4);
+
+        if(src0 == src1)
+        {
+            throw new AssemblyError("Incorrect arguments for instruction \"" + mnemonic + "\" at line " + lineNum +
+                                        ": <reg1> and <reg2> are the same");
+        }
+
+        return word | (src0 << 4) | src1;
     }
 
     private static long parseHalt(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
