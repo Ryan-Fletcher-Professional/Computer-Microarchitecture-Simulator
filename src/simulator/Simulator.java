@@ -638,6 +638,7 @@ public class Simulator extends JFrame
             if(next == null)
             {
                 newModule.storeFiles(PATH_TO_BINARIES, 0);
+                registerBanks[INTERNAL_BANK_INDEX].store(CM_INDEX, newModule.getMemoryAddress());
             }
             if((instructionCachesModel.isEmpty() && kind.equals(MEMORY_KIND.RAM)) || (type.equals(MEMORY_TYPE.INSTRUCTION) && kind.equals(MEMORY_KIND.CACHE)))
             {

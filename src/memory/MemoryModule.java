@@ -778,6 +778,11 @@ public class MemoryModule
         return ret;
     }
 
+    public int getMemoryAddress()
+    {
+        return readData(memory[0], 1, false)[0];
+    }
+
     /**
      * Creates access request to next level of memory. If there is no next level, this method throws an error.
      * @param requestType STORE/LOAD

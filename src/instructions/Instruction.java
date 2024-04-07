@@ -290,6 +290,7 @@ public class Instruction
                     new MemoryRequest(id, cache.getID(),
                             MEMORY_TYPE.INSTRUCTION, REQUEST_TYPE.LOAD,
                             new Object[]{(int)(stage.internalRegisters.load(PC_INDEX)), false})));
+            System.out.println("LOAD_PC: " + stage.internalRegisters.load(PC_INDEX));
             int[] words = cache.load(activeRequest);
             for(int i = 0; i < words.length; i++)
             {
@@ -317,7 +318,7 @@ public class Instruction
             activeRequest = new LinkedList<>(List.of(
                 new MemoryRequest(id, cache.getID(),
                                   MEMORY_TYPE.DATA, REQUEST_TYPE.LOAD,
-                                  new Object[]{getAuxBits(AUX_SOURCE(0)).toInt(), false})));
+                                  new Object[]{getAuxBits(AUX_SOURCE(0)).toInt() + ((int)stage.internalRegisters.load(CM_INDEX)), false})));
             addAuxBits(KEY, new Term(cache.load(activeRequest)[0], true));
         }
         if (activeRequest.isEmpty() && !isFinished()) {
@@ -335,7 +336,7 @@ public class Instruction
             activeRequest = new LinkedList<>(List.of(
                 new MemoryRequest(id, cache.getID(),
                                   MEMORY_TYPE.DATA, REQUEST_TYPE.STORE,
-                                  new Object[]{ getAuxBits(AUX_SOURCE(1)).toInt(),
+                                  new Object[]{ getAuxBits(AUX_SOURCE(1)).toInt() + ((int)stage.internalRegisters.load(CM_INDEX)),
                                                 new int[] { getAuxBits(AUX_SOURCE(0)).toInt() } })));
             cache.store(activeRequest);
         }

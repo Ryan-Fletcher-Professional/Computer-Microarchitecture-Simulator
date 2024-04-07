@@ -12,13 +12,15 @@ import static instructions.Instructions.*;
 public class MemoryAccessStage extends PipelineStage
 {
     public RegisterFileModule indexableRegisters;
+    public RegisterFileModule internalRegisters;
     public MemoryModule nearestDataCache;
     private int oldID = -1;
 
-    public MemoryAccessStage(int wordSize, String name, RegisterFileModule indexableRegisters, MemoryModule nearestDataCache)
+    public MemoryAccessStage(int wordSize, String name, RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters, MemoryModule nearestDataCache)
     {
         super(wordSize, name);
         this.indexableRegisters = indexableRegisters;
+        this.internalRegisters = internalRegisters;
         this.nearestDataCache = nearestDataCache;
     }
 

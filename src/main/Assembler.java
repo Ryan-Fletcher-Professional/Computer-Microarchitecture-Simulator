@@ -15,7 +15,7 @@ public class Assembler
 {
     public static final char LABEL_DEFINE = '=';
     public static final char LABEL_USE = '%';
-    public static final String MEM_LABEL = "MEM";
+//    public static final String MEM_LABEL = "MEM";
     public static final char COMMENT = '@';
     public static final char BASE_10 = '#';
     public static final char BASE_16 = 'x';
@@ -182,13 +182,20 @@ public class Assembler
                 index++;
             }
 
-            if(labels.get(MEM_LABEL) == null)
-                { labels.put(MEM_LABEL, (int)((wordSize == WORD_SIZE_SHORT)
-                                                ? SHORT_INSTRUCTION_ADDRESS_FIX(lines.length + 1, index)
-                                                : LONG_INSTRUCTION_ADDRESS_FIX(lines.length + 1, index))); }
+//            if(labels.get(MEM_LABEL) == null)
+//                { labels.put(MEM_LABEL, (int)((wordSize == WORD_SIZE_SHORT)
+//                                                ? SHORT_INSTRUCTION_ADDRESS_FIX(lines.length + 1, index)
+//                                                : LONG_INSTRUCTION_ADDRESS_FIX(lines.length + 1, index))); }
 
+            // Set first line of memory
             words.add((((wordSize == WORD_SIZE_SHORT) ? 0 : 1) << 31) | (stackSize << 21) | (bufferSize << 11));
-            words.add(0);
+            words.add((int)((wordSize == WORD_SIZE_SHORT)
+                                ? SHORT_INSTRUCTION_ADDRESS_FIX(lines.length + 1, index)
+                                : LONG_INSTRUCTION_ADDRESS_FIX(lines.length + 1, index)));
+            for(int i = 0; i < (8 - 2); i++)
+            {
+                words.add(0);
+            }
 
             for(int i = index + 1; i <= lines.length; i++)  // i is the line number the coder sees
             {
@@ -278,7 +285,7 @@ public class Assembler
      */
     public static long SHORT_INSTRUCTION_ADDRESS_FIX(long lineNum, int numStartInstructions)
     {
-        return lineNum - 1 - (numStartInstructions - 2);
+        return lineNum - 1 - (numStartInstructions - 8);
     }
 
     /**
@@ -289,7 +296,7 @@ public class Assembler
      */
     public static long LONG_INSTRUCTION_ADDRESS_FIX(long lineNum, int numStartInstructions)
     {
-        return ((lineNum - 1) * 2) - ((numStartInstructions - 1) * 2L);
+        return ((lineNum - 1) * 2) - ((numStartInstructions - 4) * 2L);
     }
 
     private static boolean CONTAINS_WHITESPACE(String str)

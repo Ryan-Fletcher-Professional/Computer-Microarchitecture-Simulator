@@ -1,9 +1,9 @@
 SET WORD SIZE 64
 SET STACK SIZE 1000000000
 SET BUFFER SIZE 1000000000
-COPY %MEM+#1, R2    @ Next load address
+COPY #1, R2         @ Next load address
 COPY #0, R3         @ Current index
-LOAD %MEM+#0, R4    @ Size of list
+LOAD #0, R4         @ Size of list
     =LOOP_START
 LOAD R2, R1         @ Next value
 ADD R0, R1          @ Accumulate

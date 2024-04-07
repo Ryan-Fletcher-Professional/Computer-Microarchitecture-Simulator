@@ -113,7 +113,7 @@ public class Pipeline
         fetch = new FetchStage(wordSize, "Fetch", internalRegisters, nearestInstructionCache);
         DecodeStage decode = new DecodeStage(wordSize, "Decode", indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
         execute = new ExecuteStage(wordSize, "Execute", internalRegisters);
-        access = new MemoryAccessStage(wordSize, "Access", indexableRegisters, nearestDataCache);
+        access = new MemoryAccessStage(wordSize, "Access", indexableRegisters, internalRegisters, nearestDataCache);
         write = new MemoryWritebackStage(wordSize, "Write",
                                                               indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
         this.endStage = write;

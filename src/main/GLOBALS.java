@@ -25,6 +25,7 @@ public class GLOBALS
     public static final int CALL_STACK_INDEX = 2;
     public static final int REVERSAL_STACK_INDEX = 3;
     public static final int[] REGISTER_BANK_INDECES = new int[] { INDEXABLE_BANK_INDEX, INTERNAL_BANK_INDEX, CALL_STACK_INDEX, REVERSAL_STACK_INDEX };
+    public static final String CM = "CM";
     public static final String PC = "PC";
     public static final String CC = "CC";
     public static final int CC_NEGATIVE_MASK = 0b1 << 0;
@@ -49,9 +50,10 @@ public class GLOBALS
     public static final String PRED_2 = "PRED 2";
     public static final String CALL = "CALL";
     public static final String REV = "REV";
-    public static final String[] INTERNAL_REGISTER_NAMES = new String[] { "C0", PC, CC, PRED_1, PRED_2, CALL, REV };
-    public static final int PC_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(PC);
+    public static final String[] INTERNAL_REGISTER_NAMES = new String[] { "C0", CM, PC, CC, PRED_1, PRED_2, CALL, REV };
     public static final int CC_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(CC);
+    public static final int CM_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(CM);
+    public static final int PC_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(PC);
     public static final int PRED_1_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(PRED_1);
     public static final int PRED_2_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(PRED_2);
     public static final int CALL_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(CALL);
@@ -76,7 +78,8 @@ public class GLOBALS
     }
     public static int CURRENT_TICK = 0;
 
-    public static final int MAX_ADDRESS = (int)Math.pow(2, 25) - 1;
+    public static final int ADDRESS_SIZE = 25;
+    public static final int MAX_ADDRESS = (int)Math.pow(2, ADDRESS_SIZE) - 1;
     public static final int DATA_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);            // 4MB
     public static final int INSTRUCTION_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);     // 4MB
 
