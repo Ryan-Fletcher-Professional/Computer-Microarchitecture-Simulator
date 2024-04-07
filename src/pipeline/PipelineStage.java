@@ -6,7 +6,7 @@ import memory.MemoryModule;
 import java.util.Objects;
 
 import static instructions.Instructions.*;
-import static main.GLOBALS.SMART_TO_STRING;
+import static main.GLOBALS.*;
 
 public class PipelineStage
 {
@@ -139,6 +139,7 @@ public class PipelineStage
         {
             int sizeDif = heldInstruction.wordLength() - wordString.length();
             if(sizeDif > 0) { wordString = "0".repeat(sizeDif) + wordString; }
+            if((radix == 16) && (wordString.length() > (heldInstruction.wordLength() / 4))) { wordString = wordString.substring(wordString.length() - (heldInstruction.wordLength() / 4), wordString.length()); }
             if(radix == 2)
             {
                 String mnemonic = Objects.requireNonNullElse(MNEMONICS.get(heldInstruction.getHeader()),
@@ -148,7 +149,7 @@ public class PipelineStage
                         wordString.substring(TYPECODE_SIZE + OPCODE_SIZE);
             }
         }
-        int valueLength = Math.max(nameString.length(), wordString.length());
+        int valueLength = Math.max(nameString.length(), wordString.length() / ((radix == 16) ? 4 : 1));
         StringBuilder currentName = new StringBuilder();
         currentName.append("  ")
                    .append(" ".repeat((valueLength - nameString.length()) / 2))

@@ -13,23 +13,24 @@ public class Instructions
     public enum TYPECODE
     {
         LOAD_STORE,
-        BRANCH,
+        FLOW_CONTROL,
         INT_ARITHMETIC,
         INT_LOGIC,
-        CONTROL,
+        INT_CONTROL,
+        FP,
         MISC,
         INTERNAL
     }
     public static Map<TYPECODE, String> TYPECODE_STRINGS = new HashMap<>() {{
 
-        put(TYPECODE.LOAD_STORE, "000");
-        put(TYPECODE.BRANCH, "001");
-        put(TYPECODE.INT_ARITHMETIC, "010");
-        put(TYPECODE.INT_LOGIC, "011");
-        put(TYPECODE.CONTROL, "100");
-        //
-        put(TYPECODE.MISC, "110");
-        put(TYPECODE.INTERNAL, "111");
+        put(    TYPECODE.LOAD_STORE,        "000");
+        put(    TYPECODE.FLOW_CONTROL,      "001");
+        put(    TYPECODE.INT_ARITHMETIC,    "010");
+        put(    TYPECODE.INT_LOGIC,         "011");
+        put(    TYPECODE.INT_CONTROL,       "100");
+        put(    TYPECODE.FP,                "101");
+        put(    TYPECODE.MISC,              "110");
+        put(    TYPECODE.INTERNAL,          "111");
 
     }};
     public static Map<String, TYPECODE> TYPECODES = new HashMap<>() {{
@@ -47,10 +48,13 @@ public class Instructions
         BRANCH_IF_NEGATIVE,
 
         INT_ADD,
+        INT_SUBTRACT,
 
         COMPARE,
 
         COPY,
+
+        // FP here if implement
 
         HALT,
 
@@ -69,10 +73,13 @@ public class Instructions
         put(OPCODE.BRANCH_IF_NEGATIVE, "010");
 
         put(OPCODE.INT_ADD, "000");
+        put(OPCODE.INT_SUBTRACT, "001");
 
         put(OPCODE.COMPARE, "100");
 
         put(OPCODE.COPY, "100");
+
+        // FP here if implement
 
         put(OPCODE.HALT, "101");
 
@@ -100,10 +107,13 @@ public class Instructions
         BRANCH_IF_NEGATIVE,
 
         INT_ADD,
+        INT_SUBTRACT,
 
         COMPARE,
 
         COPY,
+
+        // FP here if implement
 
         HALT,
 
@@ -120,13 +130,16 @@ public class Instructions
         put(HEADER.LOAD,                    MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.LOAD                 ));
         put(HEADER.STORE,                   MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.STORE                ));
 
-        put(HEADER.BRANCH_IF_NEGATIVE,      MAKE_HEADER_STRING( TYPECODE.BRANCH,            OPCODE.BRANCH_IF_NEGATIVE   ));
+        put(HEADER.BRANCH_IF_NEGATIVE,      MAKE_HEADER_STRING(TYPECODE.FLOW_CONTROL,       OPCODE.BRANCH_IF_NEGATIVE   ));
 
         put(HEADER.INT_ADD,                 MAKE_HEADER_STRING( TYPECODE.INT_ARITHMETIC,    OPCODE.INT_ADD              ));
+        put(HEADER.INT_SUBTRACT,            MAKE_HEADER_STRING( TYPECODE.INT_ARITHMETIC,    OPCODE.INT_SUBTRACT         ));
 
         put(HEADER.COMPARE,                 MAKE_HEADER_STRING( TYPECODE.INT_LOGIC,         OPCODE.COMPARE              ));
 
-        put(HEADER.COPY,                    MAKE_HEADER_STRING( TYPECODE.CONTROL,           OPCODE.COPY                 ));
+        put(HEADER.COPY,                    MAKE_HEADER_STRING(TYPECODE.INT_CONTROL,        OPCODE.COPY                 ));
+
+        // FP here if implement
 
         put(HEADER.HALT,                    MAKE_HEADER_STRING( TYPECODE.MISC,              OPCODE.HALT                 ));
 
@@ -151,10 +164,13 @@ public class Instructions
         put(HEADER.BRANCH_IF_NEGATIVE,      "BRN");
 
         put(HEADER.INT_ADD,                 "ADD");
+        put(HEADER.INT_SUBTRACT,            "SUB");
 
         put(HEADER.COMPARE,                 "CMP");
 
         put(HEADER.COPY,                    "COPY");
+
+        // FP here if implement
 
         put(HEADER.HALT,                    "HALT");
     }};
@@ -189,6 +205,7 @@ public class Instructions
     public static final List<HEADER> ALU_EXECUTE_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {
         HEADER.INT_ADD,
+        HEADER.INT_SUBTRACT,
         HEADER.COMPARE,
         HEADER.COPY,
         HEADER.HALT

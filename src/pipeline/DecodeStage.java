@@ -45,6 +45,7 @@ public class DecodeStage extends PipelineStage
                 case HEADER.BRANCH_IF_NEGATIVE -> decodeBranchIfNegative();
 
                 case HEADER.INT_ADD -> decodeIntAdd();
+                case HEADER.INT_SUBTRACT -> decodeIntSubtract();
 
                 case HEADER.COMPARE -> decodeCompare();
 
@@ -336,6 +337,84 @@ public class DecodeStage extends PipelineStage
                                           AUX_SD_TYPE_IMMEDIATE :
                                           AUX_SD_TYPE_REGISTER,
                                        AUX_REG_BANK_INDEXABLES);
+
+            if(heldInstruction.getAuxBits(FLAG(2)).toInt() == 1)
+            {
+                heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+            }
+        }
+    }
+
+    private void decodeIntSubtract()
+    {
+        // Should be same as decodeIntAdd()
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            heldInstruction.addFlags(1);
+
+
+            int start = 16;
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
+            {
+                heldInstruction.addSource(2, start, start + 4, AUX_SD_TYPE_IMMEDIATE, -1);
+            }
+            else
+            {
+                heldInstruction.addSource(2, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            }
+
+            if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 1)
+            {
+                heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+            }
+        }
+        else  // LONG word
+        {
+            heldInstruction.addFlags(3);
+
+            int start = (heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) ||
+                (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1)
+                ? 20 : 48;
+
+            if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
+            {
+                heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                start += 4;
+            }
+            else
+            {
+                heldInstruction.addSource(0, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                start += 32;
+            }
+
+            if(heldInstruction.getAuxBits(FLAG(1)).toInt() == 0)
+            {
+                heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                start += 4;
+            }
+            else
+            {
+                heldInstruction.addSource(1, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                start += 32;
+            }
+
+            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addSource(2, start, start + 4,
+                                      (heldInstruction.getAuxBits(FLAG(2)).toInt() == 0) ?
+                                          AUX_SD_TYPE_IMMEDIATE :
+                                          AUX_SD_TYPE_REGISTER,
+                                      AUX_REG_BANK_INDEXABLES);
 
             if(heldInstruction.getAuxBits(FLAG(2)).toInt() == 1)
             {

@@ -1,6 +1,5 @@
 package memory;
 
-import javax.naming.OperationNotSupportedException;
 import java.util.logging.Logger;
 
 import static main.GLOBALS.*;
@@ -156,9 +155,9 @@ public class RegisterFileModule
         ret.setCharAt(ret.length() - "|  ".length(), '\n');
         for(int i = 0; i < getNumRegisters(); i++)
         {
-            String value = SMART_TO_STRING(memory[i] & masks[i], radix);
+            String value = (Long.toBinaryString(masks[i]).length() == Integer.SIZE) ? SMART_INT_TO_STRING((int)(memory[i] & masks[i]), radix) : SMART_TO_STRING(memory[i] & masks[i], radix);
             StringBuilder currentValue = new StringBuilder();
-            currentValue.append("0".repeat(valueLengths[i] - value.length()))
+            currentValue.append(((radix == 10)? " " : "0").repeat(valueLengths[i] - value.length()))
                         .append(value)
                         .append("  |  ");
             ret.append(currentValue);

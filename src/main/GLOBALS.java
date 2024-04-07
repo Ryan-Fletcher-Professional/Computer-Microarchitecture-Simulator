@@ -151,6 +151,12 @@ public class GLOBALS
     }
 
 
+    public static String SMART_INT_TO_STRING(int i, int radix)
+    {
+        return radix == 10 ? Integer.toString(i, 10) : Integer.toUnsignedString(i, radix);
+    }
+
+
     public static int MASK(int subject, int idxFromLeft)
     {
         return (subject & (0b1 << (Integer.SIZE - 1 - idxFromLeft))) >>> (Integer.SIZE - 1 - idxFromLeft);

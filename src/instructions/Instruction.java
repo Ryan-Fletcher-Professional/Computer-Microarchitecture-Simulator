@@ -265,6 +265,7 @@ public class Instruction
             case HEADER.BRANCH_IF_NEGATIVE -> {}  // Nothing to execute; logic in getNegativeConditionChecks()
 
             case HEADER.INT_ADD -> executeIntAdd((ExecuteStage)invoker);
+            case HEADER.INT_SUBTRACT -> executeIntSubtract((ExecuteStage)invoker);
 
             case HEADER.COMPARE -> executeCompare((ExecuteStage)invoker);
 
@@ -345,36 +346,39 @@ public class Instruction
 
     public void executeIntAdd(ExecuteStage stage)
     {
-        String KEY = "add_w_holding";
         int operand1 = getAuxBits(AUX_SOURCE(0)).toInt();
         int operand2 = getAuxBits(AUX_SOURCE(1)).toInt();
         int result = operand1 + operand2;
         long longResult = ((long)result) & BYTE_MASK;
         long longOperand1 = ((long)operand1) & BYTE_MASK;
         long longOperand2 = ((long)operand2) & BYTE_MASK;
+        addAuxBits(AUX_RESULT(0), new Term(result));
         if(AUX_EQUALS(getAuxBits(FLAG((wordLength() == WORD_SIZE_SHORT) ? 0 : 2)), 1))
         {
             int newCC = (int)stage.internalRegisters.load(CC_INDEX);
             newCC = (longResult != (longOperand1 + longOperand2)) ? NEW_CC_CARRY(newCC) : NEW_CC_NOCARRY(newCC);
             addAuxBits(AUX_RESULT(1), new Term(newCC, false));
         }
-        addAuxBits(AUX_RESULT(0), new Term(result));
         addAuxBits(AUX_FINISHED, AUX_TRUE);
     }
 
-//    public void executeSubtract(){
-//        String KEY = "subtract_w_holding";
-//        int srcReg = Integer.parseInt(getAuxBits(AUX_SOURCE(0)).toString().substring(1));
-//        int destReg = Integer.parseInt(getAuxBits(AUX_DEST(0)).toString().substring(1));
-//        //get the values from source registers
-//        int operand1 = stage.indexableRegisters.load(srcReg);
-//        int operand2;
-//        //     operand2 = stage.indexableRegisters.load(Integer.parseInt(getAuxBits(AUX_SOURCE(1)).toString()));
-//        //     operand2 = Integer.parseInt(getAuxBits(AUX_IMMEDIATE(0)).toString());
-//        int result = operand1 - operand2;
-//        addAuxBits(AUX_RESULT, new Term(result));
-//        addAuxBits(AUX_FINISHED, AUX_TRUE);
-//    }
+    public void executeIntSubtract(ExecuteStage stage)
+    {
+        int operand1 = getAuxBits(AUX_SOURCE(0)).toInt();
+        int operand2 = getAuxBits(AUX_SOURCE(1)).toInt();
+        int result = operand1 - operand2;
+
+        if(AUX_EQUALS(getAuxBits(FLAG((wordLength() == WORD_SIZE_SHORT) ? 0 : 2)), 1))
+        {
+            int newCC = (int)stage.internalRegisters.load(CC_INDEX);
+            newCC = (result == 0) ? NEW_CC_ZERO(newCC) : NEW_CC_NONZERO(newCC);
+            newCC = (result < 0) ? NEW_CC_NEGATIVE(newCC) : NEW_CC_NONNEGATIVE(newCC);
+            newCC = (result > 0) ? NEW_CC_POSITIVE(newCC) : NEW_CC_NONPOSITIVE(newCC);
+            addAuxBits(AUX_RESULT(1), new Term(newCC, false));
+        }
+        addAuxBits(AUX_RESULT(0), new Term(result));
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
+    }
 
     public void executeCompare(ExecuteStage stage)
     {
