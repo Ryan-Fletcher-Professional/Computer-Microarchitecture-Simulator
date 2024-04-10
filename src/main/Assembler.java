@@ -23,6 +23,11 @@ public class Assembler
     public static final char PLUS = '+';
     public static final char MINUS = '-';
 
+    /**
+     * Run this as its own program, separate from Main.main()
+     * Will read files/assembly/ instructionAssembly.txt and dataAssembly.txt and, in that order, assemble them into
+     *  binaries in files/bin
+     */
     public static void main(String[] args) throws AssemblyError
     {
         String assemblyPath = System.getProperty("user.dir") + "/src/files/assembly/";
@@ -30,6 +35,10 @@ public class Assembler
         subMain(new String[] { "-s", assemblyPath + "instructionAssembly.txt", "--data", assemblyPath + "dataAssembly.txt", "-d", binaryPath });
     }
 
+    /**
+     * Called by main()
+     * Performs the assembly process.
+     */
     public static void subMain(String[] args) throws AssemblyError
     {
         System.out.println("\n!!!!!!!!    Running assembler    !!!!!!!!\n");
@@ -46,7 +55,7 @@ public class Assembler
         int d = arguments.indexOf("-d");
         for(int i = 1; i < d; i++)
         {
-            if(i == data)
+            if(i == data)  // If we've reached the data arg, go to the next arg and parse in data mode
             {
                 dataMode = true;
                 continue;
@@ -75,10 +84,15 @@ public class Assembler
         }
     }
 
+    /**
+     * @param num The 1-index of this file in the call args. Used to order data binary after instruction binary in
+     *             destination directory.
+     * @param labels Pre-gathered line labels mapped to line numbers
+     */
     private static void ASSEMBLE(String text, File destinationDirectory, int num, boolean dataMode, Map<String, Integer> labels) throws AssemblyError
     {
         String[] lines = text.split("\\r?\\n|\\r", -1);  // Preserves empty lines for line indexing purposes
-        for(int i = 0; i < lines.length; i++)
+        for(int i = 0; i < lines.length; i++)  // Remove leading whitespace
         {
             int start = 0;
             while((start < lines[i].length()) && ((lines[i].charAt(start) == ' ') || (lines[i].charAt(start) == '\t')))
@@ -92,7 +106,7 @@ public class Assembler
 
         int wordSize = WORD_SIZE_SHORT;
 
-        for(int i = 1; i <= lines.length; i++)
+        for(int i = 1; i <= lines.length; i++)  // Check for invalid label definitions
         {
             String line = lines[i - 1];
 
@@ -104,7 +118,7 @@ public class Assembler
             labels.put(line.substring(1), i);
         }
 
-        if(dataMode)
+        if(dataMode)  // Read preloaded data memory into usable binary
         {
             for(int i = 1; i <= lines.length; i++)
             {
@@ -122,7 +136,7 @@ public class Assembler
                 words.add((int)PARSE_WORD_FOR_DATA(line, i, labels));
             }
         }
-        else
+        else  // Read instructions into usable instruction binary
         {
             int stackSize = 0b1000000000;
             int bufferSize = 0b1000000000;
@@ -182,11 +196,6 @@ public class Assembler
                 index++;
             }
 
-//            if(labels.get(MEM_LABEL) == null)
-//                { labels.put(MEM_LABEL, (int)((wordSize == WORD_SIZE_SHORT)
-//                                                ? SHORT_INSTRUCTION_ADDRESS_FIX(lines.length + 1, index)
-//                                                : LONG_INSTRUCTION_ADDRESS_FIX(lines.length + 1, index))); }
-
             // Set first line of memory
             words.add((((wordSize == WORD_SIZE_SHORT) ? 0 : 1) << 31) | (stackSize << 21) | (bufferSize << 11));
             words.add((int)((wordSize == WORD_SIZE_SHORT)
@@ -205,7 +214,7 @@ public class Assembler
                 while(!line.isEmpty() && ((line.charAt(firstNonWhitespace) == ' ') || (line.charAt(firstNonWhitespace) == '\t')))
                     { firstNonWhitespace++; }
                 if(line.isEmpty() || (line.charAt(firstNonWhitespace) == LABEL_DEFINE) || (line.charAt(firstNonWhitespace) == COMMENT))
-                {
+                {  // Ignorable lines become noops. TODO : Auto-adjust memory start and instruction addresses to get rid of these noops.
                     long instruction = NOOP(wordSize).wordNum();
                     if(wordSize == WORD_SIZE_LONG) { words.add((int)(instruction >>> (Long.SIZE - Integer.SIZE))); }
                     words.add((int)instruction);
@@ -213,7 +222,7 @@ public class Assembler
                 }
 
                 List<String> tokensAll = new ArrayList<>();
-                for(String unit : line.split(COMMENT + "")[0].split("\t"))
+                for(String unit : line.split(COMMENT + "")[0].split("\t"))  // Split each line into instruction and comment sections, ignore comment section
                 {
                     for(String atom : unit.split(" "))
                     {
@@ -233,7 +242,7 @@ public class Assembler
         }
 
         try
-        {
+        {  // Write destination binary
             File file = new File(destinationDirectory.getAbsolutePath() + "/" + num + ".txt");
 
             if(file.exists())
@@ -308,6 +317,9 @@ public class Assembler
         return false;
     }
 
+    /**
+     * Determines numerical base of a term (not Term) based on prefix (or lack thereof)
+     */
     private static int BASE(String term, int lineNum)
     {
         if(term.isEmpty()) { throw new NumberFormatException("Empty term at line " + lineNum); }
@@ -376,6 +388,7 @@ public class Assembler
         return value;
     }
 
+    // term is not a Term
     private static long PARSE_TERM(String term, int lineNum, Map<String, Integer> labels) throws AssemblyError
     {
         if(term.isEmpty() || CONTAINS_WHITESPACE(term))
@@ -417,14 +430,27 @@ public class Assembler
             { throw new AssemblyError("Invalid " + kind + " at line " + lineNum); }
     }
 
+    /**
+     * Takes header from line mnemonic, puts it at the beginning of a long (rest of bits are 0) and passes that to the
+     *  appropriate instruction parse method.
+     * @param tokens Array of Strings, which are the pre-comment sections of the line separated by the spaces. Some
+     *               tokens may correctly include following commas. Allow for those, while throwing errors at incorrect
+     *               commas.
+     * @param wordSize 32 or 64
+     * @param lineNum Assembly line number of the given instruction. Use for address fixing and error throwing
+     * @param numStartInstructions [0,3] Number of configuration instructions explicated at start of file
+     * @param labels Map of line label Strings to their corresponding line number
+     * @return long with the correct bits to write to the binary file to represent this instruction
+     * @throws AssemblyError if the assembly code is written incorrectly
+     */
     private static long PARSE_INSTRUCTION(String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
     {
         HEADER header = HEADERS_FROM_MNEMONICS.get(tokens[0]);
         if(header == null)
             { throw new AssemblyError("Unrecognized mnemonic \"" + tokens[0] + "\" at line " + lineNum); }
         long word = Long.parseUnsignedLong(HEADER_STRINGS.get(header), 2) << (wordSize - HEADER_SIZE);
-        switch(header)
-        {  // TODO : Make sure all instruction addresses are LONG_INSTRUCTION_ADDRESS_FIX'd if necessary
+        switch(header)  // TODO : Add new instructions here
+        {  // TODO : Make sure all instruction addresses are <SHORT/LONG>_INSTRUCTION_ADDRESS_FIX'd if necessary
             case HEADER.LOAD -> word = parseLoad(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.STORE -> word = parseStore(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
@@ -445,6 +471,11 @@ public class Assembler
         return word;
     }
 
+    /**
+     * TODO : IMPORTANT! Use this to restrict the bits which each argument can have to the bits it's supposed to have.
+     * Argument should be situated all the way to the right and will be returned in that same position.
+     * (See parseLoad long word section for good examples.)
+     */
     private static long SAFE(long arg, int length)
     {
         return (arg << (Long.SIZE - length)) >>> (Long.SIZE - length);

@@ -40,7 +40,7 @@ public class Instructions
         }
     }};
     public static final int OPCODE_SIZE = 3;
-    public enum OPCODE
+    public enum OPCODE  // TODO : Add new instructions here
     {
         LOAD,
         STORE,
@@ -66,7 +66,7 @@ public class Instructions
         LOAD_PC,
         EXECUTION_ERR
     }
-    public static Map<OPCODE, String> OPCODE_STRINGS = new HashMap<>() {{
+    public static Map<OPCODE, String> OPCODE_STRINGS = new HashMap<>() {{  // TODO : Add new instructions here
 
         put(OPCODE.LOAD, "000");
         put(OPCODE.STORE, "010");
@@ -101,8 +101,8 @@ public class Instructions
         }
     }};
     public static final int HEADER_SIZE = TYPECODE_SIZE + OPCODE_SIZE;
-    public enum HEADER  // TODO : EACH HEADER MUST BE NAMED AND PUT() VERY CAREFULLY
-    {
+    public enum HEADER  // TODO : Add new instructions here
+    {  // TODO : EACH HEADER MUST BE NAMED AND PUT() VERY CAREFULLY
         LOAD,
         STORE,
 
@@ -128,7 +128,7 @@ public class Instructions
         EXECUTION_ERR
     }
     private static String MAKE_HEADER_STRING(TYPECODE type, OPCODE op) { return TYPECODE_STRINGS.get(type) + OPCODE_STRINGS.get(op); }
-    public static Map<HEADER, String> HEADER_STRINGS = new HashMap<>() {{
+    public static Map<HEADER, String> HEADER_STRINGS = new HashMap<>() {{  // TODO : Add new instructions here
 
         put(HEADER.LOAD,                    MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.LOAD                 ));
         put(HEADER.STORE,                   MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.STORE                ));
@@ -161,7 +161,7 @@ public class Instructions
             put(HEADER_STRINGS.get(code), code);
         }
     }};
-    public static Map<HEADER, String> MNEMONICS = new HashMap<>() {{
+    public static Map<HEADER, String> MNEMONICS = new HashMap<>() {{  // TODO : Add new instructions here
         put(HEADER.LOAD,                    "LOAD");
         put(HEADER.STORE,                   "STR");
 
@@ -201,14 +201,14 @@ public class Instructions
     }};
 
     public static final List<HEADER> MEMORY_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
-    {
+    {  // TODO : Add new appropriate instructions here (executed in MemoryAccessStage)
         HEADER.LOAD,
         HEADER.STORE
 
         // HEADER.LOAD_PC  // NOT THIS!
     }));
     public static final List<HEADER> ALU_EXECUTE_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
-    {
+    {  // TODO : Add new appropriate instructions here (executed in ExecuteStage)
         HEADER.INT_ADD,
         HEADER.INT_SUBTRACT,
         HEADER.COMPARE,
@@ -217,107 +217,152 @@ public class Instructions
         HEADER.HALT
     }));
     public static final List<HEADER> BRANCH_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
-    {
+    {  // TODO : Add new appropriate instructions here (executed in ExecuteStage using condition checks)
         HEADER.BRANCH_IF_NEGATIVE
         // Should include all Jump instructions as well (they should be treated as unconditional branches)
     }));
     public static final List<HEADER> QUASH_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
-    {
+    {  // TODO : Add new appropriate instructions here
         HEADER.QUASH_SIZE,
         HEADER.QUASH_BRANCH
     }));
     public static final List<HEADER> ERROR_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
-    {
+    {  // TODO : Add new appropriate instructions here
         HEADER.EXECUTION_ERR,       // Should have flag matching errType
     }));
     public static final List<HEADER> DISPOSABLE_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
-    {
+    {  // TODO : Add new appropriate instructions here (these will be ignored for deciding pipeline blocking behavior)
         HEADER.NOOP,
         HEADER.STALL,
         HEADER.QUASH_SIZE,
         HEADER.QUASH_BRANCH
     }));
 
-    public static final int AUX_FALSE = 0;
-    public static Term AUX_FALSE() { return new Term(AUX_FALSE, false); }
-    public static boolean AUX_FALSE(Term term) { return term.toInt() == AUX_FALSE; }
+    /*
+        The following are all for enumeration. Do not use for computation.
+     */
     public static final int AUX_TRUE = 1;
-    public static Term AUX_TRUE() { return new Term(AUX_TRUE, false); }
-    public static boolean AUX_TRUE(Term term) { return term.toInt() == AUX_TRUE; }
+    public static final int AUX_FALSE = 0;
     public static final String AUX_FINISHED = "final result has just been written or instruction has been handled manually by pipeline";
     public static final String AUX_FINISHED_MEMORY_ACCESS_STAGE = "don't need to execute in memory access stage";
     public static final String AUX_DECODED = "don't need to decode again";
     public static final String AUX_JSR = "jump to subroutine";
-    public static final String AUX_JUMP_ADDRESS = "address to jump to";
     public static final String AUX_CURRENT_PC = "return address for JSR";
     public static final String AUX_SOURCE_ = "source value ";
-    public static final String AUX_DEST_ = "destination address ";
-    public static final String AUX_RESULT = "final result of execution";
-    public static final String AUX_RESULTS_ = "final results of execution ";
-    public static final String AUX_SOURCE_TYPE_ = "source type ";
-    public static final String AUX_DEST_TYPE_ = "destination type ";
+    public static final String AUX_DEST_ = "destination address ";  // Do not use. Use AUX_DEST(int idx) instead.
+    public static final String AUX_RESULT = "final result of execution";  // Do not use.
+    public static final String AUX_RESULTS_ = "final results of execution ";  // Do not use. Use AUX_RESULT(int idx) instead.
+    public static final String AUX_SOURCE_TYPE_ = "source type ";  // Do not use.
+    public static final String AUX_DEST_TYPE_ = "destination type ";  // Do not use.
+    // Use the following for identifying the type of a source/destination.
         public static final int AUX_SD_TYPE_REGISTER = 0;  // No such thing as a destination non-register; such descriptions in the ISA Spec are treated as sources
         public static final int AUX_SD_TYPE_IMMEDIATE = 1;
-    public static final String AUX_SOURCE_BANK_ = "source bank ";
-    public static final String AUX_DEST_BANK_ = "destination bank ";
+    public static final String AUX_SOURCE_BANK_ = "source bank ";  // Do not use.
+    public static final String AUX_DEST_BANK_ = "destination bank ";  // Do not use.
     public static final List<String> prefixes = List.of(new String[] { RegisterFileModule.INDEXABLE_PREFIX, RegisterFileModule.INTERNAL_PREFIX, RegisterFileModule.CALL_PREFIX, RegisterFileModule.REVERSAL_PREFIX });
+    // Use the following for identifying which register bank a source/destination should read to/write from.
     public static final int AUX_REG_BANK_INDEXABLES = prefixes.indexOf(RegisterFileModule.INDEXABLE_PREFIX);
     public static final int AUX_REG_BANK_INTERNALS = prefixes.indexOf(RegisterFileModule.INTERNAL_PREFIX);
     public static final int AUX_REG_BANK_CALL = prefixes.indexOf(RegisterFileModule.CALL_PREFIX);
     public static final int AUX_REG_BANK_REVERSAL = prefixes.indexOf(RegisterFileModule.REVERSAL_PREFIX);
-    public static final String AUX_FLAG_ = "flag ";
-        public static final int ERR_TYPE_NOT_IMPLEMENTED =  0b00000000000000000000000001;  // For when trying to execute() an instruction that has been intentionally left unimplemented
-        public static final int ERR_TYPE_INVALID_FLAGS =    0b00000000000000000000000010;  // Also do <err instruction>.addAuxBits(new Term(ERR_TYPE_INVALID_FLAGS, false, <word size> - HEADER_SIZE).toString(), new Term(HEADER_STRINGS.get(<err instruction>.getHeader()), false))
-        public static final int ERR_TYPE_INVALID_ARGS =     0b00000000000000000000000011;  // Also do <err instruction>.addAuxBits(new Term(ERR_TYPE_INVALID_ARGS, false, <word size> - HEADER_SIZE).toString(), new Term(HEADER_STRINGS.get(<err instruction>.getHeader()), false))
+    public static final String AUX_FLAG_ = "flag ";  // Do not use. Use FLAG(int idx) instead.
+    public static final int ERR_TYPE_NOT_IMPLEMENTED =  0b00000000000000000000000001;  // For when trying to execute() an instruction that has been intentionally left unimplemented
+    public static final int ERR_TYPE_INVALID_FLAGS =    0b00000000000000000000000010;  // Also do <err instruction>.addAuxBits(new Term(ERR_TYPE_INVALID_FLAGS, false, <word size> - HEADER_SIZE).toString(), new Term(HEADER_STRINGS.get(<err instruction>.getHeader()), false))
+    public static final int ERR_TYPE_INVALID_ARGS =     0b00000000000000000000000011;  // Also do <err instruction>.addAuxBits(new Term(ERR_TYPE_INVALID_ARGS, false, <word size> - HEADER_SIZE).toString(), new Term(HEADER_STRINGS.get(<err instruction>.getHeader()), false))
 
+    /**
+     * Checks whether the given Term (presumably from a getAuxBits() call) is set (i.e. not null) and equal to the given
+     * comparison value.
+     * @param term getAuxBits() return
+     * @param aux Comparison value
+     * @return (term != null) && term.toString().equals(aux)
+     */
     public static boolean AUX_EQUALS(Term term, String aux) { return (term != null) && term.toString().equals(aux); }
 
+    /**
+     * Checks whether the given Term (presumably from a getAuxBits() call) is set (i.e. not null) and equal to the given
+     * comparison value.
+     * @param term getAuxBits() return
+     * @param aux Comparison value
+     * @return (term != null) && (term.toInt() == aux)
+     */
     public static boolean AUX_EQUALS(Term term, int aux) { return (term != null) && (term.toInt() == aux); }
 
+    /**
+     * Returns unique auxiliary source label for given index.
+     */
     public static String AUX_SOURCE(int idx)
     {
         return AUX_SOURCE_ + Integer.toString(idx);
     }
 
+    /**
+     * Returns unique auxiliary source type label for given index.
+     */
     public static String AUX_SOURCE_TYPE(int idx)
     {
         return AUX_SOURCE_TYPE_ + Integer.toString(idx);
     }
 
-    public static String AUX_DEST_TYPE(int idx)
-    {
-        return AUX_DEST_TYPE_ + Integer.toString(idx);
-    }
-
+    /**
+     * Returns unique auxiliary destination label for given index.
+     */
     public static String AUX_DEST(int idx)
     {
         return AUX_DEST_ + Integer.toString(idx);
     }
 
+    /**
+     * Returns unique auxiliary destination type label for given index.
+     */
+    public static String AUX_DEST_TYPE(int idx)
+    {
+        return AUX_DEST_TYPE_ + Integer.toString(idx);
+    }
+
+    /**
+     * Returns unique auxiliary source register bank label for given index.
+     */
     public static String AUX_SOURCE_BANK(int idx)
     {
         return AUX_SOURCE_BANK_ + Integer.toString(idx);
     }
 
+    /**
+     * Returns unique auxiliary destination register bank label for given index.
+     */
     public static String AUX_DEST_BANK(int idx)
     {
         return AUX_DEST_BANK_ + Integer.toString(idx);
     }
 
+    /**
+     * Returns unique auxiliary result value label for given index.
+     */
     public static String AUX_RESULT(int idx)
     {
         return AUX_RESULTS_ + Integer.toString(idx);
     }
 
+    /**
+     * Returns unique auxiliary flag label for given index.
+     */
     public static String FLAG(int idx)
     {
         return AUX_FLAG_ + Integer.toString(idx);
     }
 
+    /**
+     * Filler character array for string formatting. Do not change.
+     */
     private static String GET_FILLER(int size)
     {
         return new String(new char[size]);
     }
+
+    /*
+        The following methods are methods for constructing Instruction objects. They're pretty self-explanatory.
+     */
 
     public static String GET_INSTRUCTION_STRING(int size, TYPECODE type, OPCODE op, String flags, String args)
     {
@@ -353,12 +398,6 @@ public class Instructions
 
     /**
      * Note: Puts filler 0s between flags and args
-     * @param size
-     * @param type
-     * @param op
-     * @param flags
-     * @param args
-     * @return
      */
     public static Instruction GET_INSTRUCTION(int size, TYPECODE type, OPCODE op, String flags, String args)
     {
@@ -367,11 +406,6 @@ public class Instructions
 
     /**
      * Note: Puts filler 0s between flags and args
-     * @param size
-     * @param header
-     * @param flags
-     * @param args
-     * @return
      */
     public static Instruction GET_INSTRUCTION(int size, HEADER header, String flags, String args)
     {

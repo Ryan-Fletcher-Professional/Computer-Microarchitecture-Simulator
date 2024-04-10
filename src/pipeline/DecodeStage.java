@@ -54,7 +54,7 @@ public class DecodeStage extends PipelineStage
 
                 case HEADER.HALT -> decodeHalt();
             }
-            heldInstruction.addAuxBits(AUX_DECODED, AUX_TRUE());
+            heldInstruction.addAuxBits(AUX_DECODED, AUX_TRUE);
         }
 
         String[] sourceRegs = heldInstruction.getSourceRegs();
@@ -124,7 +124,7 @@ public class DecodeStage extends PipelineStage
         }
         for(int i = 0; i < sourceRegs.length; i++)
         {
-            if(AUX_FALSE(heldInstruction.getAuxBits(AUX_SOURCE(i) + READ)))
+            if(AUX_EQUALS(heldInstruction.getAuxBits(AUX_SOURCE(i) + READ), AUX_FALSE))
             {
                 previousStage.execute(true);
                 return passBlocking();
@@ -173,7 +173,7 @@ public class DecodeStage extends PipelineStage
             heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
-            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
         }
         else  // LONG word
         {
@@ -192,7 +192,7 @@ public class DecodeStage extends PipelineStage
             }
             start = 60;
 
-            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
         }
     }
 
@@ -266,7 +266,7 @@ public class DecodeStage extends PipelineStage
 
         heldInstruction.addSourceManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
 
-        heldInstruction.addDestManual(0, new Term(PC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+        heldInstruction.addDestManual(0, new Term(PC_INDEX), AUX_REG_BANK_INTERNALS);
     }
 
     private void decodeIntAdd()
@@ -283,7 +283,7 @@ public class DecodeStage extends PipelineStage
             heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
-            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
             if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
@@ -297,7 +297,7 @@ public class DecodeStage extends PipelineStage
 
             if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 1)
             {
-                heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+                heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_REG_BANK_INTERNALS);
             }
         }
         else  // LONG word
@@ -330,7 +330,7 @@ public class DecodeStage extends PipelineStage
                 start += 32;
             }
 
-            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
             heldInstruction.addSource(2, start, start + 4,
@@ -341,7 +341,7 @@ public class DecodeStage extends PipelineStage
 
             if(heldInstruction.getAuxBits(FLAG(2)).toInt() == 1)
             {
-                heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+                heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_REG_BANK_INTERNALS);
             }
         }
     }
@@ -361,7 +361,7 @@ public class DecodeStage extends PipelineStage
             heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
-            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
             if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
@@ -375,7 +375,7 @@ public class DecodeStage extends PipelineStage
 
             if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 1)
             {
-                heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+                heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_REG_BANK_INTERNALS);
             }
         }
         else  // LONG word
@@ -408,7 +408,7 @@ public class DecodeStage extends PipelineStage
                 start += 32;
             }
 
-            heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
             start += 4;
 
             heldInstruction.addSource(2, start, start + 4,
@@ -419,7 +419,7 @@ public class DecodeStage extends PipelineStage
 
             if(heldInstruction.getAuxBits(FLAG(2)).toInt() == 1)
             {
-                heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+                heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_REG_BANK_INTERNALS);
             }
         }
     }
@@ -474,7 +474,7 @@ public class DecodeStage extends PipelineStage
             }
         }
 
-        heldInstruction.addDestManual(0, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+        heldInstruction.addDestManual(0, new Term(CC_INDEX), AUX_REG_BANK_INTERNALS);
     }
 
     public void decodeCopy()
@@ -499,7 +499,7 @@ public class DecodeStage extends PipelineStage
             heldInstruction.addSource(0, start, end, type, AUX_REG_BANK_INDEXABLES);
             start = end;
 
-            heldInstruction.addDest(0, start, start + 4, type, AUX_REG_BANK_INDEXABLES);
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
         }
         else
         {
@@ -519,7 +519,7 @@ public class DecodeStage extends PipelineStage
             start = end;
 
             type = AUX_SD_TYPE_REGISTER;
-            heldInstruction.addDest(0, start, start + 4, type, AUX_REG_BANK_INDEXABLES);
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
         }
 
         if(((length == WORD_SIZE_SHORT) || AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0)) &&
@@ -540,9 +540,9 @@ public class DecodeStage extends PipelineStage
         start += 4;
         heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
         // Swap is done in execute, not here
-        heldInstruction.addDest(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+        heldInstruction.addDest(1, start, start + 4, AUX_REG_BANK_INDEXABLES);
         start -= 4;
-        heldInstruction.addDest(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+        heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
     }
 
     private void decodeHalt()
@@ -568,6 +568,6 @@ public class DecodeStage extends PipelineStage
             heldInstruction.addSource(0, start, start + 4, type, AUX_REG_BANK_INDEXABLES);
         }
 
-        heldInstruction.addDestManual(0, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+        heldInstruction.addDestManual(0, new Term(CC_INDEX), AUX_REG_BANK_INTERNALS);
     }
 }

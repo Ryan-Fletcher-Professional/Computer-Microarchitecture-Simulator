@@ -11,11 +11,11 @@ import static main.GLOBALS.*;
 
 public class Instruction
 {
-    private static final long BYTE_MASK = 0b0000000000000000000000000000000011111111111111111111111111111111L;
+    private static final long BYTE_MASK = -1L >>> (Long.SIZE - Integer.SIZE);
 
     public int id;
     public final Term word;
-    private Map<String, Term> auxBits;
+    private Map<String, Term> auxBits;  // Labeled auxiliary bitstrings to track information associated with the Instruction
     private LinkedList<MemoryRequest> activeRequest;
 
     public Instruction(int word)
@@ -105,6 +105,10 @@ public class Instruction
         return HEADERS_FROM_BITSTRINGS.get(word.toString().substring(0, TYPECODE_SIZE + OPCODE_SIZE));
     }
 
+    /**
+     * Adds given number of flags using bits immediately after header.
+     * @param numFlags
+     */
     public void addFlags(int numFlags)
     {
         for(int i = 0; i < numFlags; i++)
@@ -115,26 +119,54 @@ public class Instruction
         }
     }
 
+    /**
+     * Adds labeled source register or value at source index idx. If register, will be automatically replaced with
+     *  actual value during execution of the Decode pipeline stage.
+     * @param idx Source index. Can be accessed with getAuxBits(AUX_SOURCE(idx))
+     * @param start Start index (inclusive) of the instruction word bits to be included in the source's reg id or value
+     * @param end End index (exclusive) of the instruction word bits for this source
+     * @param sourceType AUX_SD_TYPE_REGISTER or AUX_SD_TYPE_IMMEDIATE
+     * @param registerBank RegisterFileModule that the source register is in. Ignored if type is immediate
+     */
     public void addSource(int idx, int start, int end, int sourceType, int registerBank)
     {
         addSD(true, idx, start, end, sourceType, registerBank);
     }
 
+    /**
+     * Does the same thing as addSource() but instead of reading from the instruction word, the source id/value is taken
+     *  from the given Term directly
+     */
     public void addSourceManual(int idx, Term term, int sourceType, int registerBank)
     {
         addSDManual(true, idx, term, sourceType, registerBank);
     }
 
-    public void addDest(int idx, int start, int end, int destType, int registerBank)
+    /**
+     * Adds labeled destination register at dest index idx. Corresponding (through idx) result will be written during
+     *  execution of the Writeback pipeline stage.
+     * @param idx Destination index. Can be accessed with getAuxBits(AUX_DEST(idx))
+     * @param start Start index (inclusive) of the instruction word bits to be included in the destination's reg id
+     * @param end End index (exclusive) of the instruction word bits for this destination
+     * @param registerBank RegisterFileModule that the destination register is in
+     */
+    public void addDest(int idx, int start, int end, int registerBank)
     {
-        addSD(false, idx, start, end, destType, registerBank);
+        addSD(false, idx, start, end, AUX_SD_TYPE_REGISTER, registerBank);
     }
 
-    public void addDestManual(int idx, Term term, int destType, int registerBank)
+    /**
+     * Does the same thing as addDest() but instead of reading from the instruction word, the dest id is taken
+     *  from the given Term directly
+     */
+    public void addDestManual(int idx, Term term, int registerBank)
     {
-        addSDManual(false, idx, term, destType, registerBank);
+        addSDManual(false, idx, term, AUX_SD_TYPE_REGISTER, registerBank);
     }
 
+    /**
+     * Backend for adding source or destination aux bits. Should not be used except by existing methods above.
+     */
     public void addSD(boolean source, int idx, int start, int end, int type, int registerBank)
     {
         addSDManual(source, idx,
@@ -144,6 +176,9 @@ public class Instruction
                     type, registerBank);
     }
 
+    /**
+     * Backend for adding source or destination aux bits. Should not be used except by existing methods above.
+     */
     public void addSDManual(boolean source, int idx, Term term, int type, int registerBank)
     {
         addAuxBits(source ? AUX_SOURCE(idx) : AUX_DEST(idx), term);
@@ -153,6 +188,10 @@ public class Instruction
 
     public static final int MAX_REG_ARGS = 16;  // Should never actually be more than (3? 4?)
 
+    /**
+     * Returns array of source register IDs for use in DecodeStage. Should not be used except there; return is not
+     *  consistent compilation of actual source registers, only of remaining ones in a specific format.
+     */
     public String[] getSourceRegs()
     {
         try
@@ -183,6 +222,9 @@ public class Instruction
         }
     }
 
+    /**
+     * Returns array of source register IDs for use in DecodeStage and MemoryWritebackStage.
+     */
     public String[] getDestRegs()
     {
         // IN SIGNED BASE 10
@@ -198,21 +240,36 @@ public class Instruction
         return retList.toArray(new String[] {});
     }
 
+    /**
+     * Sets unindexed result aux bits. Should not be used except for LOAD_PC.
+     */
     public void setResult(Term term)
     {
         addAuxBits(AUX_RESULT, term);
     }
 
+    /**
+     * Sets indexed result auxiliary bits. Use this to denote which value should be written to the destination register
+     *  with the same idx. Will be automatically written in Writeback pipeline stage.
+     * @param term Term with the exact value to write.
+     */
     public void setResult(int idx, Term term)
     {
         addAuxBits(AUX_RESULT(idx), term);
     }
 
+    /**
+     * Returns unindexed result value from auxiliary bits. Should not be used except for LOAD_PC.
+     */
     public Term getResult()
     {
         return getAuxBits(AUX_RESULT);
     }
 
+    /**
+     * Returns indexed result auxiliary bitstring value. Use this to see which value will be written to the destination
+     *  register with the same idx.
+     */
     public Term getResult(int idx)
     {
         Term ret = getAuxBits(AUX_RESULT(idx));
@@ -220,10 +277,16 @@ public class Instruction
         return ret;
     }
 
+    /**
+     * Returns an array of three bitmasks, corresponding to the condition code, predicate 1, and predicate 2 registers,
+     *  in that order. In order for the instruction to execute, each bit in a given mask that's set to 1 must also be
+     *  set to 1 in the corresponding register. Currently this check is only implemented for branch instructions. (TODO)
+     *  Should be modified appropriately as additional conditional instructions are implemented.
+     */
     public int[] getPositiveConditionChecks()
     {
         // bitmasks
-        int[] ret = new int[3]; // TODO : Add others
+        int[] ret = new int[3];
         if(getHeader().equals(HEADER.BRANCH_IF_NEGATIVE))
         {
             ret[0] = CC_NEGATIVE_MASK;
@@ -231,28 +294,51 @@ public class Instruction
         return ret;
     }
 
+    /**
+     * Returns an array of three bitmasks, corresponding to the condition code, predicate 1, and predicate 2 registers,
+     *  in that order. In order for the instruction to execute, each bit in a given mask that's set to 1 must be
+     *  set to 0 in the corresponding register. Currently this check is only implemented for branch instructions. (TODO)
+     *  Should be modified appropriately as additional conditional instructions are implemented.
+     */
     public int[] getNegativeConditionChecks()
     {
         // bitmasks
-        int[] ret = new int[3]; // TODO : Add others
+        int[] ret = new int[3];
         return ret;
     }
 
+    /**
+     * setFinished(true);
+     */
     public void setFinished()
     {
         setFinished(true);
     }
 
+    /**
+     * Sets the aux bitstring denoting whether this instruction's results are ready to be written to its destination(s).
+     * Can be checked with isFinished()
+     * @param status true if finished should be set to true, false if it should be set to false
+     */
     public void setFinished(boolean status)
     {
         addAuxBits(AUX_FINISHED, status ? AUX_TRUE : AUX_FALSE);
     }
 
+    /**
+     * Whether this instruction's results are ready to be written to its destination(s)
+     */
     public boolean isFinished()
     {
         return AUX_EQUALS(getAuxBits(AUX_FINISHED), AUX_TRUE);
     }
 
+    /**
+     * Calls appropriate execution logic method. Those methods should be able to properly handle being called an
+     *  arbitrary number of times.
+     * @param invoker PipelineStage that called this method. Will be cast to the appropriate class as a correctness
+     *                check
+     */
     public void execute(PipelineStage invoker)
     {
         HEADER header = getHeader();
@@ -290,7 +376,6 @@ public class Instruction
                     new MemoryRequest(id, cache.getID(),
                             MEMORY_TYPE.INSTRUCTION, REQUEST_TYPE.LOAD,
                             new Object[]{(int)(stage.internalRegisters.load(PC_INDEX)), false})));
-            System.out.println("LOAD_PC: " + stage.internalRegisters.load(PC_INDEX));
             int[] words = cache.load(activeRequest);
             for(int i = 0; i < words.length; i++)
             {
