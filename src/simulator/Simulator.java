@@ -52,12 +52,13 @@ public class Simulator extends JFrame
                    callStackDisplayPanel, reversalStackDisplayPanel, pipelineDisplayPanel;
     private JCheckBox activePipelineCheckbox;
 
-    public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int extendedState, int startingPC)
+    public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int extendedState, int startingPC, int[][][] startingMemories)
     {
-        this(id, registerBanks, pipeline, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT, extendedState, startingPC);
+        this(id, registerBanks, pipeline, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT, extendedState, startingPC, startingMemories);
     }
 
-    public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int width, int height, int extendedState, int startingPC)
+    public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int width, int height,
+                     int extendedState, int startingPC, int[][][] startingMemories)
     {
         this.id = id;
         this.registerBanks = registerBanks;
@@ -170,7 +171,7 @@ public class Simulator extends JFrame
         resetButton.setMaximumSize(new Dimension(100, 30));
         resetButton.addActionListener(e -> {
             setVisible(false);
-            new Simulator(GET_ID(), registerBanks, pipeline, this.getExtendedState(), startingPC);
+            new Simulator(GET_ID(), registerBanks, pipeline, this.getExtendedState(), startingPC, startingMemories);
             for(RegisterFileModule bank : registerBanks)
             {
                 if(bank != null) { bank.reset(); }
@@ -488,6 +489,12 @@ public class Simulator extends JFrame
 
         setExtendedState(extendedState);
 
+        if(startingMemories != null)
+        {
+            loadMemories(startingMemories);
+            controlsToggle.doClick();
+        }
+
         updateDisplay();
     }
 
@@ -608,6 +615,61 @@ public class Simulator extends JFrame
         });
 
         return panel;
+    }
+
+    private void loadMemories(int[][][] memories)
+    {
+        for(int[] unifiedModule : memories[0])
+        {
+            ramField.setText(Integer.toString(unifiedModule[0]));
+            ramRadio.setSelected(true);
+            dataRadio.setSelected(true);
+            if(unifiedModule[3] == WORD_SIZE_LONG)
+            {
+                longWordsRadio.setSelected(true);
+            }
+            else
+            {
+                shortWordsRadio.setSelected(true);
+            }
+            columnSizeField.setText(Integer.toString(unifiedModule[1]));
+            lineSizeField.setText(Integer.toString(unifiedModule[2]));
+            createNewMemoryModule(memoryLists[0]);
+        }
+        for(int[] dataModule : memories[1])
+        {
+            cacheField.setText(Integer.toString(dataModule[0]));
+            cacheRadio.setSelected(true);
+            dataRadio.setSelected(true);
+            if(dataModule[3] == WORD_SIZE_LONG)
+            {
+                longWordsRadio.setSelected(true);
+            }
+            else
+            {
+                shortWordsRadio.setSelected(true);
+            }
+            columnSizeField.setText(Integer.toString(dataModule[1]));
+            lineSizeField.setText(Integer.toString(dataModule[2]));
+            createNewMemoryModule(memoryLists[1]);
+        }
+        for(int[] instructionModule : memories[2])
+        {
+            cacheField.setText(Integer.toString(instructionModule[0]));
+            cacheRadio.setSelected(true);
+            instructionRadio.setSelected(true);
+            if(instructionModule[3] == WORD_SIZE_LONG)
+            {
+                longWordsRadio.setSelected(true);
+            }
+            else
+            {
+                shortWordsRadio.setSelected(true);
+            }
+            columnSizeField.setText(Integer.toString(instructionModule[1]));
+            lineSizeField.setText(Integer.toString(instructionModule[2]));
+            createNewMemoryModule(memoryLists[2]);
+        }
     }
 
     /**

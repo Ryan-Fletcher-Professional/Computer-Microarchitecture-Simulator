@@ -12,6 +12,19 @@ import static main.GLOBALS.*;
 
 public class Main
 {
+    // Each int[][] corresponds to the unified, data, or instruction memories (in that order)
+    // Each int[] is one module in the form of [ delay, number of lines, number of words per line, word size ]
+    private static final int[][][] STARTING_MEMORIES = new int[][][] {
+        new int[][] {
+            new int[] {5, 32, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+        },
+        new int[][] {
+            new int[] {1, 4, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
+        }
+    };
+
     public static void main(String[] args)
     {
         System.out.println("\n!!!!!!!!    Running simulator    !!!!!!!!\n");
@@ -55,7 +68,7 @@ public class Main
         registerBanks[INTERNAL_BANK_INDEX].pendings = pendingRegisters[INTERNAL_BANK_INDEX];
         registerBanks[CALL_STACK_INDEX].pendings = pendingRegisters[CALL_STACK_INDEX];
         registerBanks[REVERSAL_STACK_INDEX].pendings = pendingRegisters[REVERSAL_STACK_INDEX];
-        new Simulator(GET_ID(), registerBanks, new Pipeline(registerBanks[INDEXABLE_BANK_INDEX], registerBanks[INTERNAL_BANK_INDEX], registerBanks[CALL_STACK_INDEX], registerBanks[REVERSAL_STACK_INDEX], null, null, pendingRegisters, startingParams[0]), JFrame.MAXIMIZED_BOTH, startingPC);
+        new Simulator(GET_ID(), registerBanks, new Pipeline(registerBanks[INDEXABLE_BANK_INDEX], registerBanks[INTERNAL_BANK_INDEX], registerBanks[CALL_STACK_INDEX], registerBanks[REVERSAL_STACK_INDEX], null, null, pendingRegisters, startingParams[0]), JFrame.MAXIMIZED_BOTH, startingPC, STARTING_MEMORIES);
     }
 
     private static int[] FIND_START_PARAMS(String path)
