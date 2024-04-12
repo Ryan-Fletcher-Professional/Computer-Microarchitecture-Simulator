@@ -15,12 +15,12 @@ public class MemoryWritebackStage extends PipelineStage
     private final RegisterFileModule internalRegisters;
     private final RegisterFileModule callStack;
     private final RegisterFileModule reversalStack;
-    private final boolean[][] pendingRegisters;
+    private final int[][] pendingRegisters;
 
     public MemoryWritebackStage(int wordSize, String name,
                                 RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters,
                                 RegisterFileModule callStack, RegisterFileModule reversalStack,
-                                boolean[][] pendingRegisters)
+                                int[][] pendingRegisters)
     {
         super(wordSize, name);
         this.indexableRegisters = indexableRegisters;
@@ -43,7 +43,7 @@ public class MemoryWritebackStage extends PipelineStage
     }
 
     @Override
-    public Instruction execute(boolean nextIsBlocked) throws MRAException
+    public Instruction execute(boolean nextIsBlocked, boolean activePipeline) throws MRAException
     {
         HEADER header = heldInstruction.getHeader();
         boolean branched = false;
@@ -70,36 +70,36 @@ public class MemoryWritebackStage extends PipelineStage
                 if(dest.startsWith(RegisterFileModule.INDEXABLE_PREFIX))
                 {
                     indexableRegisters.store(idx, heldInstruction.getResult(i).toInt());
-                    pendingRegisters[INDEXABLE_BANK_INDEX][idx] = false;
+                    pendingRegisters[INDEXABLE_BANK_INDEX][idx]--;
                 }
                 else if(dest.startsWith(RegisterFileModule.INTERNAL_PREFIX))
                 {
                     internalRegisters.store(idx, heldInstruction.getResult(i).toInt());
-                    pendingRegisters[INTERNAL_BANK_INDEX][idx] = false;
+                    pendingRegisters[INTERNAL_BANK_INDEX][idx]--;
                 }
                 else if(dest.startsWith(RegisterFileModule.CALL_PREFIX))
                 {
                     callStack.store(idx, heldInstruction.getResult(i).toInt());
-                    pendingRegisters[CALL_STACK_INDEX][idx] = false;
+                    pendingRegisters[CALL_STACK_INDEX][idx]--;
                 }
                 else if(dest.startsWith(RegisterFileModule.REVERSAL_PREFIX))
                 {
                     reversalStack.store(idx, heldInstruction.getResult(i).toInt());
-                    pendingRegisters[REVERSAL_STACK_INDEX][idx] = false;
+                    pendingRegisters[REVERSAL_STACK_INDEX][idx]--;
                 }
             }
 
             Instruction ret = heldInstruction;
             if(!branched)
             {
-                heldInstruction = previousStage.execute(nextIsBlocked);
+                heldInstruction = previousStage.execute(nextIsBlocked, activePipeline);
             }
             else
             {
                 heldInstruction = previousStage.quashFromBranch();
-                for(boolean[] bank : pendingRegisters)
+                for(int[] bank : pendingRegisters)
                 {
-                    Arrays.fill(bank, false);
+                    Arrays.fill(bank, 0);
                 }
             }
             return ret;
@@ -113,7 +113,7 @@ public class MemoryWritebackStage extends PipelineStage
             // TODO : Record stall
         }
         Instruction ret = heldInstruction;
-        Instruction gotten = previousStage.execute(nextIsBlocked);
+        Instruction gotten = previousStage.execute(nextIsBlocked, activePipeline);
         if(!nextIsBlocked) { heldInstruction = gotten; }
         return ret;
     }

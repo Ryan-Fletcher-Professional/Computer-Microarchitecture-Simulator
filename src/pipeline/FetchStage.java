@@ -61,19 +61,20 @@ public class FetchStage extends PipelineStage
 
     public void preExecute() throws MRAException
     {
-        heldInstruction = super.execute(false);
+        heldInstruction = super.execute(false, true);
         heldInstruction.execute(this);
     }
 
     @Override
-    public Instruction execute(boolean nextIsBlocked) throws MRAException
+    public Instruction execute(boolean nextIsBlocked, boolean activePipeline) throws MRAException
     {
         // Default execute gives LOAD_PC
         // LOAD_PC should read the value in PC *AND* send out to the cache to get the instruction at that address
-        heldInstruction = super.execute(nextIsBlocked);
+        heldInstruction = super.execute(nextIsBlocked, activePipeline);
         heldInstruction.execute(this);
         Instruction ret = pass(nextIsBlocked);
-        heldInstruction = super.execute(nextIsBlocked);
+        ret.addAuxBits(AUX_FETCHED, AUX_TRUE);
+        heldInstruction = super.execute(nextIsBlocked, activePipeline);
         if(!heldInstruction.getHeader().equals(HEADER.LOAD_PC)) { throw new MRAException("Fetch was given an instruction besides LOAD_PC: " + HEADER_STRINGS.get(heldInstruction.getHeader())); }
         return ret;
     }

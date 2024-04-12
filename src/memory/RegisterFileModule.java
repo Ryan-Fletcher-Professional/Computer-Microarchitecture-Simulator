@@ -20,7 +20,7 @@ public class RegisterFileModule
     private final int id;
     private int currentRegisterIndex = -1;
     private final REGISTER_FILE_MODE mode;
-    public boolean[] pendings;
+    public int[] pendings;
 
     public RegisterFileModule(int id, REGISTER_FILE_MODE mode, int[] registerLengths, String[] names)
     {
@@ -145,7 +145,7 @@ public class RegisterFileModule
         {
             valueLengths[i] = Math.max(names[i].length() + (PENDING_INDICATOR.length() * 2), SMART_TO_STRING(masks[i], radix).length());
             StringBuilder currentName = new StringBuilder();
-            String pendingIndicator = pendings[i] ? PENDING_INDICATOR : "";
+            String pendingIndicator = PENDING_INDICATOR.repeat(pendings[i]);
             currentName.append(" ".repeat((valueLengths[i] - names[i].length()) / 2))
                        .append(pendingIndicator).append(names[i]).append(pendingIndicator)
                        .append(" ".repeat(valueLengths[i] - currentName.length()));

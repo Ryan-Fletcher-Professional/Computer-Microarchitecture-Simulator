@@ -213,14 +213,14 @@ public class GLOBALS
      * Creates new smooth-shaped 2D array to track pending registers in all four banks.
      * TODO : Change to int[][] and implement "scoreboarding"
      */
-    public static boolean[][] NEW_PENDING_REGISTERS(RegisterFileModule[] banks)
+    public static int[][] NEW_PENDING_REGISTERS(RegisterFileModule[] banks)
     {
         int longest = 0;
         for(RegisterFileModule bank : banks)
         {
             longest = Math.max(longest, bank.getNumRegisters());
         }
-        return new boolean[banks.length][longest];
+        return new int[banks.length][longest];
     }
 
     /*

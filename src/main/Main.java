@@ -50,7 +50,7 @@ public class Main
         registerBanks[INTERNAL_BANK_INDEX].store(List.of(INTERNAL_REGISTER_NAMES).indexOf(PC), startingPC);
         registerBanks[CALL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK, callStackLengths, callStackNames);
         registerBanks[REVERSAL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK_CIRCULAR, reversalStackLengths, reversalStackNames);
-        boolean[][] pendingRegisters = NEW_PENDING_REGISTERS(registerBanks);
+        int[][] pendingRegisters = NEW_PENDING_REGISTERS(registerBanks);
         registerBanks[INDEXABLE_BANK_INDEX].pendings = pendingRegisters[INDEXABLE_BANK_INDEX];
         registerBanks[INTERNAL_BANK_INDEX].pendings = pendingRegisters[INTERNAL_BANK_INDEX];
         registerBanks[CALL_STACK_INDEX].pendings = pendingRegisters[CALL_STACK_INDEX];

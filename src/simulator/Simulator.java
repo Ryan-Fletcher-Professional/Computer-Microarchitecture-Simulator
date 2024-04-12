@@ -50,6 +50,7 @@ public class Simulator extends JFrame
     private MemoryModule currentlySelectedMemory;
     private JPanel currentlyVisibleControls, currentlyInvisibleControls, stackPipelinePanel,
                    callStackDisplayPanel, reversalStackDisplayPanel, pipelineDisplayPanel;
+    private JCheckBox activePipelineCheckbox;
 
     public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int extendedState, int startingPC)
     {
@@ -87,25 +88,38 @@ public class Simulator extends JFrame
             catch(NumberFormatException _ignored_) {}
             for(int i = 0; i < numTicks; i++)
             {
-                CURRENT_TICK += 1;
-                boolean aboutToHalt = pipeline.preExecute();  // Happens before memory cycled, so memory cycling can be "in-line" with pipeline cycling
-                for(JList<MemoryModule> list : memoryLists)
+                boolean aboutToHalt = false;
+                Instruction output = null;
+                boolean doneOnce = false;
+                while((output == null) || !(AUX_EQUALS(output.getAuxBits(AUX_FETCHED), AUX_TRUE)))
                 {
-                    for(int j = 0; j < list.getModel().getSize(); j++)
+                    CURRENT_TICK += 1;
+                    aboutToHalt = pipeline.preExecute();  // Happens before memory cycled, so memory cycling can be "in-line" with pipeline cycling
+                    for(JList<MemoryModule> list : memoryLists)
                     {
-                        list.getModel().getElementAt(j).tick();
+                        for(int j = 0; j < list.getModel().getSize(); j++)
+                        {
+                            list.getModel().getElementAt(j).tick();
+                        }
                     }
+                    if(aboutToHalt)
+                    {
+                        System.out.println("HALT ENCOUNTERED");
+                        pipeline.openWrite();
+                        break;
+                    }
+                    output = pipeline.execute(activePipelineCheckbox.isSelected() || !doneOnce);
+                    if(ERROR_INSTRUCTIONS.contains(output.getHeader()))
+                    {
+                        System.out.println("ERROR ENCOUNTERED: " + output.word.toString());
+                        break;
+                    }
+
+                    doneOnce = true;
+                    if(activePipelineCheckbox.isSelected()) { break; }
                 }
                 if(aboutToHalt)
                 {
-                    System.out.println("HALT ENCOUNTERED");
-                    pipeline.openWrite();
-                    break;
-                }
-                Instruction output = pipeline.execute();
-                if(ERROR_INSTRUCTIONS.contains(output.getHeader()))
-                {
-                    System.out.println("ERROR ENCOUNTERED: " + output.word.toString());
                     break;
                 }
             }
@@ -136,17 +150,6 @@ public class Simulator extends JFrame
             updateDisplay();
         });
         JPanel bankPanel = new JPanel(new GridLayout(1, 1));
-//        JButton bankToggle = new JButton("Toggle Register Bank View");
-//        bankToggle.setMinimumSize(new Dimension(300, 30));
-//        bankToggle.setMaximumSize(new Dimension(300, 30));
-//        bankToggle.addActionListener(e -> {
-//            bankPanel.remove(currentlyVisibleBank);
-//            bankPanel.add(currentlyInvisibleBank);
-//            JScrollPane temp = currentlyVisibleBank;
-//            currentlyVisibleBank = currentlyInvisibleBank;
-//            currentlyInvisibleBank = temp;
-//            updateDisplay();
-//        });
         JButton saveButton = new JButton("Save to File");
         saveButton.setMinimumSize(new Dimension(300, 30));
         saveButton.setMaximumSize(new Dimension(300, 30));
@@ -225,14 +228,19 @@ public class Simulator extends JFrame
 
         // Pipeline
         pipelineDisplayPanel = new JPanel(new BorderLayout());
+        JPanel pipelineLabelPanel = new JPanel();
         pipelineLabel = new JLabel("Pipeline");
         pipelineLabel.setMinimumSize(new Dimension(200, 30));
         pipelineLabel.setMaximumSize(new Dimension(200, 30));
+        activePipelineCheckbox = new JCheckBox();
+        activePipelineCheckbox.setSelected(true);
+        pipelineLabelPanel.add(pipelineLabel);
+        pipelineLabelPanel.add(activePipelineCheckbox);
         pipelineDisplayText = new JTextArea();
         pipelineDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
         pipelineDisplayText.setEditable(false);
         pipelineDisplayPane = new JScrollPane(pipelineDisplayText);
-        pipelineDisplayPanel.add(pipelineLabel, BorderLayout.NORTH);
+        pipelineDisplayPanel.add(pipelineLabelPanel, BorderLayout.NORTH);
         pipelineDisplayPanel.add(pipelineDisplayPane, BorderLayout.SOUTH);
 
         stackPipeline = new JPanel[] { callStackDisplayPanel, reversalStackDisplayPanel, pipelineDisplayPanel };

@@ -171,8 +171,8 @@ public class Instruction
     {
         addSDManual(source, idx,
                     new Term((wordLength() == WORD_SIZE_SHORT) ?
-                                   MASK((int)wordNum(), start, end) :
-                                   MASK_LONG(wordNum(), start, end)),
+                                 MASK((int)wordNum(), start, end) :
+                                 MASK_LONG(wordNum(), start, end)),
                     type, registerBank);
     }
 
@@ -334,34 +334,39 @@ public class Instruction
     }
 
     /**
-     * Calls appropriate execution logic method. Those methods should be able to properly handle being called an
-     *  arbitrary number of times.
+     * Calls appropriate execution logic method. These methods should set their aux finished bits to true when they
+     *  don't want to be called again.
      * @param invoker PipelineStage that called this method. Will be cast to the appropriate class as a correctness
      *                check
      */
     public void execute(PipelineStage invoker)
     {
-        HEADER header = getHeader();
-
-        switch(header)
+        if(!isFinished())
         {
-            case HEADER.LOAD -> executeLoad((MemoryAccessStage)invoker);
-            case HEADER.STORE -> executeStore((MemoryAccessStage)invoker);
+            HEADER header = getHeader();
 
-            case HEADER.BRANCH_IF_NEGATIVE -> {}  // Nothing to execute; logic in getNegativeConditionChecks()
+            switch(header)
+            {
+                case HEADER.LOAD -> executeLoad((MemoryAccessStage)invoker);
+                case HEADER.STORE -> executeStore((MemoryAccessStage)invoker);
 
-            case HEADER.INT_ADD -> executeIntAdd((ExecuteStage)invoker);
-            case HEADER.INT_SUBTRACT -> executeIntSubtract((ExecuteStage)invoker);
+                case HEADER.BRANCH_IF_NEGATIVE ->
+                {
+                }  // Nothing to execute; logic in getNegativeConditionChecks()
 
-            case HEADER.COMPARE -> executeCompare((ExecuteStage)invoker);
+                case HEADER.INT_ADD -> executeIntAdd((ExecuteStage)invoker);
+                case HEADER.INT_SUBTRACT -> executeIntSubtract((ExecuteStage)invoker);
 
-            case HEADER.COPY -> executeCopy((ExecuteStage)invoker);
-            case HEADER.SWAP -> executeSwap((ExecuteStage)invoker);
+                case HEADER.COMPARE -> executeCompare((ExecuteStage)invoker);
 
-            case HEADER.HALT -> executeHalt((ExecuteStage)invoker);
+                case HEADER.COPY -> executeCopy((ExecuteStage)invoker);
+                case HEADER.SWAP -> executeSwap((ExecuteStage)invoker);
 
-            case HEADER.LOAD_PC -> executeLoadPC((FetchStage)invoker);
-            case HEADER.EXECUTION_ERR -> executeError(invoker);
+                case HEADER.HALT -> executeHalt((ExecuteStage)invoker);
+
+                case HEADER.LOAD_PC -> executeLoadPC((FetchStage)invoker);
+                case HEADER.EXECUTION_ERR -> executeError(invoker);
+            }
         }
     }
 
@@ -373,9 +378,9 @@ public class Instruction
         if(activeRequest == null)
         {
             activeRequest = new LinkedList<>(List.of(
-                    new MemoryRequest(id, cache.getID(),
-                            MEMORY_TYPE.INSTRUCTION, REQUEST_TYPE.LOAD,
-                            new Object[]{(int)(stage.internalRegisters.load(PC_INDEX)), false})));
+                new MemoryRequest(id, cache.getID(),
+                                  MEMORY_TYPE.INSTRUCTION, REQUEST_TYPE.LOAD,
+                                  new Object[]{(int)(stage.internalRegisters.load(PC_INDEX)), false})));
             int[] words = cache.load(activeRequest);
             for(int i = 0; i < words.length; i++)
             {
@@ -422,7 +427,7 @@ public class Instruction
                 new MemoryRequest(id, cache.getID(),
                                   MEMORY_TYPE.DATA, REQUEST_TYPE.STORE,
                                   new Object[]{ getAuxBits(AUX_SOURCE(1)).toInt() + ((int)stage.internalRegisters.load(CM_INDEX)),
-                                                new int[] { getAuxBits(AUX_SOURCE(0)).toInt() } })));
+                                      new int[] { getAuxBits(AUX_SOURCE(0)).toInt() } })));
             cache.store(activeRequest);
         }
         if(activeRequest.isEmpty() && !isFinished())
@@ -480,23 +485,27 @@ public class Instruction
         newCC = (result > 0) ? NEW_CC_POSITIVE(newCC) : NEW_CC_NONPOSITIVE(newCC);
 
         setResult(0, new Term(newCC, false));
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
     }
 
     public void executeCopy(ExecuteStage stage)
     {
         setResult(0, new Term(getAuxBits(AUX_SOURCE(0)).toInt(), false));
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
     }
 
     public void executeSwap(ExecuteStage stage)
     {
         setResult(0, new Term(getAuxBits(AUX_SOURCE(1)).toInt(), false));
         setResult(1, new Term(getAuxBits(AUX_SOURCE(0)).toInt(), false));
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
     }
 
     public void executeHalt(ExecuteStage stage)
     {
         // Just copies the result value. Does not cease
         setResult(0, new Term(getAuxBits(AUX_SOURCE(0)).toInt(), false));
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
     }
 
     public void executeError(PipelineStage ignored)

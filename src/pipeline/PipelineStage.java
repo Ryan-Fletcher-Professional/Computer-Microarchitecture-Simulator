@@ -121,11 +121,11 @@ public class PipelineStage
      * @param nextIsBlocked Blocked status of following stage in pipeline.
      * @return STALL if this stage is blocked. If not, previousStage.execute() (default NOOP).
      */
-    protected Instruction execute(boolean nextIsBlocked) throws MRAException
+    protected Instruction execute(boolean nextIsBlocked, boolean activePipeline) throws MRAException
     {
         if(heldInstruction == null) { heldInstruction = getDefaultInstruction(wordSize); }
         Instruction ret = heldInstruction;
-        heldInstruction = (previousStage != null) ? previousStage.execute(nextIsBlocked) : null;
+        heldInstruction = (previousStage != null) ? previousStage.execute(nextIsBlocked, activePipeline) : null;
         return ret;
     }
 

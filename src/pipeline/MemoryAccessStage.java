@@ -38,7 +38,7 @@ public class MemoryAccessStage extends PipelineStage
     }
 
     @Override
-    public Instruction execute(boolean nextIsBlocked) throws MRAException
+    public Instruction execute(boolean nextIsBlocked, boolean activePipeline) throws MRAException
     {
         if(MEMORY_INSTRUCTIONS.contains(heldInstruction.getHeader()))
         {
@@ -52,13 +52,13 @@ public class MemoryAccessStage extends PipelineStage
         Instruction ret = pass(nextIsBlocked);
         if(!nextIsBlocked && (heldInstruction.isFinished() || AUX_EQUALS(heldInstruction.getAuxBits(AUX_FINISHED_MEMORY_ACCESS_STAGE), AUX_TRUE)))
         {
-            heldInstruction = previousStage.execute(nextIsBlocked);
+            heldInstruction = previousStage.execute(nextIsBlocked, activePipeline);
             oldID = ret.id;
         }
         else
         {
             ret = nextIsBlocked ? ret : passBlocking();
-            previousStage.execute(true);
+            previousStage.execute(true, activePipeline);
         }
         return ret;
     }

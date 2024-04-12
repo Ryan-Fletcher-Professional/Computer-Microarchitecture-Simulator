@@ -41,7 +41,7 @@ public class ExecuteStage extends PipelineStage
     }
 
     @Override
-    public Instruction execute(boolean nextIsBlocked) throws MRAException
+    public Instruction execute(boolean nextIsBlocked, boolean activePipeline) throws MRAException
     {
         if(ALU_EXECUTE_INSTRUCTIONS.contains(heldInstruction.getHeader()))
         {
@@ -81,9 +81,9 @@ public class ExecuteStage extends PipelineStage
                 heldInstruction.addAuxBits(AUX_RESULT(0), destination);
             }
         }
-        Instruction ret = pass(nextIsBlocked);
-        Instruction next = previousStage.execute(nextIsBlocked);
-        if(!nextIsBlocked) { heldInstruction = next; }
+        Instruction ret = pass(nextIsBlocked && !DISPOSABLE_INSTRUCTIONS.contains(heldInstruction.getHeader()));
+        Instruction next = previousStage.execute(nextIsBlocked && !DISPOSABLE_INSTRUCTIONS.contains(heldInstruction.getHeader()), activePipeline);
+        if(!(nextIsBlocked && !DISPOSABLE_INSTRUCTIONS.contains(heldInstruction.getHeader()))) { heldInstruction = next; }
         return ret;
     }
 }

@@ -25,7 +25,7 @@ public class Pipeline
     public Pipeline(RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters,
                     RegisterFileModule callStack, RegisterFileModule reversalStack,
                     MemoryModule nearestInstructionCache, MemoryModule nearestDataCache,
-                    boolean[][] pendingRegisters, int wordSize)
+                    int[][] pendingRegisters, int wordSize)
     {
         initialize(indexableRegisters, internalRegisters, callStack, reversalStack,
                    nearestInstructionCache, nearestDataCache, pendingRegisters, wordSize);
@@ -84,12 +84,12 @@ public class Pipeline
         return aboutToWriteHalt;
     }
 
-    public Instruction execute()
+    public Instruction execute(boolean activePipeline)
     {
         Instruction ret = null;
         try
         {
-            ret = this.endStage.execute(false);
+            ret = this.endStage.execute(false, activePipeline);
         }
         catch(MRAException e)
         {
@@ -101,7 +101,7 @@ public class Pipeline
 
     private void initialize(RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters,
                             RegisterFileModule callStack, RegisterFileModule reversalStack,
-                            MemoryModule nearestInstructionCache, MemoryModule nearestDataCache, boolean[][] pendingRegisters,
+                            MemoryModule nearestInstructionCache, MemoryModule nearestDataCache, int[][] pendingRegisters,
                             int wordSize)
     {
         this.indexableRegisters = indexableRegisters;

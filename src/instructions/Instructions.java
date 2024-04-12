@@ -243,6 +243,7 @@ public class Instructions
      */
     public static final int AUX_TRUE = 1;
     public static final int AUX_FALSE = 0;
+    public static final String AUX_FETCHED = "fetched";
     public static final String AUX_FINISHED = "final result has just been written or instruction has been handled manually by pipeline";
     public static final String AUX_FINISHED_MEMORY_ACCESS_STAGE = "don't need to execute in memory access stage";
     public static final String AUX_DECODED = "don't need to decode again";
