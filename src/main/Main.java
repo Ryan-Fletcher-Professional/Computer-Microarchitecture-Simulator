@@ -3,27 +3,16 @@ package main;
 import memory.RegisterFileModule;
 import pipeline.Pipeline;
 import simulator.Simulator;
-
 import javax.swing.*;
 import java.io.*;
 import java.util.List;
-
 import static main.GLOBALS.*;
 
 public class Main
 {
     // Each int[][] corresponds to the unified, data, or instruction memories (in that order)
     // Each int[] is one module in the form of [ delay, number of lines, number of words per line, word size ]
-    private static final int[][][] STARTING_MEMORIES = new int[][][] {
-        new int[][] {
-            new int[] {5, 32, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
-        },
-        new int[][] {
-        },
-        new int[][] {
-            new int[] {1, 4, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
-        }
-    };
+    private static final int[][][] STARTING_MEMORIES = START_MEM_5RAM32_1INST4LONG;
 
     public static void main(String[] args)
     {

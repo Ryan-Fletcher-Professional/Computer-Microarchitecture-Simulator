@@ -13,6 +13,46 @@ public class GLOBALS
         Clerical
      */
 
+    public static final int DEFAULT_LINE_SIZE = 8;
+    public static final int INDEXABLE_BANK_SIZE = 16;
+    public static int WORD_SIZE_SHORT = 32;
+    public static int WORD_SIZE_LONG = 64;
+
+    public static final int[][][] START_MEM_5RAM32_1INST4LONG = new int[][][] {
+        new int[][] {
+            new int[] {5, 32, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+        },
+        new int[][] {
+            new int[] {1, 4, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
+        }
+    };
+    public static final int[][][] START_MEM_100RAM1024_10DATA256_2DATA128_1INST32LONG = new int[][][] {
+        new int[][] {
+            new int[] {100, 1024, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+            new int[] {10, 256, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT},
+            new int[] {2, 128, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+            new int[] {1, 32, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
+        }
+    };
+    public static final int[][][] START_MEM_100RAM1024_10DATA256_2DATA128_1INST32SHORT = new int[][][] {
+        new int[][] {
+            new int[] {100, 1024, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+            new int[] {10, 256, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT},
+            new int[] {2, 128, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+            new int[] {1, 32, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        }
+    };
+
     public static int currentId = 0;
     public static int GET_ID()
     {
@@ -21,8 +61,6 @@ public class GLOBALS
 
     public static int CURRENT_TICK = 0;
 
-    public static final int DEFAULT_LINE_SIZE = 8;
-    public static final int INDEXABLE_BANK_SIZE = 16;
     public static final int INDEXABLE_BANK_INDEX = 0;
     public static final int INTERNAL_BANK_INDEX = 1;
     public static final int CALL_STACK_INDEX = 2;
@@ -81,8 +119,6 @@ public class GLOBALS
     public static final int MAX_ADDRESS = (int)Math.pow(2, ADDRESS_SIZE) - 1;
     public static final int DATA_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);            // 4MB
     public static final int INSTRUCTION_MEMORY_ACTUAL_MAX_SIZE = (int)Math.pow(2, 20);     // 4MB
-    public static int WORD_SIZE_SHORT = 32;
-    public static int WORD_SIZE_LONG = 64;
     public static final WRITE_MODE DEFAULT_CACHE_WRITE_MODE = WRITE_MODE.BACK;
     public static final WRITE_MODE DEFAULT_RAM_WRITE_MODE = WRITE_MODE.THROUGH_ALLOCATE;
     public static final int DEFAULT_CACHE_ACCESS_DELAY = 10;
