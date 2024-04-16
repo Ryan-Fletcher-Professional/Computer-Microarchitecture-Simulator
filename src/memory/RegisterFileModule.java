@@ -36,6 +36,13 @@ public class RegisterFileModule
         totalLength = len;
         this.names = names.clone();
         this.mode = mode;
+        if(mode.equals(REGISTER_FILE_MODE.STACK_CIRCULAR))
+        {  // So that there is a starting state to undo to
+            for(int r = 0; r < getNumRegisters(); r++)
+            {
+                store(0);
+            }
+        }
     }
 
     public int getID()
@@ -46,6 +53,11 @@ public class RegisterFileModule
     public int getNumRegisters()
     {
         return memory.length;
+    }
+
+    public void store(long value)
+    {
+        store(-1, value);
     }
 
     public void store(int index, long value)

@@ -32,19 +32,21 @@ public class Main
         String[] internalNames = INTERNAL_REGISTER_NAMES;
         // TODO : Ensure external pushes to and pops from call stack perform 17 operations in correct order
         int[] callStackLengths = new int[internalLengths[6] * (indexableLengths.length + 1)];  // Will be pushed/popped in groups of 17; 1 for return pointer and 16 for snapshot of indexable register file
-        String[] callStackNames = new String[internalLengths[6] * (indexableLengths.length + 1)];
+        String[] callStackNames = new String[callStackLengths.length];
         for(int i = 0; i < callStackLengths.length; i++)
         {
             int index = i % (indexableLengths.length + 1);
-            callStackLengths[i] = (index == 0) ? ADDRESS_SIZE : indexableLengths[0];
-            callStackNames[i] = i / (indexableLengths.length + 1) + " " + ((index == 0) ? "R" : index);
+            callStackLengths[i] = (index == 0) ? ADDRESS_SIZE : indexableLengths[i % indexableLengths.length];
+            callStackNames[i] = i / (indexableLengths.length + 1) + " " + ((index == 0) ? "R" : (index - 1));
         }
-        int[] reversalStackLengths = new int[internalLengths[7]];
-        String[] reversalStackNames = new String[internalLengths[7]];
+        // TODO : Ensure external pushes to and pops from reversal stack perform 16 operations in correct order
+        int[] reversalStackLengths = new int[internalLengths[7] * indexableLengths.length];  // Will be pushed/popped in groups of 16 for snapshot of indexable register file
+        String[] reversalStackNames = new String[reversalStackLengths.length];
         for(int i = 0; i < reversalStackLengths.length; i++)
         {
-            reversalStackLengths[i] = WORD_SIZE_LONG;
-            reversalStackNames[i] = Integer.toString(i);
+            int index = i % indexableLengths.length;
+            reversalStackLengths[i] = indexableLengths[index];
+            reversalStackNames[i] = i / indexableLengths.length + " " + index;
         }
         registerBanks[INDEXABLE_BANK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, indexableLengths, indexableNames);
         registerBanks[INTERNAL_BANK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, internalLengths, internalNames);

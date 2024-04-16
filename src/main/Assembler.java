@@ -3,11 +3,9 @@ package main;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Pattern;
-
 import static main.GLOBALS.*;
 import static instructions.Instructions.*;
 
@@ -464,6 +462,7 @@ public class Assembler
             case HEADER.COPY -> word = parseCopy(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.SWAP -> word = parseSwap(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
+            case HEADER.UNDO -> word = parseUndo(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.HALT -> word = parseHalt(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
             default -> throw new AssemblyError("UNPARSED INSTRUCTION at line " + lineNum);
@@ -810,6 +809,33 @@ public class Assembler
         }
 
         return word | (src0 << 4) | src1;
+    }
+
+    private static long parseUndo(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {
+        if((tokens.length < 2) || (tokens.length > 3))
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + "<quantity>{, <skip>}"); }
+
+        for(int i = 1; i < tokens.length - 1; i++)
+        {
+            if(!tokens[i].endsWith(","))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": Missing comma separator"); }
+        }
+
+        if(tokens.length == 2)
+        {
+            tokens = new String[] {tokens[0], tokens[1] + ",", "0"};
+        }
+
+        long flag_a = (!tokens[1].startsWith(REGISTER_PREFIX + "")) ? 1L : 0L;
+        long flag_b = (!tokens[2].startsWith(REGISTER_PREFIX + "")) ? 0L : 1L;
+
+        long quantity = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 10);
+        long skip = SAFE(PARSE_TOKEN(tokens[2], lineNum, labels), 10);
+
+        return word | (flag_a << (wordSize - 7)) | (flag_b << (wordSize - 8)) | (quantity << 10) | skip;
     }
 
     private static long parseHalt(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError

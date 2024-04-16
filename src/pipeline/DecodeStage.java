@@ -36,7 +36,7 @@ public class DecodeStage extends PipelineStage
     {
         // Split flags and argument according to header and add as aux bits
         if(!AUX_EQUALS(heldInstruction.getAuxBits(AUX_DECODED), AUX_TRUE))
-        {
+        {  // TODO : Add new instructions here
             switch(heldInstruction.getHeader())
             {
                 case HEADER.LOAD -> decodeLoad();
@@ -52,6 +52,7 @@ public class DecodeStage extends PipelineStage
                 case HEADER.COPY -> decodeCopy();
                 case HEADER.SWAP -> decodeSwap();
 
+                case HEADER.UNDO -> decodeUndo();
                 case HEADER.HALT -> decodeHalt();
             }
             heldInstruction.addAuxBits(AUX_DECODED, AUX_TRUE);
@@ -569,5 +570,43 @@ public class DecodeStage extends PipelineStage
         }
 
         heldInstruction.addDestManual(0, new Term(CC_INDEX), AUX_REG_BANK_INTERNALS);
+    }
+
+    public void decodeUndo()
+    {
+        /*
+         * This decodes a bit weirdly. UNDO can have wildly varied behavior depending on which instructions precede it,
+         *  which registers those instructions write to, etc. So to avoid any forwarding or backwarding shenanigans,
+         *  UNDO simply will act as though it writes to all 16 indexable registers.
+         *  That means UNDO will block for at most 2 extra cycles while it approaches the writeback stage.
+         */
+
+        for(int i = 0; i < indexableRegisters.getNumRegisters(); i++)
+        {
+            heldInstruction.addSDManual(false, i, new Term(i), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+        }
+
+        heldInstruction.addFlags(2);
+
+        int start = heldInstruction.wordLength() - 20;
+
+        if(AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0))
+        {
+            heldInstruction.addSource(0, start, start + 10, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+        }
+        else
+        {
+            heldInstruction.addSource(0, start, start + 10, AUX_SD_TYPE_IMMEDIATE, -1);
+        }
+        start += 10;
+
+        if(AUX_EQUALS(heldInstruction.getAuxBits(FLAG(1)), 0))
+        {
+            heldInstruction.addSource(1, start, start + 10, AUX_SD_TYPE_IMMEDIATE, -1);
+        }
+        else
+        {
+            heldInstruction.addSource(1, start, start + 10, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+        }
     }
 }

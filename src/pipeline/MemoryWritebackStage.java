@@ -48,7 +48,44 @@ public class MemoryWritebackStage extends PipelineStage
         HEADER header = heldInstruction.getHeader();
         boolean branched = false;
 
-        if(AUX_EQUALS(heldInstruction.getAuxBits(AUX_JSR), AUX_TRUE))
+        if(heldInstruction.getHeader().equals(HEADER.UNDO))
+        {
+            int quantity = heldInstruction.getAuxBits(AUX_SOURCE(0)).toInt();
+            int skip = heldInstruction.getAuxBits(AUX_SOURCE(1)).toInt();
+
+            // Undo back to desired frame
+            for(int r = 0; r < indexableRegisters.getNumRegisters(); r++)
+            {
+                indexableRegisters.store(indexableRegisters.getNumRegisters() - 1 - r, reversalStack.peek(((skip + quantity) * indexableRegisters.getNumRegisters()) + r));
+            }
+
+            // Redo skipped undos (compare each frame to previous one to see actual changes)
+            for(int i = skip - 1; i >= 0; i--)
+            {
+                for(int r = 0; r < indexableRegisters.getNumRegisters(); r++)
+                {
+                    long newValue = reversalStack.peek((i * indexableRegisters.getNumRegisters()) + r);
+                    long oldValue = reversalStack.peek(((i + 1) * indexableRegisters.getNumRegisters()) + r);
+                    if(newValue != oldValue)
+                    {
+                        indexableRegisters.store(indexableRegisters.getNumRegisters() - 1 - r, newValue);
+                    }
+                }
+            }
+
+            // Clear out all looked-at frames (including skipped ones)
+            for(int i = 0; i < (skip + quantity) * indexableRegisters.getNumRegisters(); i++)
+            {
+                reversalStack.load();
+            }
+
+            // Drop pendings
+            for(int r = 0; r < indexableRegisters.getNumRegisters(); r++)
+            {
+                pendingRegisters[INDEXABLE_BANK_INDEX][r]--;
+            }
+        }
+        else if(AUX_EQUALS(heldInstruction.getAuxBits(AUX_JSR), AUX_TRUE))
         {
             // TODO : Handle jump to subroutine
             branched = true;
@@ -62,6 +99,8 @@ public class MemoryWritebackStage extends PipelineStage
                 branched = true;
             }
 
+            boolean wroteToIndexable = false;
+
             for(int i = 0; heldInstruction.getAuxBits(AUX_RESULT(i)) != null; i++)
             {
                 //System.out.println(header + " " + i);
@@ -71,6 +110,7 @@ public class MemoryWritebackStage extends PipelineStage
                 {
                     indexableRegisters.store(idx, heldInstruction.getResult(i).toInt());
                     pendingRegisters[INDEXABLE_BANK_INDEX][idx]--;
+                    wroteToIndexable = true;
                 }
                 else if(dest.startsWith(RegisterFileModule.INTERNAL_PREFIX))
                 {
@@ -86,6 +126,14 @@ public class MemoryWritebackStage extends PipelineStage
                 {
                     reversalStack.store(idx, heldInstruction.getResult(i).toInt());
                     pendingRegisters[REVERSAL_STACK_INDEX][idx]--;
+                }
+            }
+
+            if(wroteToIndexable)
+            {
+                for(int r = 0; r < indexableRegisters.getNumRegisters(); r++)
+                {
+                    reversalStack.store(indexableRegisters.load(r));
                 }
             }
 

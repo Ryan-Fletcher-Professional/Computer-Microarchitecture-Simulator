@@ -57,6 +57,7 @@ public class Instructions
 
         // FP here if implement
 
+        UNDO,
         HALT,
 
         NOOP,
@@ -83,6 +84,7 @@ public class Instructions
 
         // FP here if implement
 
+        put(OPCODE.UNDO, "100");
         put(OPCODE.HALT, "101");
 
         put(OPCODE.NOOP, "000");
@@ -118,6 +120,7 @@ public class Instructions
 
         // FP here if implement
 
+        UNDO,
         HALT,
 
         NOOP,
@@ -145,6 +148,7 @@ public class Instructions
 
         // FP here if implement
 
+        put(HEADER.UNDO,                    MAKE_HEADER_STRING( TYPECODE.MISC,              OPCODE.UNDO                 ));
         put(HEADER.HALT,                    MAKE_HEADER_STRING( TYPECODE.MISC,              OPCODE.HALT                 ));
 
         put(HEADER.NOOP,                    MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.NOOP                 ));
@@ -177,6 +181,7 @@ public class Instructions
 
         // FP here if implement
 
+        put(HEADER.UNDO,                    "UNDO");
         put(HEADER.HALT,                    "HALT");
     }};
     public static Map<String, HEADER> HEADERS_FROM_MNEMONICS = new HashMap<>() {{

@@ -560,7 +560,7 @@ public class Simulator extends JFrame
         int dividerSize = ((BasicSplitPaneUI)topBottomPane.getUI()).getDivider().getDividerSize();
         paneSize.width = Math.min(stackPipelinePanel.getWidth(), 8 * (valueBinRadio.isSelected() ? 38 : (valueHexRadio.isSelected() ? 14 : 20)));
         callDisplayPane.setPreferredSize(new Dimension(paneSize.width, paneSize.height - dividerSize - callStackLabel.getHeight()));
-        reversalDisplayPane.setPreferredSize(new Dimension(Math.min(stackPipelinePanel.getWidth(), (int)((double)paneSize.width * 1.5)), paneSize.height - (2 * dividerSize) - reversalStackLabel.getHeight()));
+        reversalDisplayPane.setPreferredSize(new Dimension(paneSize.width, paneSize.height - dividerSize - reversalStackLabel.getHeight()));
         pipelineDisplayPane.setPreferredSize(new Dimension(Math.max(paneSize.width, 8 * 38) * (int)((pipeline.getWordSize() == 64) ? 1.5 : 1), paneSize.height - (2 * dividerSize) - pipelineLabel.getHeight()));
 
         SwingUtilities.invokeLater(() -> {

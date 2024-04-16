@@ -4,6 +4,13 @@ SET BUFFER SIZE 1000000000
 COPY #1, R2         @ Next load address
 COPY #0, R3         @ Current index
 LOAD #0, R4         @ Size of list
+COPY #1, R5         @ Testing UNDO
+COPY #2, R6
+COPY #3, R7
+COPY #4, R8
+COPY #5, R9
+COPY #6, R10
+UNDO #2, #2         @ HUZZAH! It works!
     =LOOP_START
 LOAD R2, R1         @ Next value
 ADD R0, R1          @ Accumulate
