@@ -138,16 +138,19 @@ public class Assembler
         {
             int stackSize = 0b1000000000;
             int bufferSize = 0b1000000000;
+            int set = 0b000;
 
             int index = 0;
             if(lines[index].equals("SET WORD SIZE 32"))
             {
                 index++;
+                set |= 0b001;
             }
             else if(lines[index].equals("SET WORD SIZE 64"))
             {
                 wordSize = WORD_SIZE_LONG;
                 index++;
+                set |= 0b001;
             }
             if((index < lines.length) && lines[index].startsWith("SET STACK SIZE "))
             {
@@ -166,6 +169,7 @@ public class Assembler
                     if((value & (0b1000000000 >> i)) != 0b0000000000)
                     {
                         stackSize = value & (0b1000000000 >> i);
+                        set |= 0b010;
                         break;
                     }
                 }
@@ -188,6 +192,7 @@ public class Assembler
                     if((value & (0b1000000000 >> i)) != 0b0000000000)
                     {
                         bufferSize = value & (0b1000000000 >> i);
+                        set |= 0b100;
                         break;
                     }
                 }
@@ -195,7 +200,7 @@ public class Assembler
             }
 
             // Set first line of memory
-            words.add((((wordSize == WORD_SIZE_SHORT) ? 0 : 1) << 31) | (stackSize << 21) | (bufferSize << 11));
+            words.add((((wordSize == WORD_SIZE_SHORT) ? 0 : 1) << 31) | (stackSize << 21) | (bufferSize << 11) | (set << 8));
             words.add((int)((wordSize == WORD_SIZE_SHORT)
                                 ? SHORT_INSTRUCTION_ADDRESS_FIX(lines.length + 1, index)
                                 : LONG_INSTRUCTION_ADDRESS_FIX(lines.length + 1, index)));
@@ -295,6 +300,11 @@ public class Assembler
         return lineNum - 1 - (numStartInstructions - 8);
     }
 
+    public static long SHORT_INSTRUCTION_ADDRESS_UNFIX(long address, int numStartInstructions)
+    {
+        return address + (numStartInstructions - 8) + 1;
+    }
+
     /**
      * Translates the instruction line number the coder sees into the absolute memory address when instructions are long
      *  and there are numStartCommands of the three possible special commands at the start of the file.
@@ -304,6 +314,11 @@ public class Assembler
     public static long LONG_INSTRUCTION_ADDRESS_FIX(long lineNum, int numStartInstructions)
     {
         return ((lineNum - 1) * 2) - ((numStartInstructions - 4) * 2L);
+    }
+
+    public static long LONG_INSTRUCTION_ADDRESS_UNFIX(long address, int numStartInstructions)
+    {
+        return ((address + ((numStartInstructions - 4) * 2L)) / 2) + 1;
     }
 
     private static boolean CONTAINS_WHITESPACE(String str)

@@ -1,9 +1,13 @@
 package pipeline;
 
+import instructions.Term;
 import memory.MemoryModule;
 import memory.RegisterFileModule;
 import static main.GLOBALS.*;
 import instructions.Instruction;
+
+import java.util.List;
+
 import static instructions.Instructions.*;
 
 public class FetchStage extends PipelineStage
@@ -52,6 +56,7 @@ public class FetchStage extends PipelineStage
         if(heldInstruction.isFinished() && !nextStatus)
         {
             heldInstruction = new Instruction(heldInstruction.getAuxBits(AUX_RESULT));
+            heldInstruction.addAuxBits(AUX_PC_AT_FETCH, new Term(internalRegisters.load(List.of(INTERNAL_REGISTER_NAMES).indexOf(PC)), false, 32));
             Instruction ret = passUnblocked();
             heldInstruction = null;
             return ret;

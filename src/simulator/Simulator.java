@@ -7,12 +7,14 @@ import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.io.File;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static main.Assembler.*;
 import static main.GLOBALS.*;
 
 import static instructions.Instructions.*;
@@ -27,9 +29,9 @@ public class Simulator extends JFrame
 {
     private static final Logger logger = Logger.getLogger(Simulator.class.getName());
 
-    private final int id, startingPC;
+    private final int id, startingPC, numSpecialInstructions;
     private JSplitPane topBottomPane;
-    private JLabel callStackLabel, reversalStackLabel, pipelineLabel;
+    private JLabel callStackLabel, reversalStackLabel, pipelineLabel, pipelineOutputLabel;
     private RegisterFileModule[] registerBanks;
     private Pipeline pipeline;
     private int frameWidth, frameHeight;
@@ -52,13 +54,13 @@ public class Simulator extends JFrame
                    callStackDisplayPanel, reversalStackDisplayPanel, pipelineDisplayPanel;
     private JCheckBox activePipelineCheckbox;
 
-    public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int extendedState, int startingPC, int[][][] startingMemories)
+    public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int extendedState, int startingPC, int[][][] startingMemories, int numSpecialInstructions)
     {
-        this(id, registerBanks, pipeline, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT, extendedState, startingPC, startingMemories);
+        this(id, registerBanks, pipeline, DEFAULT_UI_WIDTH, DEFAULT_UI_HEIGHT, extendedState, startingPC, startingMemories, numSpecialInstructions);
     }
 
     public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int width, int height,
-                     int extendedState, int startingPC, int[][][] startingMemories)
+                     int extendedState, int startingPC, int[][][] startingMemories, int numSpecialInstructions)
     {
         this.id = id;
         this.registerBanks = registerBanks;
@@ -66,6 +68,7 @@ public class Simulator extends JFrame
         this.frameWidth = width;
         this.frameHeight = height;
         this.startingPC = startingPC;
+        this.numSpecialInstructions = numSpecialInstructions;
 
         setTitle("Basic Memory Manipulator");
         setSize(width, height);
@@ -77,20 +80,20 @@ public class Simulator extends JFrame
         JLabel countLabel = new JLabel("Cycles: 0");
         countLabel.setMinimumSize(new Dimension(200, 30));
         countLabel.setMaximumSize(new Dimension(200, 30));
-        JButton tickButton = new JButton("Cycle Clock");
+        JButton tickButton = new JButton("Cycle");
         tickButton.setMinimumSize(new Dimension(100, 30));
         tickButton.setMaximumSize(new Dimension(100, 30));
         JTextField tickField = new JTextField(1);
         tickField.setMinimumSize(new Dimension(100, 30));
         tickField.setMaximumSize(new Dimension(100, 30));
         tickButton.addActionListener(e -> {
+            Instruction output = null;
             double numTicks = Double.POSITIVE_INFINITY;
             try{ numTicks = Integer.parseInt(tickField.getText()); }
             catch(NumberFormatException _ignored_) {}
             for(int i = 0; i < numTicks; i++)
             {
                 boolean aboutToHalt = false;
-                Instruction output = null;
                 boolean doneOnce = false;
                 while((output == null) || !(AUX_EQUALS(output.getAuxBits(AUX_FETCHED), AUX_TRUE)))
                 {
@@ -125,6 +128,12 @@ public class Simulator extends JFrame
                 }
             }
             countLabel.setText("Cycles: " + CURRENT_TICK);
+            if(output != null)
+            {
+                long pc = (output.getAuxBits(AUX_PC_AT_FETCH) == null) ? -1 : output.getAuxBits(AUX_PC_AT_FETCH).toInt();
+                pipelineOutputLabel.setText("Line " + ((pc == -1L) ? "--" : ((output.wordLength() == WORD_SIZE_SHORT ? SHORT_INSTRUCTION_ADDRESS_UNFIX(pc, numSpecialInstructions) : LONG_INSTRUCTION_ADDRESS_UNFIX(pc, numSpecialInstructions)))) +
+                                            ": " + ((MNEMONICS.get(output.getHeader()) != null) ? MNEMONICS.get(output.getHeader()) : INTERNAL_MNEMONICS.get(output.getHeader())));
+            }
             updateDisplay();
         });
 
@@ -171,7 +180,7 @@ public class Simulator extends JFrame
         resetButton.setMaximumSize(new Dimension(100, 30));
         resetButton.addActionListener(e -> {
             setVisible(false);
-            new Simulator(GET_ID(), registerBanks, pipeline, this.getExtendedState(), startingPC, startingMemories);
+            new Simulator(GET_ID(), registerBanks, pipeline, this.getExtendedState(), startingPC, startingMemories, numSpecialInstructions);
             for(RegisterFileModule bank : registerBanks)
             {
                 if(bank != null) { bank.reset(); }
@@ -229,14 +238,18 @@ public class Simulator extends JFrame
 
         // Pipeline
         pipelineDisplayPanel = new JPanel(new BorderLayout());
-        JPanel pipelineLabelPanel = new JPanel();
+        JPanel pipelineLabelPanel = new JPanel(new GridLayout(2, 1));
+        JPanel pipelineTopPanel = new JPanel();
         pipelineLabel = new JLabel("Pipeline");
         pipelineLabel.setMinimumSize(new Dimension(200, 30));
         pipelineLabel.setMaximumSize(new Dimension(200, 30));
         activePipelineCheckbox = new JCheckBox();
         activePipelineCheckbox.setSelected(true);
-        pipelineLabelPanel.add(pipelineLabel);
-        pipelineLabelPanel.add(activePipelineCheckbox);
+        pipelineTopPanel.add(pipelineLabel);
+        pipelineTopPanel.add(activePipelineCheckbox);
+        pipelineOutputLabel = new JLabel("Line --: ----");
+        pipelineLabelPanel.add(pipelineTopPanel);
+        pipelineLabelPanel.add(pipelineOutputLabel);
         pipelineDisplayText = new JTextArea();
         pipelineDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
         pipelineDisplayText.setEditable(false);

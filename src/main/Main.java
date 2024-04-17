@@ -39,7 +39,6 @@ public class Main
             callStackLengths[i] = (index == 0) ? ADDRESS_SIZE : indexableLengths[i % indexableLengths.length];
             callStackNames[i] = i / (indexableLengths.length + 1) + " " + ((index == 0) ? "R" : (index - 1));
         }
-        // TODO : Ensure external pushes to and pops from reversal stack perform 16 operations in correct order
         int[] reversalStackLengths = new int[internalLengths[7] * indexableLengths.length];  // Will be pushed/popped in groups of 16 for snapshot of indexable register file
         String[] reversalStackNames = new String[reversalStackLengths.length];
         for(int i = 0; i < reversalStackLengths.length; i++)
@@ -59,12 +58,12 @@ public class Main
         registerBanks[INTERNAL_BANK_INDEX].pendings = pendingRegisters[INTERNAL_BANK_INDEX];
         registerBanks[CALL_STACK_INDEX].pendings = pendingRegisters[CALL_STACK_INDEX];
         registerBanks[REVERSAL_STACK_INDEX].pendings = pendingRegisters[REVERSAL_STACK_INDEX];
-        new Simulator(GET_ID(), registerBanks, new Pipeline(registerBanks[INDEXABLE_BANK_INDEX], registerBanks[INTERNAL_BANK_INDEX], registerBanks[CALL_STACK_INDEX], registerBanks[REVERSAL_STACK_INDEX], null, null, pendingRegisters, startingParams[0]), JFrame.MAXIMIZED_BOTH, startingPC, STARTING_MEMORIES);
+        new Simulator(GET_ID(), registerBanks, new Pipeline(registerBanks[INDEXABLE_BANK_INDEX], registerBanks[INTERNAL_BANK_INDEX], registerBanks[CALL_STACK_INDEX], registerBanks[REVERSAL_STACK_INDEX], null, null, pendingRegisters, startingParams[0]), JFrame.MAXIMIZED_BOTH, startingPC, STARTING_MEMORIES, startingParams[3]);
     }
 
     private static int[] FIND_START_PARAMS(String path)
     {
-        int[] ret = new int[] { 32, 0b1000000000, 0b1000000000 };
+        int[] ret = new int[] { 32, 0b1000000000, 0b1000000000, 0 };
 
         File directory = new File(path);
         File[] files = directory.listFiles();
@@ -93,6 +92,13 @@ public class Main
                     {
                         ret[2] = (value & (0b00000000000100000000000000000000 >> i)) >> 10;
                         break;
+                    }
+                }
+                for(int i = 0; i < 3; i++)
+                {
+                    if((value & (0b00000000000000000000010000000000 >> i)) != 0b00000000000000000000000000000000)
+                    {
+                        ret[3] += 1;
                     }
                 }
             }

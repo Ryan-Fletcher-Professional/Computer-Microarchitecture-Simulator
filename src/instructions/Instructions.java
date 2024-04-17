@@ -253,6 +253,7 @@ public class Instructions
     public static final String AUX_FINISHED_MEMORY_ACCESS_STAGE = "don't need to execute in memory access stage";
     public static final String AUX_DECODED = "don't need to decode again";
     public static final String AUX_JSR = "jump to subroutine";
+    public static final String AUX_PC_AT_FETCH = "pc when this instruction was fetched";
     public static final String AUX_CURRENT_PC = "return address for JSR";
     public static final String AUX_SOURCE_ = "source value ";
     public static final String AUX_DEST_ = "destination address ";  // Do not use. Use AUX_DEST(int idx) instead.
