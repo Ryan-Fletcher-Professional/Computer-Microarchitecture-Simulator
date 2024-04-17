@@ -51,7 +51,7 @@ public class Simulator extends JFrame
     private DefaultListModel<MemoryModule> unifiedMemoryModel, instructionCachesModel, dataCachesModel;
     private MemoryModule currentlySelectedMemory;
     private JPanel currentlyVisibleControls, currentlyInvisibleControls, stackPipelinePanel,
-                   callStackDisplayPanel, reversalStackDisplayPanel, pipelineDisplayPanel;
+                   callStackDisplayPanel, reversalStackDisplayPanel, pipelineDisplayPanel, pipelineLabelPanel;
     private JCheckBox activePipelineCheckbox;
 
     public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int extendedState, int startingPC, int[][][] startingMemories, int numSpecialInstructions)
@@ -93,6 +93,7 @@ public class Simulator extends JFrame
             catch(NumberFormatException _ignored_) {}
             for(int i = 0; i < numTicks; i++)
             {
+                output = null;
                 boolean aboutToHalt = false;
                 boolean doneOnce = false;
                 while((output == null) || !(AUX_EQUALS(output.getAuxBits(AUX_FETCHED), AUX_TRUE)))
@@ -238,7 +239,7 @@ public class Simulator extends JFrame
 
         // Pipeline
         pipelineDisplayPanel = new JPanel(new BorderLayout());
-        JPanel pipelineLabelPanel = new JPanel(new GridLayout(2, 1));
+        pipelineLabelPanel = new JPanel(new GridLayout(2, 1));
         JPanel pipelineTopPanel = new JPanel();
         pipelineLabel = new JLabel("Pipeline");
         pipelineLabel.setMinimumSize(new Dimension(200, 30));
@@ -574,7 +575,7 @@ public class Simulator extends JFrame
         paneSize.width = Math.min(stackPipelinePanel.getWidth(), 8 * (valueBinRadio.isSelected() ? 38 : (valueHexRadio.isSelected() ? 14 : 20)));
         callDisplayPane.setPreferredSize(new Dimension(paneSize.width, paneSize.height - dividerSize - callStackLabel.getHeight()));
         reversalDisplayPane.setPreferredSize(new Dimension(paneSize.width, paneSize.height - dividerSize - reversalStackLabel.getHeight()));
-        pipelineDisplayPane.setPreferredSize(new Dimension(Math.max(paneSize.width, 8 * 38) * (int)((pipeline.getWordSize() == 64) ? 1.5 : 1), paneSize.height - (2 * dividerSize) - pipelineLabel.getHeight()));
+        pipelineDisplayPane.setPreferredSize(new Dimension(Math.max(paneSize.width, 8 * 38) * (int)((pipeline.getWordSize() == 64) ? 1.5 : 1), paneSize.height - (2 * dividerSize) - pipelineLabelPanel.getHeight()));
 
         SwingUtilities.invokeLater(() -> {
             for(int i = 0; i < bars.size(); i++)
