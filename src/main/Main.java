@@ -30,14 +30,13 @@ public class Main
         }
         int[] internalLengths = new int[] { 1, 25, 25, 16, 64, 64, startingParams[1], startingParams[2] };
         String[] internalNames = INTERNAL_REGISTER_NAMES;
-        // TODO : Ensure external pushes to and pops from call stack perform 17 operations in correct order
-        int[] callStackLengths = new int[internalLengths[6] * (indexableLengths.length + 1)];  // Will be pushed/popped in groups of 17; 1 for return pointer and 16 for snapshot of indexable register file
+        int[] callStackLengths = new int[internalLengths[6] * indexableLengths.length];  // Will be pushed/popped in groups of 17; 1 for return pointer and 16 for snapshot of indexable register file
         String[] callStackNames = new String[callStackLengths.length];
         for(int i = 0; i < callStackLengths.length; i++)
         {
-            int index = i % (indexableLengths.length + 1);
-            callStackLengths[i] = (index == 0) ? ADDRESS_SIZE : indexableLengths[i % indexableLengths.length];
-            callStackNames[i] = i / (indexableLengths.length + 1) + " " + ((index == 0) ? "R" : (index - 1));
+            int index = i % indexableLengths.length;
+            callStackLengths[i] = (index == 0) ? ADDRESS_SIZE : indexableLengths[index];
+            callStackNames[i] = i / indexableLengths.length + " " + ((index == 0) ? "R" : index);
         }
         int[] reversalStackLengths = new int[internalLengths[7] * indexableLengths.length];  // Will be pushed/popped in groups of 16 for snapshot of indexable register file
         String[] reversalStackNames = new String[reversalStackLengths.length];
@@ -50,7 +49,7 @@ public class Main
         registerBanks[INDEXABLE_BANK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, indexableLengths, indexableNames);
         registerBanks[INTERNAL_BANK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, internalLengths, internalNames);
         int startingPC = 8;
-        registerBanks[INTERNAL_BANK_INDEX].store(List.of(INTERNAL_REGISTER_NAMES).indexOf(PC), startingPC);
+        registerBanks[INTERNAL_BANK_INDEX].store(PC_INDEX, startingPC);
         registerBanks[CALL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK, callStackLengths, callStackNames);
         registerBanks[REVERSAL_STACK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.STACK_CIRCULAR, reversalStackLengths, reversalStackNames);
         int[][] pendingRegisters = NEW_PENDING_REGISTERS(registerBanks);

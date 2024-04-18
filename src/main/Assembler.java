@@ -468,6 +468,8 @@ public class Assembler
             case HEADER.STORE -> word = parseStore(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
             case HEADER.BRANCH_IF_NEGATIVE -> word = parseBranchIfNegative(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.CALL -> word = parseCall(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.RETURN -> {}  // RETURN has no args
 
             case HEADER.INT_ADD -> word = parseIntAdd(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.INT_SUBTRACT -> word = parseIntSubtract(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
@@ -593,11 +595,61 @@ public class Assembler
         }
         else
         {
-            long flag = (!tokens[1].startsWith(REGISTER_PREFIX + "")) ? 1L : 0L;
+            long flag = !tokens[1].startsWith(REGISTER_PREFIX + "") ? 1L : 0L;
 
             long dest = LONG_INSTRUCTION_ADDRESS_FIX(SAFE(PARSE_TOKEN(tokens[1], lineNum, labels), (flag == 1) ? 25 : 4), numStartInstructions);
 
             return word | (flag << (wordSize - 7)) | dest;
+        }
+    }
+
+    private static long parseCall(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {
+        if((tokens.length < 2) || (tokens.length > 3))
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <dest adrs>{, <sign><return shift>}"); }
+
+        boolean defaulted = false;
+        if(tokens.length == 2)
+        {
+            tokens = new String[] { tokens[0], tokens[1] + ",", "+1" };
+            defaulted = true;
+        }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <dest reg> is not a register"); }
+            if(!((tokens[2].charAt(0) == '+') || (tokens[2].charAt(0) == '-')))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <sign> is not a + or -"); }
+            if(!(defaulted || tokens[2].substring(1).startsWith(REGISTER_PREFIX + "")))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <return shift> is not a register"); }
+
+            long flag_b = !tokens[2].substring(1).startsWith(REGISTER_PREFIX + "") ? 0L : 1L;
+            long flag_c = tokens[2].charAt(0) == '+' ? 0L : 1L;
+
+            long dest = SHORT_INSTRUCTION_ADDRESS_FIX(SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4), numStartInstructions);
+            long shift = SAFE(PARSE_TOKEN(tokens[2].substring(1), lineNum, labels), 4);
+
+            return word | (flag_b << (wordSize - 7)) | (flag_c << (wordSize - 8)) | (dest << 4) | shift;
+        }
+        else
+        {
+            if(!((tokens[2].charAt(0) == '+') || (tokens[2].charAt(0) == '-')))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <sign> is not a + or -"); }
+
+            long flag_a = !tokens[1].startsWith(REGISTER_PREFIX + "") ? 1L : 0L;
+            long flag_b = !tokens[2].substring(1).startsWith(REGISTER_PREFIX + "") ? 0L : 1L;
+            long flag_c = tokens[2].charAt(0) == '+' ? 0L : 1L;
+
+            long dest = LONG_INSTRUCTION_ADDRESS_FIX(SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), (flag_a == 0) ? 4 : 25), numStartInstructions);
+//            System.out.println(dest);
+            long shift = SAFE(PARSE_TOKEN(tokens[2].substring(1), lineNum, labels) * 2, (flag_b == 0) ? 25 : 4);
+            return word | (flag_a << (wordSize - 7)) | (flag_b << (wordSize - 8)) | (flag_c << (wordSize - 9)) | (dest << ((flag_b == 0) ? 24 : 4)) | shift;
         }
     }
 

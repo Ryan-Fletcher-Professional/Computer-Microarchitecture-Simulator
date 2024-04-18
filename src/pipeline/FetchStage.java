@@ -56,7 +56,7 @@ public class FetchStage extends PipelineStage
         if(heldInstruction.isFinished() && !nextStatus)
         {
             heldInstruction = new Instruction(heldInstruction.getAuxBits(AUX_RESULT));
-            heldInstruction.addAuxBits(AUX_PC_AT_FETCH, new Term(internalRegisters.load(List.of(INTERNAL_REGISTER_NAMES).indexOf(PC)), false, 32));
+            heldInstruction.addAuxBits(AUX_PC_AT_FETCH, new Term(internalRegisters.load(PC_INDEX), false, 32));
             Instruction ret = passUnblocked();
             heldInstruction = null;
             return ret;

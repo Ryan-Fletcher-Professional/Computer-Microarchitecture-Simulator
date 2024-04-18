@@ -350,9 +350,9 @@ public class Instruction
                 case HEADER.LOAD -> executeLoad((MemoryAccessStage)invoker);
                 case HEADER.STORE -> executeStore((MemoryAccessStage)invoker);
 
-                case HEADER.BRANCH_IF_NEGATIVE ->
-                {
-                }  // Nothing to execute; logic in getNegativeConditionChecks()
+                case HEADER.BRANCH_IF_NEGATIVE -> {}  // Nothing to execute; logic in getNegativeConditionChecks()
+                case HEADER.CALL -> {}  // Nothing to execute; decentralized logic
+                case HEADER.RETURN -> {}  // Nothing to execute; decentralized logic
 
                 case HEADER.INT_ADD -> executeIntAdd((ExecuteStage)invoker);
                 case HEADER.INT_SUBTRACT -> executeIntSubtract((ExecuteStage)invoker);

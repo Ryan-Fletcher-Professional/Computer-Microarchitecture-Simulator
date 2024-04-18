@@ -46,6 +46,8 @@ public class Instructions
         STORE,
 
         BRANCH_IF_NEGATIVE,
+        CALL,
+        RETURN,
 
         INT_ADD,
         INT_SUBTRACT,
@@ -73,6 +75,8 @@ public class Instructions
         put(OPCODE.STORE, "010");
 
         put(OPCODE.BRANCH_IF_NEGATIVE, "010");
+        put(OPCODE.CALL, "110");
+        put(OPCODE.RETURN, "111");
 
         put(OPCODE.INT_ADD, "000");
         put(OPCODE.INT_SUBTRACT, "001");
@@ -109,6 +113,8 @@ public class Instructions
         STORE,
 
         BRANCH_IF_NEGATIVE,
+        CALL,
+        RETURN,
 
         INT_ADD,
         INT_SUBTRACT,
@@ -137,6 +143,8 @@ public class Instructions
         put(HEADER.STORE,                   MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.STORE                ));
 
         put(HEADER.BRANCH_IF_NEGATIVE,      MAKE_HEADER_STRING(TYPECODE.FLOW_CONTROL,       OPCODE.BRANCH_IF_NEGATIVE   ));
+        put(HEADER.CALL,                    MAKE_HEADER_STRING(TYPECODE.FLOW_CONTROL,       OPCODE.CALL                 ));
+        put(HEADER.RETURN,                  MAKE_HEADER_STRING(TYPECODE.FLOW_CONTROL,       OPCODE.RETURN               ));
 
         put(HEADER.INT_ADD,                 MAKE_HEADER_STRING( TYPECODE.INT_ARITHMETIC,    OPCODE.INT_ADD              ));
         put(HEADER.INT_SUBTRACT,            MAKE_HEADER_STRING( TYPECODE.INT_ARITHMETIC,    OPCODE.INT_SUBTRACT         ));
@@ -170,6 +178,8 @@ public class Instructions
         put(HEADER.STORE,                   "STR");
 
         put(HEADER.BRANCH_IF_NEGATIVE,      "BRN");
+        put(HEADER.CALL,                    "CALL");
+        put(HEADER.RETURN,                  "RETURN");
 
         put(HEADER.INT_ADD,                 "ADD");
         put(HEADER.INT_SUBTRACT,            "SUB");
@@ -223,7 +233,9 @@ public class Instructions
     }));
     public static final List<HEADER> BRANCH_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {  // TODO : Add new appropriate instructions here (executed in ExecuteStage using condition checks)
-        HEADER.BRANCH_IF_NEGATIVE
+        HEADER.BRANCH_IF_NEGATIVE,
+        HEADER.CALL,
+        HEADER.RETURN
         // Should include all Jump instructions as well (they should be treated as unconditional branches)
     }));
     public static final List<HEADER> QUASH_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]

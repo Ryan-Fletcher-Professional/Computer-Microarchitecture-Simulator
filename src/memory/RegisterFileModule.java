@@ -108,6 +108,7 @@ public class RegisterFileModule
             if(currentRegisterIndex == -1)
                 { throw new RuntimeException("STACK UNDERFLOW: Register file " + id); }
             long value = memory[currentRegisterIndex];
+            memory[currentRegisterIndex] = 0;
             currentRegisterIndex -= 1;
             return value;
         }
@@ -115,6 +116,7 @@ public class RegisterFileModule
         {
             if(index != -1) { WARN(logger, "You are attempting to address a stack register file"); }
             long value = memory[currentRegisterIndex];
+            memory[currentRegisterIndex] = 0;
             currentRegisterIndex = (currentRegisterIndex + getNumRegisters() - 1) % getNumRegisters();
             return value;
         }
@@ -160,7 +162,7 @@ public class RegisterFileModule
             String pendingIndicator = PENDING_INDICATOR.repeat(pendings[i]);
             currentName.append(" ".repeat((valueLengths[i] - names[i].length()) / 2))
                        .append(pendingIndicator).append(names[i]).append(pendingIndicator)
-                       .append(" ".repeat(valueLengths[i] - currentName.length()));
+                       .append(" ".repeat(Math.max(0, valueLengths[i] - currentName.length())));
             ret.append(currentName)
                .append("  |  ");
         }

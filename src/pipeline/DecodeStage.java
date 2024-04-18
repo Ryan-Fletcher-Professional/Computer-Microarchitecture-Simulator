@@ -4,6 +4,8 @@ import instructions.Instruction;
 import instructions.Term;
 import memory.RegisterFileModule;
 
+import java.util.List;
+
 import static instructions.Instructions.*;
 import static instructions.Instructions.AUX_SD_TYPE_REGISTER;
 import static main.GLOBALS.*;
@@ -43,6 +45,8 @@ public class DecodeStage extends PipelineStage
                 case HEADER.STORE -> decodeStore();
 
                 case HEADER.BRANCH_IF_NEGATIVE -> decodeBranchIfNegative();
+                case HEADER.CALL -> decodeCall();
+                case HEADER.RETURN -> decodeReturn();
 
                 case HEADER.INT_ADD -> decodeIntAdd();
                 case HEADER.INT_SUBTRACT -> decodeIntSubtract();
@@ -267,6 +271,39 @@ public class DecodeStage extends PipelineStage
 
         heldInstruction.addSourceManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
 
+        heldInstruction.addDestManual(0, new Term(PC_INDEX), AUX_REG_BANK_INTERNALS);
+    }
+
+    private void decodeCall()
+    {
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            heldInstruction.addFlags(2);
+
+
+            int start = heldInstruction.wordLength() - 8;
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+            heldInstruction.addSource(1, start, start + 4, (heldInstruction.getAuxBits(FLAG(1)).toInt() == 0) ? AUX_SD_TYPE_IMMEDIATE : AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+
+            heldInstruction.addDestManual(0, new Term(PC_INDEX), AUX_REG_BANK_INTERNALS);
+        }
+        else  // LONG instruction word
+        {
+            heldInstruction.addFlags(3);
+
+
+            int start = heldInstruction.wordLength() - 24 - ((heldInstruction.getAuxBits(FLAG(0)).toInt() == 0) ? 4 : 25);
+            heldInstruction.addSource(0, start, heldInstruction.wordLength() - 24, (heldInstruction.getAuxBits(FLAG(0)).toInt() == 0) ? AUX_SD_TYPE_REGISTER : AUX_SD_TYPE_IMMEDIATE, AUX_REG_BANK_INDEXABLES);
+            start = heldInstruction.wordLength() - ((heldInstruction.getAuxBits(FLAG(1)).toInt() == 0) ? 24 : 4);
+            heldInstruction.addSource(1, start, heldInstruction.wordLength(), (heldInstruction.getAuxBits(FLAG(1)).toInt() == 0) ? AUX_SD_TYPE_IMMEDIATE : AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+
+            heldInstruction.addDestManual(0, new Term(PC_INDEX), AUX_REG_BANK_INTERNALS);
+        }
+    }
+
+    private void decodeReturn()
+    {
         heldInstruction.addDestManual(0, new Term(PC_INDEX), AUX_REG_BANK_INTERNALS);
     }
 

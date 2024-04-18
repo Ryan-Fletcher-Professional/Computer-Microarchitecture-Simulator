@@ -1,6 +1,7 @@
 SET WORD SIZE 64
 SET STACK SIZE 1000000000
 SET BUFFER SIZE 1000000000
+
 COPY #1, R2         @ Next load address
 COPY #0, R3         @ Current index
 LOAD #0, R4         @ Size of list

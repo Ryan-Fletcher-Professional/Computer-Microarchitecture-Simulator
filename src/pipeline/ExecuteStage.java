@@ -47,10 +47,13 @@ public class ExecuteStage extends PipelineStage
         {
             heldInstruction.execute(this);
         }
-        if(AUX_EQUALS(heldInstruction.getAuxBits(AUX_JSR), AUX_TRUE))
+        if(heldInstruction.getHeader().equals(HEADER.CALL))
         {
-            int address = computeCurrentPC();
-            heldInstruction.addAuxBits(AUX_CURRENT_PC, address);
+            int sign = 1;
+            if(((heldInstruction.wordLength() == WORD_SIZE_SHORT) && AUX_EQUALS(heldInstruction.getAuxBits(FLAG(2)), 1)) ||
+                ((heldInstruction.wordLength() == WORD_SIZE_LONG) && AUX_EQUALS(heldInstruction.getAuxBits(FLAG(3)), 1)))
+                { sign = -1; }
+            heldInstruction.addAuxBits(AUX_SOURCE(1), new Term(heldInstruction.getAuxBits(AUX_PC_AT_FETCH).toInt() + (sign * heldInstruction.getAuxBits(AUX_SOURCE(1)).toInt())));
         }
         if(BRANCH_INSTRUCTIONS.contains(heldInstruction.getHeader()))
         {
@@ -72,13 +75,14 @@ public class ExecuteStage extends PipelineStage
             if((internalRegisters.load(List.of(internalRegisters.names).indexOf(PRED_1)) & checks[1]) != 0) { branch = false; }
             if((internalRegisters.load(List.of(internalRegisters.names).indexOf(PRED_1)) & checks[2]) != 0) { branch = false; }
 
-            Term destination = heldInstruction.getAuxBits(AUX_SOURCE(0));  // All branching instructions have main dest as first source
-            // TODO : Implement and use computeTargetAddress() when appropriate
-            //  DecodeStage will add aux bits corresponding to branch destinations in AUX_RESULT (???)
+            Term destinationValue = heldInstruction.getAuxBits(AUX_SOURCE(0));
+            // Some branching instructions have main dest adrs as first source
+            // For others, this will be null until writeback
 
             if(branch)
             {
-                heldInstruction.addAuxBits(AUX_RESULT(0), destination);
+                //System.out.println(heldInstruction.getAuxBits(AUX_SOURCE(0)).toLong());
+                heldInstruction.addAuxBits(AUX_RESULT(0), destinationValue);
             }
         }
         Instruction ret = pass(nextIsBlocked && !DISPOSABLE_INSTRUCTIONS.contains(heldInstruction.getHeader()));

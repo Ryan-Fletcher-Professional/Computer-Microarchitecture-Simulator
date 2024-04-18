@@ -186,7 +186,7 @@ public class Simulator extends JFrame
             {
                 if(bank != null) { bank.reset(); }
             }
-            registerBanks[INTERNAL_BANK_INDEX].store(List.of(INTERNAL_REGISTER_NAMES).indexOf(PC), startingPC);
+            registerBanks[INTERNAL_BANK_INDEX].store(PC_INDEX, startingPC);
             pipeline.reset();
         });
         Component[] toolBarComponents = new Component[] { countLabel, tickButton, tickField, stackPipelineToggle,

@@ -34,7 +34,7 @@ public class MemoryWritebackStage extends PipelineStage
     {
         // Return whether will branch this cycle
         boolean branching = false;
-        if(AUX_EQUALS(heldInstruction.getAuxBits(AUX_JSR), AUX_TRUE) ||
+        if(heldInstruction.getHeader().equals(HEADER.RETURN) ||
             ((heldInstruction.getResult(0) != null) && BRANCH_INSTRUCTIONS.contains(heldInstruction.getHeader())))
         {
             branching = true;
@@ -85,10 +85,39 @@ public class MemoryWritebackStage extends PipelineStage
                 pendingRegisters[INDEXABLE_BANK_INDEX][r]--;
             }
         }
-        else if(AUX_EQUALS(heldInstruction.getAuxBits(AUX_JSR), AUX_TRUE))
+        else if(heldInstruction.getHeader().equals(HEADER.CALL))
         {
-            // TODO : Handle jump to subroutine
-            branched = true;
+            // ExecuteStage switches this from return shift to actual return address
+            callStack.store(heldInstruction.getAuxBits(AUX_SOURCE(1)).toLong());
+            for(int r = 1; r < indexableRegisters.getNumRegisters(); r++)
+            {
+                callStack.store(indexableRegisters.load(r));
+            }
+            internalRegisters.store(PC_INDEX, heldInstruction.getResult(0).toLong());
+            pendingRegisters[INTERNAL_BANK_INDEX][PC_INDEX]--;
+            Instruction ret = heldInstruction;
+            heldInstruction = previousStage.quashFromBranch();
+            for(int[] bank : pendingRegisters)
+            {
+                Arrays.fill(bank, 0);
+            }
+            return ret;
+        }
+        else if(heldInstruction.getHeader().equals(HEADER.RETURN))
+        {
+            for(int r = 0; r < indexableRegisters.getNumRegisters() - 1; r++)
+            {
+                indexableRegisters.store(indexableRegisters.getNumRegisters() - 1 - r, callStack.load());
+            }
+            internalRegisters.store(PC_INDEX, callStack.load());
+            pendingRegisters[INTERNAL_BANK_INDEX][PC_INDEX]--;
+            Instruction ret = heldInstruction;
+            heldInstruction = previousStage.quashFromBranch();
+            for(int[] bank : pendingRegisters)
+            {
+                Arrays.fill(bank, 0);
+            }
+            return ret;
         }
         else if(heldInstruction.getResult(0) != null)
         {
