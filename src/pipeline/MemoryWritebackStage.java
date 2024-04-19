@@ -58,25 +58,24 @@ public class MemoryWritebackStage extends PipelineStage
             // Undo back to desired frame
             for(int r = 0; r < indexableRegisters.getNumRegisters(); r++)
             {
-                indexableRegisters.store(indexableRegisters.getNumRegisters() - 1 - r, reversalStack.peek(((skip + quantity) * indexableRegisters.getNumRegisters()) + r));
+                indexableRegisters.store(indexableRegisters.getNumRegisters() - 1 - r, reversalStack.peek(((skip + quantity) * (indexableRegisters.getNumRegisters() + 1)) + r));
             }
 
             // Redo skipped undos (compare each frame to previous one to see actual changes)
             for(int i = skip - 1; i >= 0; i--)
             {
+                int mask = (int)reversalStack.peek((i * (indexableRegisters.getNumRegisters() + 1)) + indexableRegisters.getNumRegisters());
                 for(int r = 0; r < indexableRegisters.getNumRegisters(); r++)
                 {
-                    long newValue = reversalStack.peek((i * indexableRegisters.getNumRegisters()) + r);
-                    long oldValue = reversalStack.peek(((i + 1) * indexableRegisters.getNumRegisters()) + r);
-                    if(newValue != oldValue)
+                    if((mask & (1 << r)) != 0)
                     {
-                        indexableRegisters.store(indexableRegisters.getNumRegisters() - 1 - r, newValue);
+                        indexableRegisters.store(indexableRegisters.getNumRegisters() - 1 - r, reversalStack.peek((i * (indexableRegisters.getNumRegisters() + 1)) + r));
                     }
                 }
             }
 
             // Clear out all looked-at frames (including skipped ones)
-            for(int i = 0; i < (skip + quantity) * indexableRegisters.getNumRegisters(); i++)
+            for(int i = 0; i < (skip + quantity) * (indexableRegisters.getNumRegisters() + 1); i++)
             {
                 reversalStack.load();
             }
@@ -130,7 +129,7 @@ public class MemoryWritebackStage extends PipelineStage
                 branched = true;
             }
 
-            boolean wroteToIndexable = false;
+            int wroteToIndexable = 0;
 
             for(int i = 0; heldInstruction.getAuxBits(AUX_RESULT(i)) != null; i++)
             {
@@ -141,7 +140,7 @@ public class MemoryWritebackStage extends PipelineStage
                 {
                     indexableRegisters.store(idx, heldInstruction.getResult(i).toInt());
                     pendingRegisters[INDEXABLE_BANK_INDEX][idx]--;
-                    wroteToIndexable = true;
+                    wroteToIndexable |= (1 << (indexableRegisters.getNumRegisters() - 1)) >>> idx;
                 }
                 else if(dest.startsWith(RegisterFileModule.INTERNAL_PREFIX))
                 {
@@ -160,8 +159,9 @@ public class MemoryWritebackStage extends PipelineStage
                 }
             }
 
-            if(wroteToIndexable)
+            if(wroteToIndexable != 0)
             {
+                reversalStack.store(wroteToIndexable);
                 for(int r = 0; r < indexableRegisters.getNumRegisters(); r++)
                 {
                     reversalStack.store(indexableRegisters.load(r));

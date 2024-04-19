@@ -38,13 +38,13 @@ public class Main
             callStackLengths[i] = (index == 0) ? ADDRESS_SIZE : indexableLengths[index];
             callStackNames[i] = i / indexableLengths.length + " " + ((index == 0) ? "R" : index);
         }
-        int[] reversalStackLengths = new int[internalLengths[7] * indexableLengths.length];  // Will be pushed/popped in groups of 16 for snapshot of indexable register file
+        int[] reversalStackLengths = new int[internalLengths[7] * (indexableLengths.length + 1)];  // Will be pushed/popped in groups of 16 for snapshot of indexable register file
         String[] reversalStackNames = new String[reversalStackLengths.length];
         for(int i = 0; i < reversalStackLengths.length; i++)
         {
-            int index = i % indexableLengths.length;
-            reversalStackLengths[i] = indexableLengths[index];
-            reversalStackNames[i] = i / indexableLengths.length + " " + index;
+            int index = i % (indexableLengths.length + 1);
+            reversalStackLengths[i] = (index == 0) ? indexableLengths.length : indexableLengths[index - 1];
+            reversalStackNames[i] = i / (indexableLengths.length + 1) + " " + ((index == 0) ? "M" : (index - 1));
         }
         registerBanks[INDEXABLE_BANK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, indexableLengths, indexableNames);
         registerBanks[INTERNAL_BANK_INDEX] = new RegisterFileModule(GET_ID(), REGISTER_FILE_MODE.ADDRESSED, internalLengths, internalNames);
