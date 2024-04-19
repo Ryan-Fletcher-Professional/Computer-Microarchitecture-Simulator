@@ -4,9 +4,6 @@ import instructions.Instruction;
 import instructions.Term;
 import memory.MemoryModule;
 import memory.RegisterFileModule;
-import static main.Assembler.*;
-import java.util.Arrays;
-import java.util.List;
 
 import static instructions.Instructions.*;
 import static instructions.Instructions.AUX_SD_TYPE_REGISTER;
@@ -61,7 +58,10 @@ public class DecodeStage extends PipelineStage
                 case HEADER.RETURN -> decodeReturn();
 
                 case HEADER.INT_ADD -> decodeIntAdd();
-                case HEADER.INT_SUBTRACT -> decodeIntSubtract();
+                case HEADER.INT_SUB -> decodeIntSubtract();
+                case HEADER.INT_MUL -> decodeIntMultiply();
+                case HEADER.INT_DIV -> decodeIntDivide();
+                case HEADER.INT_MOD -> decodeIntModulo();
 
                 case HEADER.COMPARE -> decodeCompare();
 
@@ -584,6 +584,192 @@ public class DecodeStage extends PipelineStage
             if(heldInstruction.getAuxBits(FLAG(2)).toInt() == 1)
             {
                 heldInstruction.addDestManual(1, new Term(CC_INDEX), AUX_REG_BANK_INTERNALS);
+            }
+        }
+    }
+
+    private void decodeIntMultiply()
+    {
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            heldInstruction.addFlags(1);
+
+
+            int start = 16;
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 1)
+            {
+                heldInstruction.addDest(1, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            }
+        }
+        else  // LONG word
+        {
+            heldInstruction.addFlags(3);
+
+            int start = (heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) ||
+                (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1)
+                ? 20 : 48;
+
+            if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
+            {
+                heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                start += 4;
+            }
+            else
+            {
+                heldInstruction.addSource(0, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                start += 32;
+            }
+
+            if(heldInstruction.getAuxBits(FLAG(1)).toInt() == 0)
+            {
+                heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                start += 4;
+            }
+            else
+            {
+                heldInstruction.addSource(1, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                start += 32;
+            }
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            if(heldInstruction.getAuxBits(FLAG(2)).toInt() == 1)
+            {
+                heldInstruction.addDest(1, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            }
+        }
+    }
+
+    private void decodeIntDivide()
+    {
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            heldInstruction.addFlags(1);
+
+
+            int start = 16;
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 1)
+            {
+                heldInstruction.addDest(1, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            }
+        }
+        else  // LONG word
+        {
+            heldInstruction.addFlags(3);
+
+            int start = (heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) ||
+                (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1)
+                ? 20 : 48;
+
+            if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
+            {
+                heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                start += 4;
+            }
+            else
+            {
+                heldInstruction.addSource(0, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                start += 32;
+            }
+
+            if(heldInstruction.getAuxBits(FLAG(1)).toInt() == 0)
+            {
+                heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                start += 4;
+            }
+            else
+            {
+                heldInstruction.addSource(1, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                start += 32;
+            }
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            if(heldInstruction.getAuxBits(FLAG(2)).toInt() == 1)
+            {
+                heldInstruction.addDest(1, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            }
+        }
+    }
+
+    private void decodeIntModulo()
+    {
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            heldInstruction.addFlags(1);
+
+
+            int start = 16;
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 1)
+            {
+                heldInstruction.addDest(1, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            }
+        }
+        else  // LONG word
+        {
+            heldInstruction.addFlags(3);
+
+            int start = (heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) ||
+                (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1)
+                ? 20 : 48;
+
+            if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
+            {
+                heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                start += 4;
+            }
+            else
+            {
+                heldInstruction.addSource(0, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                start += 32;
+            }
+
+            if(heldInstruction.getAuxBits(FLAG(1)).toInt() == 0)
+            {
+                heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                start += 4;
+            }
+            else
+            {
+                heldInstruction.addSource(1, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                start += 32;
+            }
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            if(heldInstruction.getAuxBits(FLAG(2)).toInt() == 1)
+            {
+                heldInstruction.addDest(1, start, start + 4, AUX_REG_BANK_INDEXABLES);
             }
         }
     }

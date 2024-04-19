@@ -52,7 +52,10 @@ public class Instructions
         RETURN,
 
         INT_ADD,
-        INT_SUBTRACT,
+        INT_SUB,
+        INT_MUL,
+        INT_DIV,
+        INT_MOD,
 
         COMPARE,
 
@@ -83,7 +86,10 @@ public class Instructions
         put(OPCODE.RETURN, "111");
 
         put(OPCODE.INT_ADD, "000");
-        put(OPCODE.INT_SUBTRACT, "001");
+        put(OPCODE.INT_SUB, "001");
+        put(OPCODE.INT_MUL, "010");
+        put(OPCODE.INT_DIV, "011");
+        put(OPCODE.INT_MOD, "100");
 
         put(OPCODE.COMPARE, "100");
 
@@ -123,7 +129,10 @@ public class Instructions
         RETURN,
 
         INT_ADD,
-        INT_SUBTRACT,
+        INT_SUB,
+        INT_MUL,
+        INT_DIV,
+        INT_MOD,
 
         COMPARE,
 
@@ -150,17 +159,20 @@ public class Instructions
         put(HEADER.STORE,                   MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.STORE                ));
         put(HEADER.STORE_LINE,              MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.STORE_LINE           ));
 
-        put(HEADER.BRANCH_IF_NEGATIVE,      MAKE_HEADER_STRING(TYPECODE.FLOW_CONTROL,       OPCODE.BRANCH_IF_NEGATIVE   ));
-        put(HEADER.CALL,                    MAKE_HEADER_STRING(TYPECODE.FLOW_CONTROL,       OPCODE.CALL                 ));
-        put(HEADER.RETURN,                  MAKE_HEADER_STRING(TYPECODE.FLOW_CONTROL,       OPCODE.RETURN               ));
+        put(HEADER.BRANCH_IF_NEGATIVE,      MAKE_HEADER_STRING( TYPECODE.FLOW_CONTROL,       OPCODE.BRANCH_IF_NEGATIVE  ));
+        put(HEADER.CALL,                    MAKE_HEADER_STRING( TYPECODE.FLOW_CONTROL,       OPCODE.CALL                ));
+        put(HEADER.RETURN,                  MAKE_HEADER_STRING( TYPECODE.FLOW_CONTROL,       OPCODE.RETURN              ));
 
         put(HEADER.INT_ADD,                 MAKE_HEADER_STRING( TYPECODE.INT_ARITHMETIC,    OPCODE.INT_ADD              ));
-        put(HEADER.INT_SUBTRACT,            MAKE_HEADER_STRING( TYPECODE.INT_ARITHMETIC,    OPCODE.INT_SUBTRACT         ));
+        put(HEADER.INT_SUB,                 MAKE_HEADER_STRING( TYPECODE.INT_ARITHMETIC,    OPCODE.INT_SUB              ));
+        put(HEADER.INT_MUL,                 MAKE_HEADER_STRING( TYPECODE.INT_ARITHMETIC,    OPCODE.INT_MUL              ));
+        put(HEADER.INT_DIV,                 MAKE_HEADER_STRING( TYPECODE.INT_ARITHMETIC,    OPCODE.INT_DIV              ));
+        put(HEADER.INT_MOD,                 MAKE_HEADER_STRING( TYPECODE.INT_ARITHMETIC,    OPCODE.INT_MOD              ));
 
         put(HEADER.COMPARE,                 MAKE_HEADER_STRING( TYPECODE.INT_LOGIC,         OPCODE.COMPARE              ));
 
-        put(HEADER.COPY,                    MAKE_HEADER_STRING(TYPECODE.INT_CONTROL,        OPCODE.COPY                 ));
-        put(HEADER.SWAP,                    MAKE_HEADER_STRING(TYPECODE.INT_CONTROL,        OPCODE.SWAP                 ));
+        put(HEADER.COPY,                    MAKE_HEADER_STRING( TYPECODE.INT_CONTROL,        OPCODE.COPY                ));
+        put(HEADER.SWAP,                    MAKE_HEADER_STRING( TYPECODE.INT_CONTROL,        OPCODE.SWAP                ));
 
         // FP here if implement
 
@@ -192,7 +204,10 @@ public class Instructions
         put(HEADER.RETURN,                  "RETURN");
 
         put(HEADER.INT_ADD,                 "ADD");
-        put(HEADER.INT_SUBTRACT,            "SUB");
+        put(HEADER.INT_SUB,                 "SUB");
+        put(HEADER.INT_MUL,                 "MUL");
+        put(HEADER.INT_DIV,                 "DIV");
+        put(HEADER.INT_MOD,                 "MOD");
 
         put(HEADER.COMPARE,                 "CMP");
 
@@ -237,7 +252,10 @@ public class Instructions
     public static final List<HEADER> ALU_EXECUTE_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {  // TODO : Add new appropriate instructions here (executed in ExecuteStage)
         HEADER.INT_ADD,
-        HEADER.INT_SUBTRACT,
+        HEADER.INT_SUB,
+        HEADER.INT_MUL,
+        HEADER.INT_DIV,
+        HEADER.INT_MOD,
         HEADER.COMPARE,
         HEADER.COPY,
         HEADER.SWAP,

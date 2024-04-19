@@ -481,7 +481,10 @@ public class Assembler
             case HEADER.RETURN -> {}  // RETURN has no args
 
             case HEADER.INT_ADD -> word = parseIntAdd(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
-            case HEADER.INT_SUBTRACT -> word = parseIntSubtract(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.INT_SUB -> word = parseIntSubtract(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.INT_MUL -> word = parseIntMultiply(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.INT_DIV -> word = parseIntDivide(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.INT_MOD -> word = parseIntModulo(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
             case HEADER.COMPARE -> word = parseCompare(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
@@ -740,9 +743,9 @@ public class Assembler
 
     private static long parseIntAdd(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
     {
-        if((tokens.length != 3) && (tokens.length != 5))
+        if((tokens.length < 3) || (tokens.length > 5))
         { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
-                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <operand 1>, <operand 2>{, <dest reg>, <set carry>}"); }
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <operand 1>, <operand 2>{, <dest reg>{, <set carry>}}"); }
         for(int i = 1; i < tokens.length - 1; i++)
         {
             if(!tokens[i].endsWith(","))
@@ -752,11 +755,14 @@ public class Assembler
 
         long flag_a = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[1].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
         long flag_b = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[2].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
-        long flag_c = (tokens.length == 3) ? 0L : (!tokens[4].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+        long flag_c = (tokens.length < 5) ? 0L : (!tokens[4].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
 
         if(tokens.length == 3)
             { tokens = new String[] { tokens[0], tokens[1], tokens[2] + ",",
                                       ((flag_a == 0) ? tokens[1] : (tokens[2] + ",")),
+                                      "0" }; }
+        if(tokens.length == 4)
+        { tokens = new String[] { tokens[0], tokens[1], tokens[2], tokens[3] + ",",
                                       "0" }; }
 
         if(wordSize == WORD_SIZE_SHORT)
@@ -801,9 +807,9 @@ public class Assembler
     private static long parseIntSubtract(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
     {
         // Should be the same as parseIntAdd() except the format reminders
-        if((tokens.length != 3) && (tokens.length != 5))
+        if((tokens.length < 3) || (tokens.length > 5))
         { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
-                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <operand 1>, <operand 2>{, <dest reg>, <compare>}"); }
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <operand 1>, <operand 2>{, <dest reg>{, <compare>}}"); }
         for(int i = 1; i < tokens.length - 1; i++)
         {
             if(!tokens[i].endsWith(","))
@@ -813,12 +819,15 @@ public class Assembler
 
         long flag_a = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[1].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
         long flag_b = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[2].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
-        long flag_c = (tokens.length == 3) ? 0L : (!tokens[4].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+        long flag_c = (tokens.length < 5) ? 0L : (!tokens[4].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
 
         if(tokens.length == 3)
         { tokens = new String[] { tokens[0], tokens[1], tokens[2] + ",",
             ((flag_a == 0) ? tokens[1] : (tokens[2] + ",")),
             "0" }; }
+        if(tokens.length == 4)
+            { tokens = new String[] { tokens[0], tokens[1], tokens[2], tokens[3] + ",",
+                "0" }; }
 
         if(wordSize == WORD_SIZE_SHORT)
         {
@@ -856,6 +865,207 @@ public class Assembler
 
             return word | (flag_a << (wordSize - 7)) | (flag_b << (wordSize - 8)) | (flag_c << (wordSize - 9))
                 | (operand1 << operand1Shift) | (operand2 << 8) | (dest << 4) | carry;
+        }
+    }
+
+    private static long parseIntMultiply(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {
+        // Should be the same as parseIntAdd() except the format reminders
+        if((tokens.length < 3) || (tokens.length > 5))
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <operand 1>, <operand 2>{, <dest reg>{, <major>}}"); }
+        for(int i = 1; i < tokens.length - 1; i++)
+        {
+            if(!tokens[i].endsWith(","))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": Missing comma separator"); }
+        }
+
+        long flag_a = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[1].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+        long flag_b = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[2].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+        long flag_c = (tokens.length < 5) ? 0L : 1L;
+
+        if(tokens.length == 3)
+            { tokens = new String[] { tokens[0], tokens[1], tokens[2] + ",",
+                ((flag_a == 0) ? tokens[1] : (tokens[2] + ",")),
+                "R0" }; }
+        if(tokens.length == 4)
+            { tokens = new String[] { tokens[0], tokens[1], tokens[2], tokens[3] + ",",
+                "R0" }; }
+
+        if(!tokens[3].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <dest reg> is not a register"); }
+        if(!tokens[4].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <major> is not a register"); }
+        if((flag_c == 1) && tokens[4].equals(tokens[3].substring(0, tokens[3].length() - 1)))
+        { throw new AssemblyError("Invalid argument for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <major> is the same as <dest reg>"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <operand 1> is not a register"); }
+            if(!tokens[2].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <operand 2> is not a register"); }
+
+            long operand1 = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long operand2 = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), 4);
+            long dest = SAFE(PARSE_TOKEN(tokens[3].substring(0, tokens[3].length() - 1), lineNum, labels), 4);
+            long major = SAFE(PARSE_TOKEN(tokens[4], lineNum, labels), 4);
+
+            return word | (flag_c << (wordSize - 7)) | (operand1 << 12) | (operand2 << 8) | (dest << 4) | major;
+        }
+        else
+        {
+            long operand1 = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), (flag_a == 1) ? 32 : 4);
+
+            int operand1Shift = (flag_b == 1L) ? 40 : 12;
+
+            long operand2 = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), (flag_b == 1) ? 32 : 4);
+
+            long dest = SAFE(PARSE_TOKEN(tokens[3].substring(0, tokens[3].length() - 1), lineNum, labels), 4);
+            long major = SAFE(PARSE_TOKEN(tokens[4], lineNum, labels), 4);
+
+            return word | (flag_a << (wordSize - 7)) | (flag_b << (wordSize - 8)) | (flag_c << (wordSize - 9))
+                | (operand1 << operand1Shift) | (operand2 << 8) | (dest << 4) | major;
+        }
+    }
+
+    private static long parseIntDivide(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {
+        // Should be the same as parseIntAdd() except the format reminders
+        if((tokens.length < 3) || (tokens.length > 5))
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <operand 1>, <operand 2>{, <dest reg>{, <remainder>}}"); }
+        for(int i = 1; i < tokens.length - 1; i++)
+        {
+            if(!tokens[i].endsWith(","))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": Missing comma separator"); }
+        }
+
+        long flag_a = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[1].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+        long flag_b = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[2].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+        long flag_c = (tokens.length < 5) ? 0L : 1L;
+
+        if(tokens.length == 3)
+        { tokens = new String[] { tokens[0], tokens[1], tokens[2] + ",",
+            ((flag_a == 0) ? tokens[1] : (tokens[2] + ",")),
+            "R0" }; }
+        if(tokens.length == 4)
+        { tokens = new String[] { tokens[0], tokens[1], tokens[2], tokens[3] + ",",
+            "R0" }; }
+
+        if(!tokens[3].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <dest reg> is not a register"); }
+        if(!tokens[4].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <remainder> is not a register"); }
+        if((flag_c == 1) && tokens[4].equals(tokens[3].substring(0, tokens[3].length() - 1)))
+        { throw new AssemblyError("Invalid argument for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <remainder> is the same as <dest reg>"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <operand 1> is not a register"); }
+            if(!tokens[2].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <operand 2> is not a register"); }
+
+            long operand1 = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long operand2 = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), 4);
+            long dest = SAFE(PARSE_TOKEN(tokens[3].substring(0, tokens[3].length() - 1), lineNum, labels), 4);
+            long remainder = SAFE(PARSE_TOKEN(tokens[4], lineNum, labels), 4);
+
+            return word | (flag_c << (wordSize - 7)) | (operand1 << 12) | (operand2 << 8) | (dest << 4) | remainder;
+        }
+        else
+        {
+            long operand1 = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), (flag_a == 1) ? 32 : 4);
+
+            int operand1Shift = (flag_b == 1L) ? 40 : 12;
+
+            long operand2 = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), (flag_b == 1) ? 32 : 4);
+
+            long dest = SAFE(PARSE_TOKEN(tokens[3].substring(0, tokens[3].length() - 1), lineNum, labels), 4);
+            long remainder = SAFE(PARSE_TOKEN(tokens[4], lineNum, labels), 4);
+
+            return word | (flag_a << (wordSize - 7)) | (flag_b << (wordSize - 8)) | (flag_c << (wordSize - 9))
+                | (operand1 << operand1Shift) | (operand2 << 8) | (dest << 4) | remainder;
+        }
+    }
+
+    private static long parseIntModulo(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {
+        // Should be the same as parseIntAdd() except the format reminders
+        if((tokens.length < 3) || (tokens.length > 5))
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <operand 1>, <operand 2>{, <dest reg>{, <divisor>}}"); }
+        for(int i = 1; i < tokens.length - 1; i++)
+        {
+            if(!tokens[i].endsWith(","))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": Missing comma separator"); }
+        }
+
+        long flag_a = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[1].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+        long flag_b = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[2].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+        long flag_c = (tokens.length < 5) ? 0L : 1L;
+
+        if(tokens.length == 3)
+        { tokens = new String[] { tokens[0], tokens[1], tokens[2] + ",",
+            ((flag_a == 0) ? tokens[1] : (tokens[2] + ",")),
+            "R0" }; }
+        if(tokens.length == 4)
+        { tokens = new String[] { tokens[0], tokens[1], tokens[2], tokens[3] + ",",
+            "R0" }; }
+
+        if(!tokens[3].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <dest reg> is not a register"); }
+        if(!tokens[4].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <divisor> is not a register"); }
+        if((flag_c == 1) && tokens[4].equals(tokens[3].substring(0, tokens[3].length() - 1)))
+        { throw new AssemblyError("Invalid argument for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <divisor> is the same as <dest reg>"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <operand 1> is not a register"); }
+            if(!tokens[2].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <operand 2> is not a register"); }
+
+            long operand1 = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long operand2 = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), 4);
+            long dest = SAFE(PARSE_TOKEN(tokens[3].substring(0, tokens[3].length() - 1), lineNum, labels), 4);
+            long divisor = SAFE(PARSE_TOKEN(tokens[4], lineNum, labels), 4);
+
+            return word | (flag_c << (wordSize - 7)) | (operand1 << 12) | (operand2 << 8) | (dest << 4) | divisor;
+        }
+        else
+        {
+            long operand1 = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), (flag_a == 1) ? 32 : 4);
+
+            int operand1Shift = (flag_b == 1L) ? 40 : 12;
+
+            long operand2 = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), (flag_b == 1) ? 32 : 4);
+
+            long dest = SAFE(PARSE_TOKEN(tokens[3].substring(0, tokens[3].length() - 1), lineNum, labels), 4);
+            long divisor = SAFE(PARSE_TOKEN(tokens[4], lineNum, labels), 4);
+
+            return word | (flag_a << (wordSize - 7)) | (flag_b << (wordSize - 8)) | (flag_c << (wordSize - 9))
+                | (operand1 << operand1Shift) | (operand2 << 8) | (dest << 4) | divisor;
         }
     }
 

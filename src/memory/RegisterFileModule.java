@@ -30,7 +30,7 @@ public class RegisterFileModule
         int len = 0;
         for(int i = 0; i < registerLengths.length; i++)
         {
-            masks[i] = (long)(Math.pow(2, registerLengths[i]) - 1);
+            masks[i] = (registerLengths[i] < Long.SIZE) ? (long)(Math.pow(2, registerLengths[i]) - 1) : -1L;
             len += registerLengths[i];
         }
         totalLength = len;

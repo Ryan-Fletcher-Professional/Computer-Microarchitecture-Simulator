@@ -346,7 +346,7 @@ public class Instruction
             HEADER header = getHeader();
 
             switch(header)
-            {
+            {  // TODO : Add new instructions here
                 case HEADER.LOAD -> executeLoad((MemoryAccessStage)invoker);
                 case HEADER.LOAD_LINE -> executeLoadLine((MemoryAccessStage)invoker);
                 case HEADER.STORE -> executeStore((MemoryAccessStage)invoker);
@@ -357,7 +357,10 @@ public class Instruction
                 case HEADER.RETURN -> {}  // Nothing to execute; decentralized logic
 
                 case HEADER.INT_ADD -> executeIntAdd((ExecuteStage)invoker);
-                case HEADER.INT_SUBTRACT -> executeIntSubtract((ExecuteStage)invoker);
+                case HEADER.INT_SUB -> executeIntSubtract((ExecuteStage)invoker);
+                case HEADER.INT_MUL -> executeIntMultiply((ExecuteStage)invoker);
+                case HEADER.INT_DIV -> executeIntDivide((ExecuteStage)invoker);
+                case HEADER.INT_MOD -> executeIntModulo((ExecuteStage)invoker);
 
                 case HEADER.COMPARE -> executeCompare((ExecuteStage)invoker);
 
@@ -530,6 +533,50 @@ public class Instruction
             addAuxBits(AUX_RESULT(1), new Term(newCC, false));
         }
         addAuxBits(AUX_RESULT(0), new Term(result));
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
+    }
+
+    public void executeIntMultiply(ExecuteStage stage)
+    {
+        long operand1 = getAuxBits(AUX_SOURCE(0)).toLong();
+        long operand2 = getAuxBits(AUX_SOURCE(1)).toLong();
+        long result = operand1 * operand2;
+
+        addAuxBits(AUX_RESULT(0), new Term((int)result));
+        if(AUX_EQUALS(getAuxBits(FLAG((wordLength() == WORD_SIZE_SHORT) ? 0 : 2)), 1))
+        {
+            addAuxBits(AUX_RESULT(1), new Term((int)(result >>> Integer.SIZE), false));
+        }
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
+    }
+
+    public void executeIntDivide(ExecuteStage stage)
+    {
+        int operand1 = getAuxBits(AUX_SOURCE(0)).toInt();
+        int operand2 = getAuxBits(AUX_SOURCE(1)).toInt();
+        int result = operand1 / operand2;
+        int remainder = operand1 % operand2;
+
+        addAuxBits(AUX_RESULT(0), new Term(result));
+        if(AUX_EQUALS(getAuxBits(FLAG((wordLength() == WORD_SIZE_SHORT) ? 0 : 2)), 1))
+        {
+            addAuxBits(AUX_RESULT(1), new Term(remainder, false));
+        }
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
+    }
+
+    public void executeIntModulo(ExecuteStage stage)
+    {
+        int operand1 = getAuxBits(AUX_SOURCE(0)).toInt();
+        int operand2 = getAuxBits(AUX_SOURCE(1)).toInt();
+        int result = operand1 % operand2;
+        int divisor = operand1 / operand2;
+
+        addAuxBits(AUX_RESULT(0), new Term(result));
+        if(AUX_EQUALS(getAuxBits(FLAG((wordLength() == WORD_SIZE_SHORT) ? 0 : 2)), 1))
+        {
+            addAuxBits(AUX_RESULT(1), new Term(divisor, false));
+        }
         addAuxBits(AUX_FINISHED, AUX_TRUE);
     }
 
