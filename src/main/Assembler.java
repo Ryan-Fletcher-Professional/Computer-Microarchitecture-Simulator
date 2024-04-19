@@ -199,6 +199,13 @@ public class Assembler
                 index++;
             }
 
+            List<String> newLines = new ArrayList<>(List.of(lines));
+            while(((newLines.size() - index) % (8 / (wordSize / WORD_SIZE_SHORT))) != 0)
+            {
+                newLines.add("HALT #0");
+            }
+            lines = newLines.toArray(new String[] {});
+
             // Set first line of memory
             words.add((((wordSize == WORD_SIZE_SHORT) ? 0 : 1) << 31) | (stackSize << 21) | (bufferSize << 11) | (set << 8));
             words.add((int)((wordSize == WORD_SIZE_SHORT)
@@ -465,7 +472,9 @@ public class Assembler
         switch(header)  // TODO : Add new instructions here
         {  // TODO : Make sure all instruction addresses are <SHORT/LONG>_INSTRUCTION_ADDRESS_FIX'd if necessary
             case HEADER.LOAD -> word = parseLoad(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.LOAD_LINE -> word = parseLoadLine(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.STORE -> word = parseStore(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.STORE_LINE -> word = parseStoreLine(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
             case HEADER.BRANCH_IF_NEGATIVE -> word = parseBranchIfNegative(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.CALL -> word = parseCall(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
@@ -492,7 +501,7 @@ public class Assembler
      * Argument should be situated all the way to the right and will be returned in that same position.
      * (See parseLoad long word section for good examples.)
      */
-    private static long SAFE(long arg, int length)
+    public static long SAFE(long arg, int length)
     {
         return (arg << (Long.SIZE - length)) >>> (Long.SIZE - length);
     }
@@ -514,6 +523,44 @@ public class Assembler
             if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
             { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
                                       lineNum + ": <src adrs> is not a register"); }
+
+            long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+
+            int srcShift = 4;
+            long dest = SAFE(PARSE_TOKEN(tokens[2], lineNum, labels), 4);
+
+            return word | (src << srcShift) | dest;
+        }
+        else
+        {
+            long flag = (!tokens[1].startsWith(REGISTER_PREFIX + "")) ? 1L : 0L;
+
+            long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), (flag == 1) ? 25 : 4);
+
+            int srcShift = 4;
+            long dest = SAFE(PARSE_TOKEN(tokens[2], lineNum, labels), 4);
+
+            return word | (flag << (wordSize - 7)) | (src << srcShift) | dest;
+        }
+    }
+
+    private static long parseLoadLine(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {
+        if(tokens.length != 3)
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <src adrs>, <dest reg start>"); }
+        if(!tokens[1].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+        if(!tokens[2].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <dest reg start> is not a register"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <src adrs> is not a register"); }
 
             long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
 
@@ -572,6 +619,44 @@ public class Assembler
             long dest = SAFE(PARSE_TOKEN(tokens[2], lineNum, labels), (flag_b == 1) ? 25 : 4);
 
             return word | (flag_a << (wordSize - 7)) | (flag_b << (wordSize - 8)) | (src << srcShift) | dest;
+        }
+    }
+
+    private static long parseStoreLine(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {
+        if(tokens.length != 3)
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <src reg start>, <dest adrs>"); }
+        if(!tokens[1].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+        if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <src reg start> is not a register"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            if(!tokens[2].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <dest adrs> is not a register"); }
+
+            long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+
+            int srcShift = 4;
+            long dest = SAFE(PARSE_TOKEN(tokens[2], lineNum, labels), 4);
+
+            return word | (src << srcShift) | dest;
+        }
+        else
+        {
+            long flag = (!tokens[1].startsWith(REGISTER_PREFIX + "")) ? 1L : 0L;
+
+            long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+
+            int srcShift = 25;
+            long dest = SAFE(PARSE_TOKEN(tokens[2], lineNum, labels), (flag == 1) ? 25 : 4);
+
+            return word | (flag << (wordSize - 7)) | (src << srcShift) | dest;
         }
     }
 

@@ -348,7 +348,9 @@ public class Instruction
             switch(header)
             {
                 case HEADER.LOAD -> executeLoad((MemoryAccessStage)invoker);
+                case HEADER.LOAD_LINE -> executeLoadLine((MemoryAccessStage)invoker);
                 case HEADER.STORE -> executeStore((MemoryAccessStage)invoker);
+                case HEADER.STORE_LINE -> executeStoreLine((MemoryAccessStage)invoker);
 
                 case HEADER.BRANCH_IF_NEGATIVE -> {}  // Nothing to execute; logic in getNegativeConditionChecks()
                 case HEADER.CALL -> {}  // Nothing to execute; decentralized logic
@@ -400,20 +402,57 @@ public class Instruction
         }
     }
 
-    public void executeLoad(MemoryAccessStage stage) {
+    public void executeLoad(MemoryAccessStage stage)
+    {
         String KEY = "load_w_holding";
         MemoryModule cache = stage.nearestDataCache;
 
-        if (activeRequest == null) {
+        if(activeRequest == null)
+        {
             activeRequest = new LinkedList<>(List.of(
                 new MemoryRequest(id, cache.getID(),
                                   MEMORY_TYPE.DATA, REQUEST_TYPE.LOAD,
                                   new Object[]{getAuxBits(AUX_SOURCE(0)).toInt() + ((int)stage.internalRegisters.load(CM_INDEX)), false})));
-            addAuxBits(KEY, new Term(cache.load(activeRequest)[0], true));
+            addAuxBits(KEY, new Term(cache.load(activeRequest)[0], false, stage.nearestDataCache.wordLength.equals(WORD_LENGTH.SHORT) ? WORD_SIZE_SHORT : WORD_SIZE_LONG));
         }
-        if (activeRequest.isEmpty() && !isFinished()) {
+        if(activeRequest.isEmpty() && !isFinished()) {
             //store the loaded value in aux_result
             addAuxBits(AUX_RESULT(0), getAuxBits(KEY));
+            addAuxBits(AUX_FINISHED, AUX_TRUE);
+        }
+    }
+
+    public void executeLoadLine(MemoryAccessStage stage)
+    {
+        String KEY = "load_l_holding_";
+        MemoryModule cache = stage.nearestDataCache;
+
+        if(activeRequest == null)
+        {
+            activeRequest = new LinkedList<>(List.of(
+                new MemoryRequest(id, cache.getID(),
+                                  MEMORY_TYPE.DATA, REQUEST_TYPE.LOAD,
+                                  new Object[]{getAuxBits(AUX_SOURCE(0)).toInt() + ((int)stage.internalRegisters.load(CM_INDEX)), true})));
+            int[] words = cache.load(activeRequest);
+            for(int i = 0; i < words.length; i++)
+            {
+                addAuxBits(KEY + i, new Term(words[i], false, stage.nearestDataCache.wordLength.equals(WORD_LENGTH.SHORT) ? WORD_SIZE_SHORT : WORD_SIZE_LONG));
+            }
+        }
+        if(activeRequest.isEmpty() && !isFinished())
+        {
+            //store the loaded values in aux_results
+            for(int i = 0; i < stage.nearestDataCache.getLineSize(); i++)
+            {
+                if(getAuxBits(AUX_DEST(i)) != null)  // If line goes past end of indexable registers
+                {
+                    addAuxBits(AUX_RESULT(i), getAuxBits(KEY + i));
+                }
+                else
+                {
+                    break;
+                }
+            }
             addAuxBits(AUX_FINISHED, AUX_TRUE);
         }
     }
@@ -422,7 +461,8 @@ public class Instruction
     {
         MemoryModule cache = stage.nearestDataCache;
 
-        if (activeRequest == null) {
+        if(activeRequest == null)
+        {
             activeRequest = new LinkedList<>(List.of(
                 new MemoryRequest(id, cache.getID(),
                                   MEMORY_TYPE.DATA, REQUEST_TYPE.STORE,
@@ -430,10 +470,31 @@ public class Instruction
                                       new int[] { getAuxBits(AUX_SOURCE(0)).toInt() } })));
             cache.store(activeRequest);
         }
-        if(activeRequest.isEmpty() && !isFinished())
+        addAuxBits(AUX_FINISHED, AUX_TRUE);//if(activeRequest.isEmpty() && !isFinished())
+//        {
+//            addAuxBits(AUX_FINISHED, AUX_TRUE);
+//        }
+    }
+
+    public void executeStoreLine(MemoryAccessStage stage)
+    {
+        MemoryModule cache = stage.nearestDataCache;
+
+        if(activeRequest == null)
         {
-            addAuxBits(AUX_FINISHED, AUX_TRUE);
+            int[] words = new int[stage.nearestDataCache.getLineSize()];
+            for(int i = 0; i < words.length; i++)
+            {
+                words[i] = getAuxBits(AUX_SOURCE(i)).toInt();
+            }
+            activeRequest = new LinkedList<>(List.of(
+                new MemoryRequest(id, cache.getID(),
+                                  MEMORY_TYPE.DATA, REQUEST_TYPE.STORE,
+                                  new Object[]{ getAuxBits(AUX_SOURCE(words.length)).toInt() + ((int)stage.internalRegisters.load(CM_INDEX)),
+                                      words })));
+            cache.store(activeRequest);
         }
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
     }
 
     public void executeIntAdd(ExecuteStage stage)

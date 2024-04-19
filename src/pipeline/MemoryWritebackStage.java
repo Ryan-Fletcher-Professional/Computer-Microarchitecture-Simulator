@@ -48,6 +48,8 @@ public class MemoryWritebackStage extends PipelineStage
         HEADER header = heldInstruction.getHeader();
         boolean branched = false;
 
+//        System.out.println(heldInstruction.getHeader() + " " + heldInstruction.getAuxBits(AUX_RESULT(0)));
+
         if(heldInstruction.getHeader().equals(HEADER.UNDO))
         {
             int quantity = heldInstruction.getAuxBits(AUX_SOURCE(0)).toInt();

@@ -2,8 +2,10 @@ package pipeline;
 
 import instructions.Instruction;
 import instructions.Term;
+import memory.MemoryModule;
 import memory.RegisterFileModule;
-
+import static main.Assembler.*;
+import java.util.Arrays;
 import java.util.List;
 
 import static instructions.Instructions.*;
@@ -14,6 +16,7 @@ public class DecodeStage extends PipelineStage
 {
     public static final String READ = "READ";
 
+    private MemoryModule nearestDataCache;
     private final RegisterFileModule indexableRegisters;
     private final RegisterFileModule internalRegisters;
     private final RegisterFileModule callStack;
@@ -34,6 +37,13 @@ public class DecodeStage extends PipelineStage
     }
 
     @Override
+    public void setNearestDataCache(MemoryModule module)
+    {
+        this.nearestDataCache = module;
+        super.setNearestDataCache(module);
+    }
+
+    @Override
     public Instruction execute(boolean nextIsBlocked, boolean activePipeline) throws MRAException
     {
         // Split flags and argument according to header and add as aux bits
@@ -42,7 +52,9 @@ public class DecodeStage extends PipelineStage
             switch(heldInstruction.getHeader())
             {
                 case HEADER.LOAD -> decodeLoad();
+                case HEADER.LOAD_LINE -> decodeLoadLine();
                 case HEADER.STORE -> decodeStore();
+                case HEADER.STORE_LINE -> decodeStoreLine();
 
                 case HEADER.BRANCH_IF_NEGATIVE -> decodeBranchIfNegative();
                 case HEADER.CALL -> decodeCall();
@@ -61,6 +73,8 @@ public class DecodeStage extends PipelineStage
             }
             heldInstruction.addAuxBits(AUX_DECODED, AUX_TRUE);
         }
+
+//        System.out.println(Arrays.toString(heldInstruction.getDestRegs()));
 
         String[] sourceRegs = heldInstruction.getSourceRegs();
         //System.out.println(heldInstruction.getHeader() + " " + Arrays.toString(sourceRegs));
@@ -201,6 +215,62 @@ public class DecodeStage extends PipelineStage
         }
     }
 
+    private void decodeLoadLine()
+    {
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            int start = 24;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            for(int i = 1; i < nearestDataCache.getLineSize(); i++)
+            {
+                int index = heldInstruction.getAuxBits(AUX_DEST(0)).toInt() + i;
+                if(index < indexableRegisters.getNumRegisters())
+                {
+                    heldInstruction.addDestManual(i, new Term(index), AUX_REG_BANK_INDEXABLES);
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+        else  // LONG word
+        {
+            heldInstruction.addFlags(1);
+
+
+            int start = 56;
+            if(AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0))
+            {
+                heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            }
+            else
+            {
+                start -= (25 - 4);
+                heldInstruction.addSource(0, start, start + 25, AUX_SD_TYPE_IMMEDIATE, -1);
+            }
+            start = 60;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            for(int i = 1; i < nearestDataCache.getLineSize(); i++)
+            {
+                int index = heldInstruction.getAuxBits(AUX_DEST(0)).toInt() + i;
+                if(index < indexableRegisters.getNumRegisters())
+                {
+                    heldInstruction.addDestManual(i, new Term(index), AUX_REG_BANK_INDEXABLES);
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+    }
+
     private void decodeStore()
     {
         if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
@@ -251,6 +321,62 @@ public class DecodeStage extends PipelineStage
                         heldInstruction.addSource(1, start, start + 25, AUX_SD_TYPE_IMMEDIATE, -1);
                     }
                 }
+            }
+        }
+    }
+
+    private void decodeStoreLine()
+    {
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            int start = 24;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            for(int i = 1; i < nearestDataCache.getLineSize(); i++)
+            {
+                int index = heldInstruction.getAuxBits(AUX_SOURCE(0)).toInt() + i;
+                if(index < indexableRegisters.getNumRegisters())
+                {
+                    heldInstruction.addSourceManual(i, new Term(index), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                }
+                else
+                {
+                    heldInstruction.addSourceManual(i, new Term(0), AUX_SD_TYPE_IMMEDIATE, -1);
+                }
+            }
+            start += 4;
+
+            heldInstruction.addSource(nearestDataCache.getLineSize(), start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+        }
+        else  // LONG word
+        {
+            heldInstruction.addFlags(1);
+
+            int start = 35;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            for(int i = 1; i < nearestDataCache.getLineSize(); i++)
+            {
+                int index = heldInstruction.getAuxBits(AUX_SOURCE(0)).toInt() + i;
+                if(index < indexableRegisters.getNumRegisters())
+                {
+                    heldInstruction.addSourceManual(i, new Term(index), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                }
+                else
+                {
+                    heldInstruction.addSourceManual(i, new Term(0), AUX_SD_TYPE_IMMEDIATE, -1);
+                }
+            }
+            start += 4;
+
+            if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
+            {
+                start += (25 - 4);
+                heldInstruction.addSource(nearestDataCache.getLineSize(), start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            }
+            else
+            {
+                heldInstruction.addSource(nearestDataCache.getLineSize(), start, start + 25, AUX_SD_TYPE_IMMEDIATE, -1);
             }
         }
     }

@@ -14,7 +14,7 @@ public class MemoryModule
     private final int id;                       // ID of this MemoryModule
     private final MEMORY_KIND kind;             // CACHE/RAM
     private final MEMORY_TYPE type;             // DATA/INSTRUCTION
-    private final WORD_LENGTH wordLength;       // SHORT/LONG
+    public final WORD_LENGTH wordLength;       // SHORT/LONG
     private final MemoryModule next;            // Pointer to memory one level down
     private final int lineSize;                 // Number of words per line
     private final int numOffsetBits;            // Number of bits needed to distinguish between all words in a line
@@ -496,7 +496,7 @@ public class MemoryModule
                 }
                 else
                 {
-                    WARN(logger, "Unexpected behavior: Lowest level of memory had dirty data or did not have requested address.");
+                    WARN(logger, "Unexpected behavior: Lowest level of memory had dirty/invalid data or did not have requested address.");
                 }
                 int[] newWords = words;
                 if(words.length < lineSize)

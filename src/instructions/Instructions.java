@@ -43,7 +43,9 @@ public class Instructions
     public enum OPCODE  // TODO : Add new instructions here
     {
         LOAD,
+        LOAD_LINE,
         STORE,
+        STORE_LINE,
 
         BRANCH_IF_NEGATIVE,
         CALL,
@@ -72,7 +74,9 @@ public class Instructions
     public static Map<OPCODE, String> OPCODE_STRINGS = new HashMap<>() {{  // TODO : Add new instructions here
 
         put(OPCODE.LOAD, "000");
+        put(OPCODE.LOAD_LINE, "001");
         put(OPCODE.STORE, "010");
+        put(OPCODE.STORE_LINE, "011");
 
         put(OPCODE.BRANCH_IF_NEGATIVE, "010");
         put(OPCODE.CALL, "110");
@@ -110,7 +114,9 @@ public class Instructions
     public enum HEADER  // TODO : Add new instructions here
     {  // TODO : EACH HEADER MUST BE NAMED AND PUT() VERY CAREFULLY
         LOAD,
+        LOAD_LINE,
         STORE,
+        STORE_LINE,
 
         BRANCH_IF_NEGATIVE,
         CALL,
@@ -140,7 +146,9 @@ public class Instructions
     public static Map<HEADER, String> HEADER_STRINGS = new HashMap<>() {{  // TODO : Add new instructions here
 
         put(HEADER.LOAD,                    MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.LOAD                 ));
+        put(HEADER.LOAD_LINE,               MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.LOAD_LINE            ));
         put(HEADER.STORE,                   MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.STORE                ));
+        put(HEADER.STORE_LINE,              MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.STORE_LINE           ));
 
         put(HEADER.BRANCH_IF_NEGATIVE,      MAKE_HEADER_STRING(TYPECODE.FLOW_CONTROL,       OPCODE.BRANCH_IF_NEGATIVE   ));
         put(HEADER.CALL,                    MAKE_HEADER_STRING(TYPECODE.FLOW_CONTROL,       OPCODE.CALL                 ));
@@ -175,7 +183,9 @@ public class Instructions
     }};
     public static Map<HEADER, String> MNEMONICS = new HashMap<>() {{  // TODO : Add new instructions here
         put(HEADER.LOAD,                    "LOAD");
+        put(HEADER.LOAD_LINE,               "LOADL");
         put(HEADER.STORE,                   "STR");
+        put(HEADER.STORE_LINE,              "STRL");
 
         put(HEADER.BRANCH_IF_NEGATIVE,      "BRN");
         put(HEADER.CALL,                    "CALL");
@@ -218,7 +228,9 @@ public class Instructions
     public static final List<HEADER> MEMORY_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {  // TODO : Add new appropriate instructions here (executed in MemoryAccessStage)
         HEADER.LOAD,
-        HEADER.STORE
+        HEADER.LOAD_LINE,
+        HEADER.STORE,
+        HEADER.STORE_LINE
 
         // HEADER.LOAD_PC  // NOT THIS!
     }));
