@@ -30,6 +30,34 @@ public class MemoryWritebackStage extends PipelineStage
         this.pendingRegisters = pendingRegisters;
     }
 
+    public void fakeUndo(int quantity, int skip)
+    {
+        // Undo back to desired frame
+        for(int r = 0; r < indexableRegisters.getNumRegisters(); r++)
+        {
+            indexableRegisters.store(indexableRegisters.getNumRegisters() - 1 - r, reversalStack.peek(((skip + quantity) * (indexableRegisters.getNumRegisters() + 1)) + r));
+        }
+
+        // Redo skipped undos (compare each frame to previous one to see actual changes)
+        for(int i = skip - 1; i >= 0; i--)
+        {
+            int mask = (int)reversalStack.peek((i * (indexableRegisters.getNumRegisters() + 1)) + indexableRegisters.getNumRegisters());
+            for(int r = 0; r < indexableRegisters.getNumRegisters(); r++)
+            {
+                if((mask & (1 << r)) != 0)
+                {
+                    indexableRegisters.store(indexableRegisters.getNumRegisters() - 1 - r, reversalStack.peek((i * (indexableRegisters.getNumRegisters() + 1)) + r));
+                }
+            }
+        }
+
+        // Clear out all looked-at frames (including skipped ones)
+        for(int i = 0; i < (skip + quantity) * (indexableRegisters.getNumRegisters() + 1); i++)
+        {
+            reversalStack.load();
+        }
+    }
+
     public Object[] preExecute()
     {
         // Return whether will branch this cycle

@@ -57,6 +57,11 @@ public class Pipeline
         write.heldInstruction = NOOP(wordSize);
     }
 
+    public void fakeUndo(int quantity, int skip)
+    {
+        write.fakeUndo(quantity, skip);
+    }
+
     public boolean preExecute()
     {
         Object[] writeRet = write.preExecute();
