@@ -362,6 +362,10 @@ public class Instruction
                 case HEADER.INT_DIV -> executeIntDivide((ExecuteStage)invoker);
                 case HEADER.INT_MOD -> executeIntModulo((ExecuteStage)invoker);
 
+                case HEADER.AND -> executeAND((ExecuteStage)invoker);
+                case HEADER.OR -> executeOR((ExecuteStage)invoker);
+                case HEADER.XOR -> executeXOR((ExecuteStage)invoker);
+                case HEADER.NOT -> executeNOT((ExecuteStage)invoker);
                 case HEADER.COMPARE -> executeCompare((ExecuteStage)invoker);
 
                 case HEADER.COPY -> executeCopy((ExecuteStage)invoker);
@@ -577,6 +581,37 @@ public class Instruction
         {
             addAuxBits(AUX_RESULT(1), new Term(divisor, false));
         }
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
+    }
+
+    public void executeAND(ExecuteStage stage)
+    {
+        int x = getAuxBits(AUX_SOURCE(0)).toInt();
+        int y = getAuxBits(AUX_SOURCE(1)).toInt();
+        addAuxBits(AUX_RESULT(0), new Term(x & y, false, Integer.SIZE));
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
+    }
+
+    public void executeOR(ExecuteStage stage)
+    {
+        int x = getAuxBits(AUX_SOURCE(0)).toInt();
+        int y = getAuxBits(AUX_SOURCE(1)).toInt();
+        addAuxBits(AUX_RESULT(0), new Term(x | y, false, Integer.SIZE));
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
+    }
+
+    public void executeXOR(ExecuteStage stage)
+    {
+        int x = getAuxBits(AUX_SOURCE(0)).toInt();
+        int y = getAuxBits(AUX_SOURCE(1)).toInt();
+        addAuxBits(AUX_RESULT(0), new Term(x ^ y, false, Integer.SIZE));
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
+    }
+
+    public void executeNOT(ExecuteStage stage)
+    {
+        int bits = getAuxBits(AUX_SOURCE(0)).toInt();
+        addAuxBits(AUX_RESULT(0), new Term(~bits, false, Integer.SIZE));
         addAuxBits(AUX_FINISHED, AUX_TRUE);
     }
 

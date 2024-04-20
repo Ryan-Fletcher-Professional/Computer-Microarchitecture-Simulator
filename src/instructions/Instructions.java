@@ -57,6 +57,10 @@ public class Instructions
         INT_DIV,
         INT_MOD,
 
+        AND,
+        OR,
+        XOR,
+        NOT,
         COMPARE,
 
         COPY,
@@ -91,6 +95,10 @@ public class Instructions
         put(OPCODE.INT_DIV, "011");
         put(OPCODE.INT_MOD, "100");
 
+        put(OPCODE.AND, "000");
+        put(OPCODE.OR, "001");
+        put(OPCODE.XOR, "010");
+        put(OPCODE.NOT, "011");
         put(OPCODE.COMPARE, "100");
 
         put(OPCODE.COPY, "100");
@@ -134,6 +142,10 @@ public class Instructions
         INT_DIV,
         INT_MOD,
 
+        AND,
+        OR,
+        XOR,
+        NOT,
         COMPARE,
 
         COPY,
@@ -169,6 +181,10 @@ public class Instructions
         put(HEADER.INT_DIV,                 MAKE_HEADER_STRING( TYPECODE.INT_ARITHMETIC,    OPCODE.INT_DIV              ));
         put(HEADER.INT_MOD,                 MAKE_HEADER_STRING( TYPECODE.INT_ARITHMETIC,    OPCODE.INT_MOD              ));
 
+        put(HEADER.AND,                     MAKE_HEADER_STRING( TYPECODE.INT_LOGIC,         OPCODE.AND                  ));
+        put(HEADER.OR,                      MAKE_HEADER_STRING( TYPECODE.INT_LOGIC,         OPCODE.OR                   ));
+        put(HEADER.XOR,                     MAKE_HEADER_STRING( TYPECODE.INT_LOGIC,         OPCODE.XOR                  ));
+        put(HEADER.NOT,                     MAKE_HEADER_STRING( TYPECODE.INT_LOGIC,         OPCODE.NOT                  ));
         put(HEADER.COMPARE,                 MAKE_HEADER_STRING( TYPECODE.INT_LOGIC,         OPCODE.COMPARE              ));
 
         put(HEADER.COPY,                    MAKE_HEADER_STRING( TYPECODE.INT_CONTROL,        OPCODE.COPY                ));
@@ -209,6 +225,10 @@ public class Instructions
         put(HEADER.INT_DIV,                 "DIV");
         put(HEADER.INT_MOD,                 "MOD");
 
+        put(HEADER.AND,                     "AND");
+        put(HEADER.OR,                      "OR");
+        put(HEADER.XOR,                     "XOR");
+        put(HEADER.NOT,                     "NOT");
         put(HEADER.COMPARE,                 "CMP");
 
         put(HEADER.COPY,                    "COPY");
@@ -256,6 +276,10 @@ public class Instructions
         HEADER.INT_MUL,
         HEADER.INT_DIV,
         HEADER.INT_MOD,
+        HEADER.AND,
+        HEADER.OR,
+        HEADER.XOR,
+        HEADER.NOT,
         HEADER.COMPARE,
         HEADER.COPY,
         HEADER.SWAP,

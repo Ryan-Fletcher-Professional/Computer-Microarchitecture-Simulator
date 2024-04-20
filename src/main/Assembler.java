@@ -486,6 +486,10 @@ public class Assembler
             case HEADER.INT_DIV -> word = parseIntDivide(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.INT_MOD -> word = parseIntModulo(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
+            case HEADER.AND -> word = parseAND(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.OR -> word = parseOR(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.XOR -> word = parseXOR(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.NOT -> word = parseNOT(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.COMPARE -> word = parseCompare(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
             case HEADER.COPY -> word = parseCopy(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
@@ -1067,6 +1071,179 @@ public class Assembler
             return word | (flag_a << (wordSize - 7)) | (flag_b << (wordSize - 8)) | (flag_c << (wordSize - 9))
                 | (operand1 << operand1Shift) | (operand2 << 8) | (dest << 4) | divisor;
         }
+    }
+
+    private static long parseAND(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {
+        if((tokens.length < 3) || (tokens.length > 4))
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <x>, <y>{, <dest reg>}"); }
+        if(!tokens[1].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+
+        long flag_a = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[1].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+        long flag_b = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[2].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+
+        if((flag_a == 1) && (flag_b == 1))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": both <x> and <y> are immediates"); }
+
+        if(tokens.length == 3)
+        { tokens = new String[] { tokens[0], tokens[1], tokens[2] + ",",
+            ((flag_a == 0) ? tokens[1].substring(0, tokens[1].length() - 1) : tokens[2]) }; }
+
+        if(!tokens[3].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <dest reg> is not a register"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <x> is not a register"); }
+            if(!tokens[2].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <y> is not a register"); }
+
+            long x = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long y = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (x << 8) | (y << 4) | dest;
+        }
+        else
+        {
+            long x = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), (flag_a == 0) ? 4 : 32);
+            int xShift = (flag_b == 0) ? 4 : 32;
+            long y = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[1].length() - 1), lineNum, labels), (flag_b == 0) ? 4 : 32);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (flag_a << (wordSize - 7)) | (flag_b << (wordSize - 8)) | (x << xShift) | (y << 4) | dest;
+        }
+    }
+
+    private static long parseOR(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {  // Should be the same as parseAND
+        if((tokens.length < 3) || (tokens.length > 4))
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <x>, <y>{, <dest reg>}"); }
+        if(!tokens[1].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+
+        long flag_a = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[1].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+        long flag_b = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[2].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+
+        if((flag_a == 1) && (flag_b == 1))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": both <x> and <y> are immediates"); }
+
+        if(tokens.length == 3)
+        { tokens = new String[] { tokens[0], tokens[1], tokens[2] + ",",
+            ((flag_a == 0) ? tokens[1].substring(0, tokens[1].length() - 1) : tokens[2]) }; }
+
+        if(!tokens[3].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <dest reg> is not a register"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <x> is not a register"); }
+            if(!tokens[2].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <y> is not a register"); }
+
+            long x = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long y = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (x << 8) | (y << 4) | dest;
+        }
+        else
+        {
+            long x = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), (flag_a == 0) ? 4 : 32);
+            int xShift = (flag_b == 0) ? 4 : 32;
+            long y = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[1].length() - 1), lineNum, labels), (flag_b == 0) ? 4 : 32);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (flag_a << (wordSize - 7)) | (flag_b << (wordSize - 8)) | (x << xShift) | (y << 4) | dest;
+        }
+    }
+
+    private static long parseXOR(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {  // Should be the same as parseAND
+        if((tokens.length < 3) || (tokens.length > 4))
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <x>, <y>{, <dest reg>}"); }
+        if(!tokens[1].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+
+        long flag_a = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[1].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+        long flag_b = (wordSize == WORD_SIZE_SHORT) ? 0L : (!tokens[2].startsWith(REGISTER_PREFIX + "") ? 1L : 0L);
+
+        if((flag_a == 1) && (flag_b == 1))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": both <x> and <y> are immediates"); }
+
+        if(tokens.length == 3)
+        { tokens = new String[] { tokens[0], tokens[1], tokens[2] + ",",
+            ((flag_a == 0) ? tokens[1].substring(0, tokens[1].length() - 1) : tokens[2]) }; }
+
+        if(!tokens[3].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <dest reg> is not a register"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <x> is not a register"); }
+            if(!tokens[2].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <y> is not a register"); }
+
+            long x = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long y = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (x << 8) | (y << 4) | dest;
+        }
+        else
+        {
+            long x = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), (flag_a == 0) ? 4 : 32);
+            int xShift = (flag_b == 0) ? 4 : 32;
+            long y = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[1].length() - 1), lineNum, labels), (flag_b == 0) ? 4 : 32);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (flag_a << (wordSize - 7)) | (flag_b << (wordSize - 8)) | (x << xShift) | (y << 4) | dest;
+        }
+    }
+
+    private static long parseNOT(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {
+        if((tokens.length < 2) || (tokens.length > 3))
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <bits reg>{, <dest reg>}"); }
+
+        if(tokens.length == 2)
+        { tokens = new String[] { tokens[0], tokens[1] + ",",
+                                    tokens[1]}; }
+
+        if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <bits reg> is not a register"); }
+        if(!tokens[2].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <dest reg> is not a register"); }
+
+        long bits = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+        long dest = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+
+        return word | (bits << 4) | dest;
     }
 
     private static long parseCompare(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError

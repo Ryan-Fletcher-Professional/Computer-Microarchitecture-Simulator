@@ -63,6 +63,10 @@ public class DecodeStage extends PipelineStage
                 case HEADER.INT_DIV -> decodeIntDivide();
                 case HEADER.INT_MOD -> decodeIntModulo();
 
+                case HEADER.AND -> decodeAND();
+                case HEADER.OR -> decodeOR();
+                case HEADER.XOR -> decodeXOR();
+                case HEADER.NOT -> decodeNOT();
                 case HEADER.COMPARE -> decodeCompare();
 
                 case HEADER.COPY -> decodeCopy();
@@ -774,6 +778,190 @@ public class DecodeStage extends PipelineStage
         }
     }
 
+    private void decodeAND()
+    {
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            int start = 20;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+        }
+        else
+        {
+            heldInstruction.addFlags(2);
+            if(((heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) &&
+                (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1)))
+            {
+                (new MRAException("Long " + MNEMONICS.get(heldInstruction.getHeader()) + " has 2x 1-flags")).printStackTrace();
+                heldInstruction = ERR(WORD_SIZE_LONG, ERR_TYPE_INVALID_FLAGS);
+                heldInstruction.addAuxBits(new Term(ERR_TYPE_INVALID_FLAGS, false, WORD_SIZE_LONG - HEADER_SIZE).toString(),
+                                           new Term(HEADER_STRINGS.get(heldInstruction.getHeader()), false));
+            }
+            else
+            {
+                int start = ((heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) ||
+                    (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1))
+                    ? 24 : 52;
+
+                if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
+                {
+                    heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                    start += 4;
+                }
+                else
+                {
+                    heldInstruction.addSource(0, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                    start += 32;
+                }
+
+                if(heldInstruction.getAuxBits(FLAG(1)).toInt() == 0)
+                {
+                    heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                    start += 4;
+                }
+                else
+                {
+                    heldInstruction.addSource(1, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                    start += 32;
+                }
+
+                heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            }
+        }
+    }
+
+    private void decodeOR()
+    {  // Should be the same as decodeAND
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            int start = 20;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+        }
+        else
+        {
+            heldInstruction.addFlags(2);
+            if(((heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) &&
+                (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1)))
+            {
+                (new MRAException("Long " + MNEMONICS.get(heldInstruction.getHeader()) + " has 2x 1-flags")).printStackTrace();
+                heldInstruction = ERR(WORD_SIZE_LONG, ERR_TYPE_INVALID_FLAGS);
+                heldInstruction.addAuxBits(new Term(ERR_TYPE_INVALID_FLAGS, false, WORD_SIZE_LONG - HEADER_SIZE).toString(),
+                                           new Term(HEADER_STRINGS.get(heldInstruction.getHeader()), false));
+            }
+            else
+            {
+                int start = ((heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) ||
+                    (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1))
+                    ? 24 : 52;
+
+                if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
+                {
+                    heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                    start += 4;
+                }
+                else
+                {
+                    heldInstruction.addSource(0, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                    start += 32;
+                }
+
+                if(heldInstruction.getAuxBits(FLAG(1)).toInt() == 0)
+                {
+                    heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                    start += 4;
+                }
+                else
+                {
+                    heldInstruction.addSource(1, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                    start += 32;
+                }
+
+                heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            }
+        }
+    }
+
+    private void decodeXOR()
+    {  // Should be the same as decodeAND
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            int start = 20;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+        }
+        else
+        {
+            heldInstruction.addFlags(2);
+            if(((heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) &&
+                (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1)))
+            {
+                (new MRAException("Long " + MNEMONICS.get(heldInstruction.getHeader()) + " has 2x 1-flags")).printStackTrace();
+                heldInstruction = ERR(WORD_SIZE_LONG, ERR_TYPE_INVALID_FLAGS);
+                heldInstruction.addAuxBits(new Term(ERR_TYPE_INVALID_FLAGS, false, WORD_SIZE_LONG - HEADER_SIZE).toString(),
+                                           new Term(HEADER_STRINGS.get(heldInstruction.getHeader()), false));
+            }
+            else
+            {
+                int start = ((heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) ||
+                    (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1))
+                    ? 24 : 52;
+
+                if(heldInstruction.getAuxBits(FLAG(0)).toInt() == 0)
+                {
+                    heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                    start += 4;
+                }
+                else
+                {
+                    heldInstruction.addSource(0, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                    start += 32;
+                }
+
+                if(heldInstruction.getAuxBits(FLAG(1)).toInt() == 0)
+                {
+                    heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+                    start += 4;
+                }
+                else
+                {
+                    heldInstruction.addSource(1, start, start + 32, AUX_SD_TYPE_IMMEDIATE, -1);
+                    start += 32;
+                }
+
+                heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+            }
+        }
+    }
+
+    private void decodeNOT()
+    {
+        int start = (heldInstruction.wordLength() == WORD_SIZE_SHORT) ? 24 : 56;
+
+        heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+        start += 4;
+
+        heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+    }
+
     private void decodeCompare()
     {
         if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
@@ -791,7 +979,7 @@ public class DecodeStage extends PipelineStage
             if(((heldInstruction.getAuxBits(FLAG(0)).toInt() == 1) &&
                 (heldInstruction.getAuxBits(FLAG(1)).toInt() == 1)))
             {
-                (new MRAException("Long CMP has 2x 1-flags")).printStackTrace();
+                (new MRAException("Long " + MNEMONICS.get(heldInstruction.getHeader()) + " has 2x 1-flags")).printStackTrace();
                 heldInstruction = ERR(WORD_SIZE_LONG, ERR_TYPE_INVALID_FLAGS);
                 heldInstruction.addAuxBits(new Term(ERR_TYPE_INVALID_FLAGS, false, WORD_SIZE_LONG - HEADER_SIZE).toString(),
                                            new Term(HEADER_STRINGS.get(heldInstruction.getHeader()), false));
