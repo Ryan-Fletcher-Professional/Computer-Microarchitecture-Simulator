@@ -76,6 +76,7 @@ public class Simulator extends JFrame
         setLocation((screenSize.width - width) / 2, (screenSize.height - height) / 2);
 
         // Toolbar at the top
+        JPanel toolBarPanel = new JPanel(new BorderLayout());
         JToolBar toolBar = new JToolBar();
         JLabel countLabel = new JLabel("Cycles: 0");
         countLabel.setMinimumSize(new Dimension(200, 30));
@@ -176,9 +177,26 @@ public class Simulator extends JFrame
                 currentlySelectedMemory.dumpToFile(fileToSave.getAbsolutePath());
             }
         });
+
+        JButton stepBackButton = new JButton("UNDO");
+        stepBackButton.setMinimumSize(new Dimension(100, 30));
+        stepBackButton.setMaximumSize(new Dimension(100, 30));
+        JTextField quantityField = new JTextField(1);
+        quantityField.setMinimumSize(new Dimension(100, 30));
+        quantityField.setMaximumSize(new Dimension(100, 30));
+        JTextField skipField = new JTextField(1);
+        skipField.setMinimumSize(new Dimension(100, 30));
+        skipField.setMaximumSize(new Dimension(100, 30));
+        stepBackButton.addActionListener(e -> {
+            pipeline.fakeUndo(Integer.parseInt(quantityField.getText()), Integer.parseInt(skipField.getText()));
+            updateDisplay();
+        });
+
+        JToolBar resetBar = new JToolBar();
         JButton resetButton = new JButton("RESET");
         resetButton.setMinimumSize(new Dimension(100, 30));
         resetButton.setMaximumSize(new Dimension(100, 30));
+        resetButton.setPreferredSize(new Dimension(100, 30));
         resetButton.addActionListener(e -> {
             setVisible(false);
             new Simulator(GET_ID(), registerBanks, pipeline, this.getExtendedState(), startingPC, startingMemories, numSpecialInstructions);
@@ -189,21 +207,19 @@ public class Simulator extends JFrame
             registerBanks[INTERNAL_BANK_INDEX].store(PC_INDEX, startingPC);
             pipeline.reset();
         });
-        Component[] toolBarComponents = new Component[] { countLabel, tickButton, tickField, stackPipelineToggle,
-                                                          /*bankToggle, */controlsToggle, saveButton };
-        int leftSize = 0;
+        Component[] toolBarComponents = new Component[] { countLabel, tickButton, tickField, Box.createHorizontalStrut(30),
+                                                          stackPipelineToggle, controlsToggle, Box.createHorizontalStrut(30),
+                                                          stepBackButton, quantityField, skipField, Box.createHorizontalStrut(30),
+                                                          saveButton };
         for(Component component : toolBarComponents)
         {
             toolBar.add(component);
-            leftSize += component.getWidth();
         }
-        JPanel blankPanel = new JPanel();
-        Dimension fill = new Dimension(width - leftSize, 30);
-        blankPanel.setMinimumSize(fill);
-        blankPanel.setMaximumSize(fill);
-        toolBar.add(blankPanel);
-        toolBar.add(resetButton, BorderLayout.EAST);
-        add(toolBar, BorderLayout.NORTH);
+        //toolBar.add(Box.createHorizontalGlue());
+        resetBar.add(resetButton, BorderLayout.EAST);
+        toolBarPanel.add(toolBar, BorderLayout.CENTER);
+        toolBarPanel.add(resetBar, BorderLayout.EAST);
+        add(toolBarPanel, BorderLayout.NORTH);
 
         // Top left for control, top right for cache configuration view, bottom for state view
         topBottomPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -484,9 +500,6 @@ public class Simulator extends JFrame
                 Dimension newSize = c.getSize();
                 frameWidth = newSize.width;
                 frameHeight = newSize.height;
-                Dimension fill = new Dimension(frameWidth - 500, 30);
-                blankPanel.setMinimumSize(fill);
-                blankPanel.setMaximumSize(fill);
             }
             @Override
             public void componentMoved(ComponentEvent e) {}
