@@ -890,9 +890,22 @@ public class Simulator extends JFrame
                                                                   new Object[]{getAddress(), lineRadio.isSelected()})));
             int[] line = currentlySelectedMemory.load(request);
 
-            for(int i = 0; i < line.length; i++)
+            int wroteToIndexable = 0;
+            for(int i = 0; (i < line.length) && ((register + i) < bank.getNumRegisters()); i++)
             {
                 bank.store(register + i, line[i]);
+                if(register <= 15)
+                {
+                    wroteToIndexable |= (1 << (registerBanks[INDEXABLE_BANK_INDEX].getNumRegisters() - 1)) >>> (register + i);
+                }
+            }
+            if(wroteToIndexable != 0)
+            {
+                registerBanks[REVERSAL_STACK_INDEX].store(wroteToIndexable);
+                for(int r = 0; r < registerBanks[INDEXABLE_BANK_INDEX].getNumRegisters(); r++)
+                {
+                    registerBanks[REVERSAL_STACK_INDEX].store(registerBanks[INDEXABLE_BANK_INDEX].load(r));
+                }
             }
 
             indexableBankDisplayText.setText(bank.getDisplayText(8, getRadices()[1]));
