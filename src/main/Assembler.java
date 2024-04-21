@@ -663,7 +663,7 @@ public class Assembler
         }
         else
         {
-            long flag = (!tokens[1].startsWith(REGISTER_PREFIX + "")) ? 1L : 0L;
+            long flag = (!tokens[2].startsWith(REGISTER_PREFIX + "")) ? 1L : 0L;
 
             long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
 

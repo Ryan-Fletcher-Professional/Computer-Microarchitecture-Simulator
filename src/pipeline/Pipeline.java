@@ -21,14 +21,15 @@ public class Pipeline
     private MemoryAccessStage access;
     private MemoryWritebackStage write;
     private PipelineStage endStage;  // This and dummyStartStage exist to prevent erroneous consecutation of actual pipeline stages
+    public int numSpecialInstructions;
 
     public Pipeline(RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters,
                     RegisterFileModule callStack, RegisterFileModule reversalStack,
                     MemoryModule nearestInstructionCache, MemoryModule nearestDataCache,
-                    int[][] pendingRegisters, int wordSize)
+                    int[][] pendingRegisters, int wordSize, int numSpecialInstructions)
     {
         initialize(indexableRegisters, internalRegisters, callStack, reversalStack,
-                   nearestInstructionCache, nearestDataCache, pendingRegisters, wordSize);
+                   nearestInstructionCache, nearestDataCache, pendingRegisters, wordSize, numSpecialInstructions);
     }
 
     // TODO : Cycling with a different word size from before will call this.
@@ -107,7 +108,7 @@ public class Pipeline
     private void initialize(RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters,
                             RegisterFileModule callStack, RegisterFileModule reversalStack,
                             MemoryModule nearestInstructionCache, MemoryModule nearestDataCache, int[][] pendingRegisters,
-                            int wordSize)
+                            int wordSize, int numSpecialInstructions)
     {
         this.indexableRegisters = indexableRegisters;
         this.internalRegisters = internalRegisters;
@@ -115,12 +116,13 @@ public class Pipeline
         this.reversalStack = reversalStack;
         this.nearestInstructionCache = nearestInstructionCache;
         this.wordSize = wordSize;
-        fetch = new FetchStage(wordSize, "Fetch", internalRegisters, nearestInstructionCache);
-        DecodeStage decode = new DecodeStage(wordSize, "Decode", indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
-        execute = new ExecuteStage(wordSize, "Execute", internalRegisters);
-        access = new MemoryAccessStage(wordSize, "Access", indexableRegisters, internalRegisters, nearestDataCache);
+        this.numSpecialInstructions = numSpecialInstructions;
+        fetch = new FetchStage(wordSize, "Fetch", internalRegisters, nearestInstructionCache, numSpecialInstructions);
+        DecodeStage decode = new DecodeStage(wordSize, "Decode", indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters, numSpecialInstructions);
+        execute = new ExecuteStage(wordSize, "Execute", internalRegisters, numSpecialInstructions);
+        access = new MemoryAccessStage(wordSize, "Access", indexableRegisters, internalRegisters, nearestDataCache, numSpecialInstructions);
         write = new MemoryWritebackStage(wordSize, "Write",
-                                                              indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters);
+                                                              indexableRegisters, internalRegisters, callStack, reversalStack, pendingRegisters, numSpecialInstructions);
         this.endStage = write;
         PipelineStage.CONSECUTE(new PipelineStage[] { fetch, decode, execute, access, write });
     }
@@ -144,6 +146,6 @@ public class Pipeline
 
     public void reset()
     {
-        initialize(indexableRegisters, internalRegisters, callStack, reversalStack, nearestInstructionCache, nearestDataCache, NEW_PENDING_REGISTERS(new RegisterFileModule[] { indexableRegisters, internalRegisters, callStack, reversalStack }), wordSize);
+        initialize(indexableRegisters, internalRegisters, callStack, reversalStack, nearestInstructionCache, nearestDataCache, NEW_PENDING_REGISTERS(new RegisterFileModule[] { indexableRegisters, internalRegisters, callStack, reversalStack }), wordSize, numSpecialInstructions);
     }
 }

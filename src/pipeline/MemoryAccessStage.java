@@ -16,9 +16,9 @@ public class MemoryAccessStage extends PipelineStage
     public MemoryModule nearestDataCache;
     private int oldID = -1;
 
-    public MemoryAccessStage(int wordSize, String name, RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters, MemoryModule nearestDataCache)
+    public MemoryAccessStage(int wordSize, String name, RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters, MemoryModule nearestDataCache, int numSpecialInstructions)
     {
-        super(wordSize, name);
+        super(wordSize, name, numSpecialInstructions);
         this.indexableRegisters = indexableRegisters;
         this.internalRegisters = internalRegisters;
         this.nearestDataCache = nearestDataCache;

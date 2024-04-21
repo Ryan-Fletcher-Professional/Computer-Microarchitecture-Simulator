@@ -16,9 +16,9 @@ public class FetchStage extends PipelineStage
     public MemoryModule nearestInstructionCache;
 
     public FetchStage(int wordSize, String name,
-                      RegisterFileModule internalRegisters, MemoryModule nearestInstructionCache)
+                      RegisterFileModule internalRegisters, MemoryModule nearestInstructionCache, int numSpecialInstructions)
     {
-        super(wordSize, name);
+        super(wordSize, name, numSpecialInstructions);
         this.internalRegisters = internalRegisters;
         this.nearestInstructionCache = nearestInstructionCache;
         heldInstruction = LOAD_PC(wordSize);

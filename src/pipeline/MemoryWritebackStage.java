@@ -20,9 +20,9 @@ public class MemoryWritebackStage extends PipelineStage
     public MemoryWritebackStage(int wordSize, String name,
                                 RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters,
                                 RegisterFileModule callStack, RegisterFileModule reversalStack,
-                                int[][] pendingRegisters)
+                                int[][] pendingRegisters, int numSpecialInstructions)
     {
-        super(wordSize, name);
+        super(wordSize, name, numSpecialInstructions);
         this.indexableRegisters = indexableRegisters;
         this.internalRegisters = internalRegisters;
         this.callStack = callStack;

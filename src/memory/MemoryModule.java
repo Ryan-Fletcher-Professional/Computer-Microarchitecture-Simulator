@@ -511,7 +511,10 @@ public class MemoryModule
             }
             else
             {
-                int[] oldWords = readData(line, getFirstAddress(line), true);
+                int[] oldWords = (!sameLine(getFirstAddress(line), virtualAddress) && (next != null))
+                                                    ? accessNext(REQUEST_TYPE.LOAD,
+                                                                 generateLoadArgsFromValues(virtualAddress, true), chain)
+                                                    : readData(line, getFirstAddress(line), true);
 //                System.out.println(Arrays.toString(words));
 //                System.out.println(Arrays.toString(oldWords));
 //                System.out.println(virtualAddress);

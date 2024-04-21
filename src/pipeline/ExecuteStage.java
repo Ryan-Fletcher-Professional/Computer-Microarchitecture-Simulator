@@ -12,9 +12,9 @@ public class ExecuteStage extends PipelineStage
 {
     public final RegisterFileModule internalRegisters;
 
-    public ExecuteStage(int wordSize, String name, RegisterFileModule internalRegisters)
+    public ExecuteStage(int wordSize, String name, RegisterFileModule internalRegisters, int numSpecialInstructions)
     {
-        super(wordSize, name);
+        super(wordSize, name, numSpecialInstructions);
         this.internalRegisters = internalRegisters;
     }
 

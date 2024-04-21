@@ -18,12 +18,14 @@ public class PipelineStage
     Instruction heldInstruction;
     private PipelineStage nextStage;
     private boolean blocking = false;
+    public int numSpecialInstructions;
 
-    public PipelineStage(int wordSize, String name)
+    public PipelineStage(int wordSize, String name, int numSpecialInstructions)
     {
         this.wordSize = wordSize;
         this.name = name;
         this.heldInstruction = NOOP(wordSize);
+        this.numSpecialInstructions = numSpecialInstructions;
     }
 
     public void setPrevious(PipelineStage previous)
@@ -148,8 +150,7 @@ public class PipelineStage
                                           Objects.requireNonNullElse(INTERNAL_MNEMONICS.get(heldInstruction.getHeader()),
                                                   "UNRECOGNIZED"));
                 long pc = (heldInstruction.getAuxBits(AUX_PC_AT_FETCH) == null) ? -1 : heldInstruction.getAuxBits(AUX_PC_AT_FETCH).toLong();
-                // TODO : Change 3
-                String lineNum = ((pc == -1L) ? "--" : ((heldInstruction.wordLength() == WORD_SIZE_SHORT ? SHORT_INSTRUCTION_ADDRESS_UNFIX(pc, 3) : LONG_INSTRUCTION_ADDRESS_UNFIX(pc, 3)))) + " : ";
+                String lineNum = ((pc == -1L) ? "--" : ((heldInstruction.wordLength() == WORD_SIZE_SHORT ? SHORT_INSTRUCTION_ADDRESS_UNFIX(pc, numSpecialInstructions) : LONG_INSTRUCTION_ADDRESS_UNFIX(pc, numSpecialInstructions)))) + " : ";
                 wordString = lineNum + mnemonic + " " +
                         wordString.substring(TYPECODE_SIZE + OPCODE_SIZE);
             }
