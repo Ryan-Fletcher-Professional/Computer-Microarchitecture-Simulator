@@ -1,0 +1,32 @@
+SET WORD SIZE 64
+SET STACK SIZE 1000000000
+SET BUFFER SIZE 1000000000
+
+BR0 %LOOP_START
+COPY #7, R10
+JUMP %TEST
+=UNTEST
+COPY #1, R2         @ Next load address
+COPY #0, R3         @ Current index
+LOAD #0, R4         @ Size of list
+COPY #1, R5         @ Testing UNDO
+COPY #2, R6
+COPY #3, R7
+COPY #4, R8
+COPY #5, R9
+UNDO #2, #2         @ HUZZAH! It works! (For real this time LOL)
+    =LOOP_START
+LOAD R2, R1         @ Next value
+ADD R0, R1          @ Accumulate
+ADD R2, #1          @ Increment next address
+ADD R3, #1          @ Increment index
+SWAP R2, R3         @ Testing SWAP
+SWAP R2, R3         @ Testing SWAP
+SUB R3, R4, R8, 1   @ Compare index w/max
+BRN %LOOP_START+#1
+STR R0, R2          @ Store acc in next add.
+HALT #0
+    @ Should save #4059 to the location after #10 in data memory.
+=TEST
+CMP R10, #7
+BR0 %UNTEST

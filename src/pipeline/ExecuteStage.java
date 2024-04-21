@@ -49,11 +49,16 @@ public class ExecuteStage extends PipelineStage
         }
         if(heldInstruction.getHeader().equals(HEADER.CALL))
         {
-            int sign = 1;
-            if(((heldInstruction.wordLength() == WORD_SIZE_SHORT) && AUX_EQUALS(heldInstruction.getAuxBits(FLAG(2)), 1)) ||
-                ((heldInstruction.wordLength() == WORD_SIZE_LONG) && AUX_EQUALS(heldInstruction.getAuxBits(FLAG(3)), 1)))
-                { sign = -1; }
-            heldInstruction.addAuxBits(AUX_SOURCE(1), new Term(heldInstruction.getAuxBits(AUX_PC_AT_FETCH).toInt() + (sign * heldInstruction.getAuxBits(AUX_SOURCE(1)).toInt())));
+            if(!AUX_EQUALS(heldInstruction.getAuxBits("finished_call_execute"), AUX_TRUE))
+            {
+                int sign = 1;
+                if(((heldInstruction.wordLength() == WORD_SIZE_SHORT) && AUX_EQUALS(heldInstruction.getAuxBits(FLAG(2)), 1)) ||
+                        ((heldInstruction.wordLength() == WORD_SIZE_LONG) && AUX_EQUALS(heldInstruction.getAuxBits(FLAG(3)), 1))) {
+                    sign = -1;
+                }
+                heldInstruction.addAuxBits(AUX_SOURCE(1), new Term(heldInstruction.getAuxBits(AUX_PC_AT_FETCH).toInt() + (sign * heldInstruction.getAuxBits(AUX_SOURCE(1)).toInt())));
+                heldInstruction.addAuxBits("finished_call_execute", AUX_TRUE);
+            }
         }
         if(BRANCH_INSTRUCTIONS.contains(heldInstruction.getHeader()))
         {

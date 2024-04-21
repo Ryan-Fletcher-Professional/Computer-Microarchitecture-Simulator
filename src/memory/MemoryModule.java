@@ -504,7 +504,7 @@ public class MemoryModule
                     int[] oldWords = (next != null) ? accessNext(REQUEST_TYPE.LOAD,
                                                                  generateLoadArgsFromValues(virtualAddress, true), chain)
                                                     : readData(line, getFirstAddress(line), true);
-                    System.arraycopy(words, 0, oldWords, virtualAddress & offsetMask, words.length);
+                    System.arraycopy(words, 0, oldWords, (words.length < lineSize) ? (virtualAddress & offsetMask) : 0, words.length);
                     newWords = oldWords;
                 }
                 writeData(true, virtualAddress, newWords);
@@ -512,7 +512,11 @@ public class MemoryModule
             else
             {
                 int[] oldWords = readData(line, getFirstAddress(line), true);
-                System.arraycopy(words, 0, oldWords, virtualAddress & offsetMask, words.length);
+//                System.out.println(Arrays.toString(words));
+//                System.out.println(Arrays.toString(oldWords));
+//                System.out.println(virtualAddress);
+//                System.out.println(offsetMask);
+                System.arraycopy(words, 0, oldWords, (words.length < lineSize) ? (virtualAddress & offsetMask) : 0, words.length);
                 writeData(true, virtualAddress, oldWords);
             }
         }
@@ -524,7 +528,7 @@ public class MemoryModule
                 int[] oldWords = ((next != null) && !sameLine(getFirstAddress(line), virtualAddress))
                                  ? accessNext(REQUEST_TYPE.LOAD, generateLoadArgsFromValues(virtualAddress, true), chain)
                                  : readData(line, getFirstAddress(line), true);
-                System.arraycopy(words, 0, oldWords, virtualAddress & offsetMask, words.length);
+                System.arraycopy(words, 0, oldWords, (words.length < lineSize) ? (virtualAddress & offsetMask) : 0, words.length);
                 newWords = oldWords;
             }
             writeData(false, virtualAddress, newWords);
