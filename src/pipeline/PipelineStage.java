@@ -6,6 +6,8 @@ import memory.MemoryModule;
 import java.util.Objects;
 
 import static instructions.Instructions.*;
+import static main.Assembler.LONG_INSTRUCTION_ADDRESS_UNFIX;
+import static main.Assembler.SHORT_INSTRUCTION_ADDRESS_UNFIX;
 import static main.GLOBALS.*;
 
 public class PipelineStage
@@ -145,7 +147,10 @@ public class PipelineStage
                 String mnemonic = Objects.requireNonNullElse(MNEMONICS.get(heldInstruction.getHeader()),
                                           Objects.requireNonNullElse(INTERNAL_MNEMONICS.get(heldInstruction.getHeader()),
                                                   "UNRECOGNIZED"));
-                wordString = mnemonic + " " +
+                long pc = (heldInstruction.getAuxBits(AUX_PC_AT_FETCH) == null) ? -1 : heldInstruction.getAuxBits(AUX_PC_AT_FETCH).toLong();
+                // TODO : Change 3
+                String lineNum = ((pc == -1L) ? "--" : ((heldInstruction.wordLength() == WORD_SIZE_SHORT ? SHORT_INSTRUCTION_ADDRESS_UNFIX(pc, 3) : LONG_INSTRUCTION_ADDRESS_UNFIX(pc, 3)))) + " : ";
+                wordString = lineNum + mnemonic + " " +
                         wordString.substring(TYPECODE_SIZE + OPCODE_SIZE);
             }
         }
