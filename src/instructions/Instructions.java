@@ -47,7 +47,9 @@ public class Instructions
         STORE,
         STORE_LINE,
 
+        BRANCH_IF_ZERO,
         BRANCH_IF_NEGATIVE,
+        JUMP,
         CALL,
         RETURN,
 
@@ -85,7 +87,9 @@ public class Instructions
         put(OPCODE.STORE, "010");
         put(OPCODE.STORE_LINE, "011");
 
+        put(OPCODE.BRANCH_IF_ZERO, "000");
         put(OPCODE.BRANCH_IF_NEGATIVE, "010");
+        put(OPCODE.JUMP, "100");
         put(OPCODE.CALL, "110");
         put(OPCODE.RETURN, "111");
 
@@ -132,7 +136,9 @@ public class Instructions
         STORE,
         STORE_LINE,
 
+        BRANCH_IF_ZERO,
         BRANCH_IF_NEGATIVE,
+        JUMP,
         CALL,
         RETURN,
 
@@ -171,7 +177,9 @@ public class Instructions
         put(HEADER.STORE,                   MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.STORE                ));
         put(HEADER.STORE_LINE,              MAKE_HEADER_STRING( TYPECODE.LOAD_STORE,        OPCODE.STORE_LINE           ));
 
+        put(HEADER.BRANCH_IF_ZERO,          MAKE_HEADER_STRING( TYPECODE.FLOW_CONTROL,       OPCODE.BRANCH_IF_ZERO      ));
         put(HEADER.BRANCH_IF_NEGATIVE,      MAKE_HEADER_STRING( TYPECODE.FLOW_CONTROL,       OPCODE.BRANCH_IF_NEGATIVE  ));
+        put(HEADER.JUMP,                    MAKE_HEADER_STRING( TYPECODE.FLOW_CONTROL,       OPCODE.JUMP                ));
         put(HEADER.CALL,                    MAKE_HEADER_STRING( TYPECODE.FLOW_CONTROL,       OPCODE.CALL                ));
         put(HEADER.RETURN,                  MAKE_HEADER_STRING( TYPECODE.FLOW_CONTROL,       OPCODE.RETURN              ));
 
@@ -215,7 +223,10 @@ public class Instructions
         put(HEADER.STORE,                   "STR");
         put(HEADER.STORE_LINE,              "STRL");
 
+
+        put(HEADER.BRANCH_IF_ZERO,          "BR0");
         put(HEADER.BRANCH_IF_NEGATIVE,      "BRN");
+        put(HEADER.JUMP,                    "JUMP");
         put(HEADER.CALL,                    "CALL");
         put(HEADER.RETURN,                  "RETURN");
 
@@ -287,7 +298,9 @@ public class Instructions
     }));
     public static final List<HEADER> BRANCH_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {  // TODO : Add new appropriate instructions here (executed in ExecuteStage using condition checks)
+        HEADER.BRANCH_IF_ZERO,
         HEADER.BRANCH_IF_NEGATIVE,
+        HEADER.JUMP,
         HEADER.CALL,
         HEADER.RETURN
         // Should include all Jump instructions as well (they should be treated as unconditional branches)

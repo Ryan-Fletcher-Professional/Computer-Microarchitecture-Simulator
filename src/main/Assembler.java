@@ -200,7 +200,12 @@ public class Assembler
             }
 
             List<String> newLines = new ArrayList<>(List.of(lines));
-            while(((newLines.size() - index) % (8 / (wordSize / WORD_SIZE_SHORT))) != 0)
+            while(((newLines.size() - index) % (8 / (wordSize / WORD_SIZE_SHORT))) != 0)  // This is to pad out the final line in instruction memory
+            {
+                newLines.add("HALT #0");
+            }
+            newLines.add("HALT #0");
+            while(((newLines.size() - index) % (8 / (wordSize / WORD_SIZE_SHORT))) != 0)  // This is to add an extra line in instruction memory as a buffer to prevent data from being read as instructions before HALT is registered
             {
                 newLines.add("HALT #0");
             }
@@ -476,7 +481,9 @@ public class Assembler
             case HEADER.STORE -> word = parseStore(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.STORE_LINE -> word = parseStoreLine(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
+            case HEADER.BRANCH_IF_ZERO -> word = parseBranchIfZero(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.BRANCH_IF_NEGATIVE -> word = parseBranchIfNegative(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.JUMP -> word = parseJump(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.CALL -> word = parseCall(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.RETURN -> {}  // RETURN has no args
 
@@ -667,7 +674,63 @@ public class Assembler
         }
     }
 
+    private static long parseBranchIfZero(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {
+        if(tokens.length != 2)
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <dest adrs>"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <dest adrs> is not a register"); }
+
+            long flag = (!tokens[1].startsWith(REGISTER_PREFIX + "")) ? 1L : 0L;
+
+            long dest = SHORT_INSTRUCTION_ADDRESS_FIX(SAFE(PARSE_TOKEN(tokens[1], lineNum, labels), (flag == 1) ? 25 : 4), numStartInstructions);
+
+            return word | dest;
+        }
+        else
+        {
+            long flag = !tokens[1].startsWith(REGISTER_PREFIX + "") ? 1L : 0L;
+
+            long dest = LONG_INSTRUCTION_ADDRESS_FIX(SAFE(PARSE_TOKEN(tokens[1], lineNum, labels), (flag == 1) ? 25 : 4), numStartInstructions);
+
+            return word | (flag << (wordSize - 7)) | dest;
+        }
+    }
+
     private static long parseBranchIfNegative(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {
+        if(tokens.length != 2)
+        { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                      "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <dest adrs>"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+            { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                          lineNum + ": <dest adrs> is not a register"); }
+
+            long flag = (!tokens[1].startsWith(REGISTER_PREFIX + "")) ? 1L : 0L;
+
+            long dest = SHORT_INSTRUCTION_ADDRESS_FIX(SAFE(PARSE_TOKEN(tokens[1], lineNum, labels), (flag == 1) ? 25 : 4), numStartInstructions);
+
+            return word | dest;
+        }
+        else
+        {
+            long flag = !tokens[1].startsWith(REGISTER_PREFIX + "") ? 1L : 0L;
+
+            long dest = LONG_INSTRUCTION_ADDRESS_FIX(SAFE(PARSE_TOKEN(tokens[1], lineNum, labels), (flag == 1) ? 25 : 4), numStartInstructions);
+
+            return word | (flag << (wordSize - 7)) | dest;
+        }
+    }
+
+    private static long parseJump(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
     {
         if(tokens.length != 2)
         { throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +

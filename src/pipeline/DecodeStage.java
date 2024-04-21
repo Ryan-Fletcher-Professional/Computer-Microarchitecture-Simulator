@@ -53,7 +53,9 @@ public class DecodeStage extends PipelineStage
                 case HEADER.STORE -> decodeStore();
                 case HEADER.STORE_LINE -> decodeStoreLine();
 
+                case HEADER.BRANCH_IF_ZERO -> decodeBranchIfZero();
                 case HEADER.BRANCH_IF_NEGATIVE -> decodeBranchIfNegative();
+                case HEADER.JUMP -> decodeJump();
                 case HEADER.CALL -> decodeCall();
                 case HEADER.RETURN -> decodeReturn();
 
@@ -385,6 +387,25 @@ public class DecodeStage extends PipelineStage
         }
     }
 
+    private void decodeBranchIfZero()
+    {
+        heldInstruction.addFlags(1);
+
+
+        int start = heldInstruction.wordLength() - 4;
+        int type = AUX_SD_TYPE_REGISTER;
+        if(heldInstruction.getAuxBits(FLAG(0)).toInt() != 0)
+        {
+            start -= (25 - 4);
+            type = AUX_SD_TYPE_IMMEDIATE;
+        }
+        heldInstruction.addSource(0, start, heldInstruction.wordLength(), type, AUX_REG_BANK_INDEXABLES);
+
+        heldInstruction.addSourceManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+
+        heldInstruction.addDestManual(0, new Term(PC_INDEX), AUX_REG_BANK_INTERNALS);
+    }
+
     private void decodeBranchIfNegative()
     {
         heldInstruction.addFlags(1);
@@ -400,6 +421,23 @@ public class DecodeStage extends PipelineStage
         heldInstruction.addSource(0, start, heldInstruction.wordLength(), type, AUX_REG_BANK_INDEXABLES);
 
         heldInstruction.addSourceManual(1, new Term(CC_INDEX), AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INTERNALS);
+
+        heldInstruction.addDestManual(0, new Term(PC_INDEX), AUX_REG_BANK_INTERNALS);
+    }
+
+    private void decodeJump()
+    {
+        heldInstruction.addFlags(1);
+
+
+        int start = heldInstruction.wordLength() - 4;
+        int type = AUX_SD_TYPE_REGISTER;
+        if(heldInstruction.getAuxBits(FLAG(0)).toInt() != 0)
+        {
+            start -= (25 - 4);
+            type = AUX_SD_TYPE_IMMEDIATE;
+        }
+        heldInstruction.addSource(0, start, heldInstruction.wordLength(), type, AUX_REG_BANK_INDEXABLES);
 
         heldInstruction.addDestManual(0, new Term(PC_INDEX), AUX_REG_BANK_INTERNALS);
     }

@@ -287,7 +287,11 @@ public class Instruction
     {
         // bitmasks
         int[] ret = new int[3];
-        if(getHeader().equals(HEADER.BRANCH_IF_NEGATIVE))
+        if(getHeader().equals(HEADER.BRANCH_IF_ZERO))
+        {
+            ret[0] = CC_ZERO_MASK;
+        }
+        else if(getHeader().equals(HEADER.BRANCH_IF_NEGATIVE))
         {
             ret[0] = CC_NEGATIVE_MASK;
         }
@@ -352,7 +356,9 @@ public class Instruction
                 case HEADER.STORE -> executeStore((MemoryAccessStage)invoker);
                 case HEADER.STORE_LINE -> executeStoreLine((MemoryAccessStage)invoker);
 
-                case HEADER.BRANCH_IF_NEGATIVE -> {}  // Nothing to execute; logic in getNegativeConditionChecks()
+                case HEADER.BRANCH_IF_ZERO -> {}  // Nothing to execute; logic in getPositiveConditionChecks()
+                case HEADER.BRANCH_IF_NEGATIVE -> {}  // Nothing to execute; logic in getPositiveConditionChecks()
+                case HEADER.JUMP -> {}  // Nothing to execute here
                 case HEADER.CALL -> {}  // Nothing to execute; decentralized logic
                 case HEADER.RETURN -> {}  // Nothing to execute; decentralized logic
 

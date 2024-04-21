@@ -2,6 +2,10 @@ SET WORD SIZE 64
 SET STACK SIZE 1000000000
 SET BUFFER SIZE 1000000000
 
+BR0 %LOOP_START
+COPY #7, R10
+JUMP %TEST
+=UNTEST
 COPY #1, R2         @ Next load address
 COPY #0, R3         @ Current index
 LOAD #0, R4         @ Size of list
@@ -23,3 +27,6 @@ BRN %LOOP_START+#1
 STR R0, R2          @ Store acc in next add.
 HALT #0
     @ Should save #4059 to the location after #10 in data memory.
+=TEST
+CMP R10, #7
+BR0 %UNTEST

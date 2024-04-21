@@ -211,6 +211,10 @@ public class MemoryWritebackStage extends PipelineStage
             }
             return ret;
         }
+        else if(BRANCH_INSTRUCTIONS.contains(heldInstruction.getHeader()))  // Unsuccessful branch
+        {
+            pendingRegisters[INTERNAL_BANK_INDEX][PC_INDEX]--;
+        }
         else if(header.equals(HEADER.NOOP))
         {
             // TODO : Record NOOP
