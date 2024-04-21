@@ -2,31 +2,90 @@ SET WORD SIZE 64
 SET STACK SIZE 1000000000
 SET BUFFER SIZE 1000000000
 
-BR0 %LOOP_START
-COPY #7, R10
-JUMP %TEST
-=UNTEST
-COPY #1, R2         @ Next load address
-COPY #0, R3         @ Current index
-LOAD #0, R4         @ Size of list
-COPY #1, R5         @ Testing UNDO
-COPY #2, R6
-COPY #3, R7
-COPY #4, R8
-COPY #5, R9
-UNDO #2, #2         @ HUZZAH! It works! (For real this time LOL)
-    =LOOP_START
-LOAD R2, R1         @ Next value
-ADD R0, R1          @ Accumulate
-ADD R2, #1          @ Increment next address
-ADD R3, #1          @ Increment index
-SWAP R2, R3         @ Testing SWAP
-SWAP R2, R3         @ Testing SWAP
-SUB R3, R4, R8, 1   @ Compare index w/max
-BRN %LOOP_START+#1
-STR R0, R2          @ Store acc in next add.
+BR0 %bottom1
+CMP #0, R0
+BR0 %bottom1
+BRN %bottom2
+SUB R0, #1, R0, 1
+COPY #0, R0
+BRN %bottom2
+COPY #16, R4  @ Number of items to add
+LOADL #0, R8
+LOADL #0, R12
+CALL %operate_arithmetic
+STR R0, #20
+COPY R4, R1
+ADD #4, R4
+COPY #0, R0
+CALL %operate_bitwise
+STR R0, #21
+JUMP %undo
+=operate_arithmetic
+LOAD R1, R3
+MOD R1, #4, R2
+CMP R2, #0
+BR0 %add
+CMP R2, #1
+BR0 %sub
+CMP R2, #2
+BR0 %mul
+CMP R2, #3
+BR0 %div
+=add
+ADD R0, R3
+JUMP %call_next_a
+=sub
+SUB R0, R3
+JUMP %call_next_a
+=mul
+MUL R0, R3
+JUMP %call_next_a
+=div
+DIV R0, R3
+JUMP %call_next_a
+=call_next_a
+ADD R1, #1
+CMP R1, R4
+BR0 %operate_a_return           @ Will add relative later :)
+CALL %operate_arithmetic
+=operate_a_return
+RETURN
+=operate_bitwise
+LOAD R1, R3
+MOD R1, #4, R2
+CMP R2, #0
+BR0 %and
+CMP R2, #1
+BR0 %or
+CMP R2, #2
+BR0 %xor
+CMP R2, #3
+BR0 %not
+=and
+AND R0, R3
+JUMP %call_next_b
+=or
+OR R0, R3
+JUMP %call_next_b
+=xor
+XOR R0, R3
+JUMP %call_next_b
+=not
+NOT R0
+JUMP %call_next_b
+=call_next_b
+ADD R1, #1
+CMP R1, R4
+BR0 %operate_b_return  @ Will add relative later :)
+CALL %operate_bitwise
+=operate_b_return
+RETURN
+=bottom1
+JUMP #8
+=bottom2
+JUMP #12
+=undo
+UNDO #2
+UNDO #4, #2
+STRL R1, #24
 HALT #0
-    @ Should save #4059 to the location after #10 in data memory.
-=TEST
-CMP R10, #7
-BR0 %UNTEST

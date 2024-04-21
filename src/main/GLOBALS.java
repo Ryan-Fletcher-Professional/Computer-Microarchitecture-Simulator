@@ -18,6 +18,16 @@ public class GLOBALS
     public static int WORD_SIZE_SHORT = 32;
     public static int WORD_SIZE_LONG = 64;
 
+    public static final int[][][] START_MEM_5RAM32_1INST1LONG = new int[][][] {  // TODO : Use this for Monday
+            new int[][] {
+                    new int[] {5, 32, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+            },
+            new int[][] {
+            },
+            new int[][] {
+                    new int[] {1, 1, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
+            }
+    };
     public static final int[][][] START_MEM_5RAM32_1INST4LONG = new int[][][] {
         new int[][] {
             new int[] {5, 32, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
@@ -27,6 +37,17 @@ public class GLOBALS
         new int[][] {
             new int[] {1, 4, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
         }
+    };
+    public static final int[][][] START_MEM_5RAM32_2DATA8_1INST4LONG = new int[][][] {  // TODO : Use this for Monday
+            new int[][] {
+                    new int[] {5, 32, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+            },
+            new int[][] {
+                    new int[] {2, 8, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+            },
+            new int[][] {
+                    new int[] {1, 8, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
+            }
     };
     public static final int[][][] START_MEM_100RAM1024_10DATA256_2DATA128_1INST32LONG = new int[][][] {
         new int[][] {
