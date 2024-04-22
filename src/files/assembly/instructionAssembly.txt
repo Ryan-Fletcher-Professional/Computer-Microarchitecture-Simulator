@@ -76,7 +76,7 @@ JUMP %call_next_b
 =call_next_b
 ADD R1, #1
 CMP R1, R4
-BR0 %operate_b_return  @ Will add relative later :)
+BR0 %operate_b_return           @ Will add relative later :)
 CALL %operate_bitwise
 =operate_b_return
 RETURN

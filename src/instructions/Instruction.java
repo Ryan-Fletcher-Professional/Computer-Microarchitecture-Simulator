@@ -392,14 +392,15 @@ public class Instruction
         MemoryModule cache = stage.nearestInstructionCache;
         if(activeRequest == null)
         {
+            long pc = stage.internalRegisters.load(PC_INDEX);
             activeRequest = new LinkedList<>(List.of(
                 new MemoryRequest(id, cache.getID(),
                                   MEMORY_TYPE.INSTRUCTION, REQUEST_TYPE.LOAD,
-                                  new Object[]{(int)(stage.internalRegisters.load(PC_INDEX)), false})));
+                                  new Object[]{(int)(pc), true})));
             int[] words = cache.load(activeRequest);
-            for(int i = 0; i < words.length; i++)
+            for(int i = 0; i < wordLength() / WORD_SIZE_SHORT; i++)
             {
-                addAuxBits(KEY + i, new Term(words[i], false, 32));
+                addAuxBits(KEY + i, new Term(words[(int)(pc % stage.nearestInstructionCache.getLineSize()) + i], false, 32));
             }
         }
         if(activeRequest.isEmpty() && !isFinished())

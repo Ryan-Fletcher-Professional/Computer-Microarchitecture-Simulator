@@ -18,15 +18,14 @@ public class GLOBALS
     public static int WORD_SIZE_SHORT = 32;
     public static int WORD_SIZE_LONG = 64;
 
-    public static final int[][][] START_MEM_5RAM32_1INST1LONG = new int[][][] {  // TODO : Use this for Monday
-            new int[][] {
-                    new int[] {5, 32, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
-            },
-            new int[][] {
-            },
-            new int[][] {
-                    new int[] {1, 1, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
-            }
+    public static final int[][][] START_MEM_5RAM32 = new int[][][] {  // TODO : Use this for Monday
+        new int[][] {
+            new int[] {5, 32, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+        },
+        new int[][] {
+        }
     };
     public static final int[][][] START_MEM_5RAM32_1INST4LONG = new int[][][] {
         new int[][] {
