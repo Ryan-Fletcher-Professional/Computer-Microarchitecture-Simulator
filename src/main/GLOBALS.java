@@ -13,7 +13,7 @@ public class GLOBALS
         Clerical
      */
 
-    public static final int PRINT_CHECKPOINT_INDEX = 10000;
+    public static final int PRINT_CHECKPOINT_INDEX = 100000;
 
     public static final int DEFAULT_LINE_SIZE = 8;
     public static final int INDEXABLE_BANK_SIZE = 16;

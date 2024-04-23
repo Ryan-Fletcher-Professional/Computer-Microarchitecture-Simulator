@@ -8,6 +8,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.io.File;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -94,9 +95,13 @@ public class Simulator extends JFrame
             catch(NumberFormatException _ignored_) {}
             for(int i = 0; i < numTicks; i++)
             {
-                if((i % PRINT_CHECKPOINT_INDEX) == 0)
+                if((i > 0) && ((i % PRINT_CHECKPOINT_INDEX) == 0))
                 {
                     System.out.println("CYCLE: " + i);
+                    for(String line : registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(10).split("\n"))
+                    {
+                        System.out.println("\t" + line);
+                    }
                 }
                 output = null;
                 boolean aboutToHalt = false;
