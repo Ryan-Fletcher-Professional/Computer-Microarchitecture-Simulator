@@ -1,6 +1,6 @@
-Takes a few seconds on mediocre laptop.
+Takes a minute or so on mediocre laptop.
 
-363,845 cycles with 64-bit instructions following memory structure:
+1,240,726 cycles with 64-bit instructions following memory structure:
            RAM:
                1024 lines, 100-cycle delay
            Data cache:
