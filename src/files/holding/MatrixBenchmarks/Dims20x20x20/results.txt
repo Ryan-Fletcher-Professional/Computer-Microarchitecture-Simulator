@@ -1,0 +1,10 @@
+Takes a few seconds on mediocre laptop.
+
+363845 cycles with 64-bit instructions following memory structure:
+           RAM:
+               1024 lines, 100-cycle delay
+           Data cache:
+               256 lines, 10-cycle delay
+               128 lines, 2-cycle delay
+           Instruction cache:
+               32 lines, 1-cycle delay
