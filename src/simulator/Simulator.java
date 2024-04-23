@@ -94,6 +94,10 @@ public class Simulator extends JFrame
             catch(NumberFormatException _ignored_) {}
             for(int i = 0; i < numTicks; i++)
             {
+                if((i % PRINT_CHECKPOINT_INDEX) == 0)
+                {
+                    System.out.println("CYCLE: " + i);
+                }
                 output = null;
                 boolean aboutToHalt = false;
                 boolean doneOnce = false;

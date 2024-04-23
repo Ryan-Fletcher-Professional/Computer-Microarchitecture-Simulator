@@ -629,7 +629,7 @@ public class Assembler
 
             long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), (flag_a == 1) ? 32 : 4);
 
-            int srcShift = (flag_b == 1L) ? 25 : 4;
+            int srcShift = (flag_a == 0L) ? 25 : 4;
             long dest = SAFE(PARSE_TOKEN(tokens[2], lineNum, labels), (flag_b == 1) ? 25 : 4);
 
             return word | (flag_a << (wordSize - 7)) | (flag_b << (wordSize - 8)) | (src << srcShift) | dest;
