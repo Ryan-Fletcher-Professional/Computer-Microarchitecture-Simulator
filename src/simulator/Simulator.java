@@ -21,6 +21,7 @@ import static main.GLOBALS.*;
 import static instructions.Instructions.*;
 
 import instructions.Instruction;
+import main.Main;
 import memory.MemoryModule;
 import memory.MemoryRequest;
 import memory.RegisterFileModule;
@@ -208,13 +209,14 @@ public class Simulator extends JFrame
         resetButton.setPreferredSize(new Dimension(100, 30));
         resetButton.addActionListener(e -> {
             setVisible(false);
-            new Simulator(GET_ID(), registerBanks, pipeline, this.getExtendedState(), startingPC, startingMemories, numSpecialInstructions);
-            for(RegisterFileModule bank : registerBanks)
-            {
-                if(bank != null) { bank.reset(); }
-            }
-            registerBanks[INTERNAL_BANK_INDEX].store(PC_INDEX, startingPC);
-            pipeline.reset();
+//            new Simulator(GET_ID(), registerBanks, pipeline, this.getExtendedState(), startingPC, startingMemories, numSpecialInstructions);
+//            for(RegisterFileModule bank : registerBanks)
+//            {
+//                if(bank != null) { bank.reset(); }
+//            }
+//            registerBanks[INTERNAL_BANK_INDEX].store(PC_INDEX, startingPC);
+//            pipeline.reset();
+            Main.main(null);  // Not a word!
         });
         Component[] toolBarComponents = new Component[] { countLabel, tickButton, tickField, Box.createHorizontalStrut(30),
                                                           stackPipelineToggle, controlsToggle, Box.createHorizontalStrut(30),

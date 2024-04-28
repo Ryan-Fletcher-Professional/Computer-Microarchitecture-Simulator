@@ -12,7 +12,7 @@ public class Main
 {
     // Each int[][] corresponds to the unified, data, or instruction memories (in that order)
     // Each int[] is one module in the form of [ delay, number of lines, number of words per line, word size ]
-    private static final int[][][] STARTING_MEMORIES = START_MEM_100RAM1024_10DATA256_2DATA128_1INST32LONG;
+    private static final int[][][] STARTING_MEMORIES = START_MEM_100RAM9192_20DATA1024_10DATA256_2DATA128_1INST32LONG;
 
     public static void main(String[] args)
     {
@@ -28,9 +28,9 @@ public class Main
             indexableLengths[i] = Integer.SIZE;
             indexableNames[i] = "R" + i;
         }
-        int[] internalLengths = new int[] { 1, 25, 25, 16, 64, 64, startingParams[1], startingParams[2] };
+        int[] internalLengths = new int[] { 1, 25, 25, 16, 64, 64 };
         String[] internalNames = INTERNAL_REGISTER_NAMES;
-        int[] callStackLengths = new int[internalLengths[6] * indexableLengths.length];  // Will be pushed/popped in groups of 17; 1 for return pointer and 16 for snapshot of indexable register file
+        int[] callStackLengths = new int[startingParams[1] * indexableLengths.length];  // Will be pushed/popped in groups of 17; 1 for return pointer and 16 for snapshot of indexable register file
         String[] callStackNames = new String[callStackLengths.length];
         for(int i = 0; i < callStackLengths.length; i++)
         {
@@ -38,7 +38,7 @@ public class Main
             callStackLengths[i] = (index == 0) ? ADDRESS_SIZE : indexableLengths[index];
             callStackNames[i] = i / indexableLengths.length + " " + ((index == 0) ? "R" : index);
         }
-        int[] reversalStackLengths = new int[internalLengths[7] * (indexableLengths.length + 1)];  // Will be pushed/popped in groups of 16 for snapshot of indexable register file
+        int[] reversalStackLengths = new int[startingParams[2] * (indexableLengths.length + 1)];  // Will be pushed/popped in groups of 16 for snapshot of indexable register file
         String[] reversalStackNames = new String[reversalStackLengths.length];
         for(int i = 0; i < reversalStackLengths.length; i++)
         {

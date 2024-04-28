@@ -20,6 +20,15 @@ public class GLOBALS
     public static int WORD_SIZE_SHORT = 32;
     public static int WORD_SIZE_LONG = 64;
 
+    public static final int[][][] START_MEM_1RAM9192 = new int[][][] {
+        new int[][] {
+            new int[] {1, 9192, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+        },
+        new int[][] {
+        }
+    };
     public static final int[][][] START_MEM_1RAM256 = new int[][][] {
         new int[][] {
             new int[] {1, 256, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
@@ -128,16 +137,16 @@ public class GLOBALS
     public static final String CC = "CC";
     public static final String PRED_1 = "PRED 1";
     public static final String PRED_2 = "PRED 2";
-    public static final String CALL = "CALL";
-    public static final String REV = "REV";
-    public static final String[] INTERNAL_REGISTER_NAMES = new String[] { "C0", CM, PC, CC, PRED_1, PRED_2, CALL, REV };
+//    public static final String CALL = "CALL";
+//    public static final String REV = "REV";
+    public static final String[] INTERNAL_REGISTER_NAMES = new String[] { "C0", CM, PC, CC, PRED_1, PRED_2/*, CALL, REV*/ };
     public static final int CC_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(CC);
     public static final int CM_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(CM);
     public static final int PC_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(PC);
     public static final int PRED_1_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(PRED_1);
     public static final int PRED_2_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(PRED_2);
-    public static final int CALL_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(CALL);
-    public static final int REV_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(REV);
+//    public static final int CALL_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(CALL);
+//    public static final int REV_INDEX = List.of(INTERNAL_REGISTER_NAMES).indexOf(REV);
 
     public enum MEMORY_KIND
     {
