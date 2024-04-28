@@ -65,6 +65,10 @@ public class Instructions
         NOT,
         COMPARE,
 
+        SLL,
+        SLR,
+        SRL,
+        SRA,
         COPY,
         SWAP,
 
@@ -105,6 +109,10 @@ public class Instructions
         put(OPCODE.NOT, "011");
         put(OPCODE.COMPARE, "100");
 
+        put(OPCODE.SLL, "000");
+        put(OPCODE.SLR, "001");
+        put(OPCODE.SRL, "010");
+        put(OPCODE.SRA, "011");
         put(OPCODE.COPY, "100");
         put(OPCODE.SWAP, "101");
 
@@ -154,6 +162,10 @@ public class Instructions
         NOT,
         COMPARE,
 
+        SLL,
+        SLR,
+        SRL,
+        SRA,
         COPY,
         SWAP,
 
@@ -195,6 +207,10 @@ public class Instructions
         put(HEADER.NOT,                     MAKE_HEADER_STRING( TYPECODE.INT_LOGIC,         OPCODE.NOT                  ));
         put(HEADER.COMPARE,                 MAKE_HEADER_STRING( TYPECODE.INT_LOGIC,         OPCODE.COMPARE              ));
 
+        put(HEADER.SLL,                     MAKE_HEADER_STRING( TYPECODE.INT_CONTROL,        OPCODE.SLL                 ));
+        put(HEADER.SLR,                     MAKE_HEADER_STRING( TYPECODE.INT_CONTROL,        OPCODE.SLR                 ));
+        put(HEADER.SRL,                     MAKE_HEADER_STRING( TYPECODE.INT_CONTROL,        OPCODE.SRL                 ));
+        put(HEADER.SRA,                     MAKE_HEADER_STRING( TYPECODE.INT_CONTROL,        OPCODE.SRA                 ));
         put(HEADER.COPY,                    MAKE_HEADER_STRING( TYPECODE.INT_CONTROL,        OPCODE.COPY                ));
         put(HEADER.SWAP,                    MAKE_HEADER_STRING( TYPECODE.INT_CONTROL,        OPCODE.SWAP                ));
 
@@ -223,7 +239,6 @@ public class Instructions
         put(HEADER.STORE,                   "STR");
         put(HEADER.STORE_LINE,              "STRL");
 
-
         put(HEADER.BRANCH_IF_ZERO,          "BR0");
         put(HEADER.BRANCH_IF_NEGATIVE,      "BRN");
         put(HEADER.JUMP,                    "JUMP");
@@ -242,6 +257,10 @@ public class Instructions
         put(HEADER.NOT,                     "NOT");
         put(HEADER.COMPARE,                 "CMP");
 
+        put(HEADER.SLL,                     "SLL");
+        put(HEADER.SLR,                     "SLR");
+        put(HEADER.SRL,                     "SRL");
+        put(HEADER.SRA,                     "SRA");
         put(HEADER.COPY,                    "COPY");
         put(HEADER.SWAP,                    "SWAP");
 
@@ -292,6 +311,10 @@ public class Instructions
         HEADER.XOR,
         HEADER.NOT,
         HEADER.COMPARE,
+        HEADER.SLL,
+        HEADER.SLR,
+        HEADER.SRL,
+        HEADER.SRA,
         HEADER.COPY,
         HEADER.SWAP,
         HEADER.HALT

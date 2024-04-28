@@ -71,6 +71,10 @@ public class DecodeStage extends PipelineStage
                 case HEADER.NOT -> decodeNOT();
                 case HEADER.COMPARE -> decodeCompare();
 
+                case HEADER.SLL -> decodeSLL();
+                case HEADER.SLR -> decodeSLR();
+                case HEADER.SRL -> decodeSRL();
+                case HEADER.SRA -> decodeSRA();
                 case HEADER.COPY -> decodeCopy();
                 case HEADER.SWAP -> decodeSwap();
 
@@ -1051,6 +1055,150 @@ public class DecodeStage extends PipelineStage
         }
 
         heldInstruction.addDestManual(0, new Term(CC_INDEX), AUX_REG_BANK_INTERNALS);
+    }
+
+    public void decodeSLL()
+    {
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            int start = 20;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+        }
+        else
+        {
+            heldInstruction.addFlags(1);
+
+            int start = 24;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+            int type = AUX_SD_TYPE_IMMEDIATE;
+            if(AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0))
+            {
+                start += 32 - 4;
+                type = AUX_SD_TYPE_REGISTER;
+            }
+
+            heldInstruction.addSource(1, start, heldInstruction.wordLength() - 4, type, AUX_REG_BANK_INDEXABLES);
+            start = heldInstruction.wordLength() - 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+        }
+    }
+
+    public void decodeSLR()
+    {  // Should be the same as SLL
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            int start = 20;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+        }
+        else
+        {
+            heldInstruction.addFlags(1);
+
+            int start = 24;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+            int type = AUX_SD_TYPE_IMMEDIATE;
+            if(AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0))
+            {
+                start += 32 - 4;
+                type = AUX_SD_TYPE_REGISTER;
+            }
+
+            heldInstruction.addSource(1, start, heldInstruction.wordLength() - 4, type, AUX_REG_BANK_INDEXABLES);
+            start = heldInstruction.wordLength() - 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+        }
+    }
+
+    public void decodeSRL()
+    {  // Should be the same as SLL
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            int start = 20;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+        }
+        else
+        {
+            heldInstruction.addFlags(1);
+
+            int start = 24;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+            int type = AUX_SD_TYPE_IMMEDIATE;
+            if(AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0))
+            {
+                start += 32 - 4;
+                type = AUX_SD_TYPE_REGISTER;
+            }
+
+            heldInstruction.addSource(1, start, heldInstruction.wordLength() - 4, type, AUX_REG_BANK_INDEXABLES);
+            start = heldInstruction.wordLength() - 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+        }
+    }
+
+    public void decodeSRA()
+    {  // Should be the same as SLL
+        if(heldInstruction.wordLength() == WORD_SIZE_SHORT)
+        {
+            int start = 20;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addSource(1, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+        }
+        else
+        {
+            heldInstruction.addFlags(1);
+
+            int start = 24;
+
+            heldInstruction.addSource(0, start, start + 4, AUX_SD_TYPE_REGISTER, AUX_REG_BANK_INDEXABLES);
+            start += 4;
+            int type = AUX_SD_TYPE_IMMEDIATE;
+            if(AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0))
+            {
+                start += 32 - 4;
+                type = AUX_SD_TYPE_REGISTER;
+            }
+
+            heldInstruction.addSource(1, start, heldInstruction.wordLength() - 4, type, AUX_REG_BANK_INDEXABLES);
+            start = heldInstruction.wordLength() - 4;
+
+            heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
+        }
     }
 
     public void decodeCopy()

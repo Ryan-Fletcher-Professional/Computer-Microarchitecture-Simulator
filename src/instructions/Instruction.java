@@ -374,6 +374,10 @@ public class Instruction
                 case HEADER.NOT -> executeNOT((ExecuteStage)invoker);
                 case HEADER.COMPARE -> executeCompare((ExecuteStage)invoker);
 
+                case HEADER.SLL -> executeSLL((ExecuteStage)invoker);
+                case HEADER.SLR -> executeSLR((ExecuteStage)invoker);
+                case HEADER.SRL -> executeSRL((ExecuteStage)invoker);
+                case HEADER.SRA -> executeSRA((ExecuteStage)invoker);
                 case HEADER.COPY -> executeCopy((ExecuteStage)invoker);
                 case HEADER.SWAP -> executeSwap((ExecuteStage)invoker);
 
@@ -635,6 +639,49 @@ public class Instruction
         newCC = (result > 0) ? NEW_CC_POSITIVE(newCC) : NEW_CC_NONPOSITIVE(newCC);
 
         setResult(0, new Term(newCC, false));
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
+    }
+
+    public void executeSLL(ExecuteStage stage) {
+        int src = getAuxBits(AUX_SOURCE(0)).toInt();
+        //shift amount
+        int amount = getAuxBits(AUX_SOURCE(1)).toInt();
+
+        // << logical left shift operation
+        int result = src << amount;
+
+        addAuxBits(AUX_RESULT(0), new Term(result, false, Integer.SIZE));
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
+    }
+
+    public void executeSLR(ExecuteStage stage) {
+        int src = getAuxBits(AUX_SOURCE(0)).toInt();
+        int amount = getAuxBits(AUX_SOURCE(1)).toInt();
+
+        //rotating left shift operation
+        int result = Integer.rotateLeft(src, amount);
+
+        addAuxBits(AUX_RESULT(0), new Term(result, false, Integer.SIZE));
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
+    }
+
+    public void executeSRL(ExecuteStage stage) {
+        int src = getAuxBits(AUX_SOURCE(0)).toInt();
+        int amount = getAuxBits(AUX_SOURCE(1)).toInt();
+
+        // >>> logical right shift operation
+        int result = src >>> amount;
+        addAuxBits(AUX_RESULT(0), new Term(result, false, Integer.SIZE));
+        addAuxBits(AUX_FINISHED, AUX_TRUE);
+    }
+
+    public void executeSRA(ExecuteStage stage) {
+        int src = getAuxBits(AUX_SOURCE(0)).toInt();
+        int amount = getAuxBits(AUX_SOURCE(1)).toInt();
+
+        // >> arithmetic right shift operation
+        int result = src >> amount;
+        addAuxBits(AUX_RESULT(0), new Term(result, false, Integer.SIZE));
         addAuxBits(AUX_FINISHED, AUX_TRUE);
     }
 

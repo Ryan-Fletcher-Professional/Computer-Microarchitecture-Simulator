@@ -499,6 +499,10 @@ public class Assembler
             case HEADER.NOT -> word = parseNOT(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.COMPARE -> word = parseCompare(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
+            case HEADER.SLL -> word = parseSLL(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.SLR -> word = parseSLR(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.SRL -> word = parseSRL(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
+            case HEADER.SRA -> word = parseSRA(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.COPY -> word = parseCopy(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
             case HEADER.SWAP -> word = parseSwap(MNEMONICS.get(header), word, tokens, wordSize, lineNum, numStartInstructions, labels);
 
@@ -1347,6 +1351,174 @@ public class Assembler
 
             return word | (flag_a << (wordSize - 7)) | (flag_b << (wordSize - 8))
                         | (operand1 << operand1Shift) | operand2;
+        }
+    }
+
+    private static long parseSLL(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {
+        if((tokens.length < 3) || (tokens.length > 4))
+        {
+            throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                        "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <src reg>, <amount>{, <dest reg>}");
+        }
+        if(!tokens[1].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+        if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <src reg> is not a register"); }
+
+        if(tokens.length == 3)
+        { tokens = new String[] { tokens[0], tokens[1], tokens[2] + ",",
+                                  tokens[1].substring(0, tokens[1].length() - 1) }; }
+
+        if(!tokens[2].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long amount = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), 4);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (src << 8) | (amount << 4) | dest;
+        }
+        else
+        {
+            long flag = !tokens[2].startsWith(REGISTER_PREFIX + "") ? 1L : 0L;
+
+            long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long amount = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), (flag == 0) ? 4 : 32);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (flag << (wordSize - 7)) | (src << 36) | (amount << 4) | dest;
+        }
+    }
+
+    private static long parseSLR(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {  // Should be the same as SLL
+        if((tokens.length < 3) || (tokens.length > 4))
+        {
+            throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                        "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <src reg>, <amount>{, <dest reg>}");
+        }
+        if(!tokens[1].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+        if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <src reg> is not a register"); }
+
+        if(tokens.length == 3)
+        { tokens = new String[] { tokens[0], tokens[1], tokens[2] + ",",
+            tokens[1].substring(0, tokens[1].length() - 1) }; }
+
+        if(!tokens[2].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long amount = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), 4);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (src << 8) | (amount << 4) | dest;
+        }
+        else
+        {
+            long flag = !tokens[2].startsWith(REGISTER_PREFIX + "") ? 1L : 0L;
+
+            long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long amount = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), (flag == 0) ? 4 : 32);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (flag << (wordSize - 7)) | (src << 36) | (amount << 4) | dest;
+        }
+    }
+
+    private static long parseSRL(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {  // Should be the same as SLL
+        if((tokens.length < 3) || (tokens.length > 4))
+        {
+            throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                        "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <src reg>, <amount>{, <dest reg>}");
+        }
+        if(!tokens[1].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+        if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <src reg> is not a register"); }
+
+        if(tokens.length == 3)
+        { tokens = new String[] { tokens[0], tokens[1], tokens[2] + ",",
+            tokens[1].substring(0, tokens[1].length() - 1) }; }
+
+        if(!tokens[2].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long amount = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), 4);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (src << 8) | (amount << 4) | dest;
+        }
+        else
+        {
+            long flag = !tokens[2].startsWith(REGISTER_PREFIX + "") ? 1L : 0L;
+
+            long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long amount = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), (flag == 0) ? 4 : 32);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (flag << (wordSize - 7)) | (src << 36) | (amount << 4) | dest;
+        }
+    }
+
+    private static long parseSRA(String mnemonic, long word, String[] tokens, int wordSize, int lineNum, int numStartInstructions, Map<String, Integer> labels) throws AssemblyError
+    {  // Should be the same as SLL
+        if((tokens.length < 3) || (tokens.length > 4))
+        {
+            throw new AssemblyError("Incorrect number of arguments for instruction \"" + mnemonic +
+                                        "\" in line " + lineNum + ". Instruction format is:\n\t" + mnemonic + " <src reg>, <amount>{, <dest reg>}");
+        }
+        if(!tokens[1].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+        if(!tokens[1].startsWith(REGISTER_PREFIX + ""))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": <src reg> is not a register"); }
+
+        if(tokens.length == 3)
+        { tokens = new String[] { tokens[0], tokens[1], tokens[2] + ",",
+            tokens[1].substring(0, tokens[1].length() - 1) }; }
+
+        if(!tokens[2].endsWith(","))
+        { throw new AssemblyError("Incorrect argument format for instruction \"" + mnemonic + "\" in line " +
+                                      lineNum + ": Missing comma separator"); }
+
+        if(wordSize == WORD_SIZE_SHORT)
+        {
+            long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long amount = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), 4);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (src << 8) | (amount << 4) | dest;
+        }
+        else
+        {
+            long flag = !tokens[2].startsWith(REGISTER_PREFIX + "") ? 1L : 0L;
+
+            long src = SAFE(PARSE_TOKEN(tokens[1].substring(0, tokens[1].length() - 1), lineNum, labels), 4);
+            long amount = SAFE(PARSE_TOKEN(tokens[2].substring(0, tokens[2].length() - 1), lineNum, labels), (flag == 0) ? 4 : 32);
+            long dest = SAFE(PARSE_TOKEN(tokens[3], lineNum, labels), 4);
+
+            return word | (flag << (wordSize - 7)) | (src << 36) | (amount << 4) | dest;
         }
     }
 
