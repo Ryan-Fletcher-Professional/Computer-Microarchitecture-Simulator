@@ -556,12 +556,19 @@ public class MemoryModule
     public void storeFiles(String path, int startingAddress)
     {
         File directory = new File(path);
-        File[] files = directory.listFiles();
+        File[] tempFiles = directory.listFiles();
+
+        File[] files = new File[2];
+        for(File file : tempFiles)
+        {
+            if(file.getName().equals("1.txt")) { files[0] = file; }
+            else if(file.getName().equals("3.txt")) { files[1] = file; }
+        }
 
         int previousSize = 0;
         List<Integer> words = new ArrayList<>();
 
-        if (files != null)
+        if (files[0] != null)
         {
             for (File file : files)
             {
