@@ -2,6 +2,7 @@ package pipeline;
 
 import instructions.Instruction;
 import memory.RegisterFileModule;
+import simulator.Simulator;
 
 import java.util.Arrays;
 
@@ -16,6 +17,7 @@ public class MemoryWritebackStage extends PipelineStage
     private final RegisterFileModule callStack;
     private final RegisterFileModule reversalStack;
     private final int[][] pendingRegisters;
+    public Simulator simulator;
 
     public MemoryWritebackStage(int wordSize, String name,
                                 RegisterFileModule indexableRegisters, RegisterFileModule internalRegisters,
@@ -217,11 +219,11 @@ public class MemoryWritebackStage extends PipelineStage
         }
         else if(header.equals(HEADER.NOOP))
         {
-            // TODO : Record NOOP
+            simulator.noops++;
         }
         else if(header.equals(HEADER.STALL))
         {
-            // TODO : Record stall
+            simulator.stalls++;
         }
         Instruction ret = heldInstruction;
         Instruction gotten = previousStage.execute(nextIsBlocked, activePipeline);

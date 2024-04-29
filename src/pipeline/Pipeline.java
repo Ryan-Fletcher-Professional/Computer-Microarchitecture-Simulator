@@ -3,6 +3,8 @@ package pipeline;
 import instructions.Instruction;
 import memory.MemoryModule;
 import memory.RegisterFileModule;
+import simulator.Simulator;
+
 import static main.GLOBALS.*;
 import static instructions.Instructions.*;
 
@@ -138,6 +140,10 @@ public class Pipeline
         endStage.setNearestDataCache(module);
     }
 
+    public void setSimulator(Simulator simulator)
+    {
+        this.write.simulator = simulator;
+    }
 
     public String getDisplayText(int radix)
     {

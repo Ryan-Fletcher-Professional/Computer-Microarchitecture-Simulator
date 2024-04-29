@@ -55,6 +55,10 @@ public class Simulator extends JFrame
     private JPanel currentlyVisibleControls, currentlyInvisibleControls, stackPipelinePanel,
                    callStackDisplayPanel, reversalStackDisplayPanel, pipelineDisplayPanel, pipelineLabelPanel;
     private JCheckBox activePipelineCheckbox;
+    public int stalls;
+    public JLabel stallsLabel;
+    public int noops;
+    public JLabel noopsLabel;
 
     public Simulator(int id, RegisterFileModule[] registerBanks, Pipeline pipeline, int extendedState, int startingPC, int[][][] startingMemories, int numSpecialInstructions)
     {
@@ -77,9 +81,17 @@ public class Simulator extends JFrame
         setLayout(new BorderLayout());
         setLocation((screenSize.width - width) / 2, (screenSize.height - height) / 2);
 
+        pipeline.setSimulator(this);
+
         // Toolbar at the top
         JPanel toolBarPanel = new JPanel(new BorderLayout());
         JToolBar toolBar = new JToolBar();
+        stallsLabel = new JLabel("Stalls: 0");
+        stallsLabel.setMinimumSize(new Dimension(150, 30));
+        stallsLabel.setMaximumSize(new Dimension(150, 30));
+        noopsLabel = new JLabel("No-Ops: 0");
+        noopsLabel.setMinimumSize(new Dimension(150, 30));
+        noopsLabel.setMaximumSize(new Dimension(150, 30));
         JLabel countLabel = new JLabel("Cycles: 0");
         countLabel.setMinimumSize(new Dimension(200, 30));
         countLabel.setMaximumSize(new Dimension(200, 30));
@@ -139,7 +151,7 @@ public class Simulator extends JFrame
                     break;
                 }
             }
-            countLabel.setText("Cycles: " + CURRENT_TICK);
+            countLabel.setText("Cycles: " + String.format("%,d", CURRENT_TICK));
             if(output != null)
             {
                 long pc = (output.getAuxBits(AUX_PC_AT_FETCH) == null) ? -1 : output.getAuxBits(AUX_PC_AT_FETCH).toInt();
@@ -218,7 +230,7 @@ public class Simulator extends JFrame
 //            pipeline.reset();
             Main.main(null);  // Not a word!
         });
-        Component[] toolBarComponents = new Component[] { countLabel, tickButton, tickField, Box.createHorizontalStrut(30),
+        Component[] toolBarComponents = new Component[] { stallsLabel, noopsLabel, countLabel, tickButton, tickField, Box.createHorizontalStrut(30),
                                                           stackPipelineToggle, controlsToggle, Box.createHorizontalStrut(30),
                                                           stepBackButton, quantityField, skipField, Box.createHorizontalStrut(30),
                                                           saveButton };
@@ -583,6 +595,9 @@ public class Simulator extends JFrame
             bars.add(pane.getVerticalScrollBar());
             positions.add(bars.getLast().getValue());
         }
+
+        stallsLabel.setText("Stalls: " + String.format("%,d", stalls));
+        noopsLabel.setText("No-Ops: " + String.format("%,d", noops));
 
         int radix = getRadices()[1];
         callStackDisplayText.setText(registerBanks[CALL_STACK_INDEX].getDisplayText(1, radix));
