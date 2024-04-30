@@ -12,7 +12,7 @@ public class Main
 {
     // Each int[][] corresponds to the unified, data, or instruction memories (in that order)
     // Each int[] is one module in the form of [ delay, number of lines, number of words per line, word size ]
-    private static final int[][][] STARTING_MEMORIES = START_MEM_100RAM9192_20DATA1024_10DATA256_2DATA128_1INST32LONG;
+    private static final int[][][] STARTING_MEMORIES = START_MEM_1RAM9192;
     private static final boolean RUN_ASSEMBLER = true;
 
     public static void main(String[] args)
@@ -24,6 +24,7 @@ public class Main
             }
             catch(AssemblyError e)
             {
+                e.printStackTrace();
                 System.out.println("\n!!!!!!!!    FAILED to run assembler    !!!!!!!!\n");
             }
         }
@@ -75,12 +76,12 @@ public class Main
     private static int[] FIND_START_PARAMS(String path)
     {
         int[] ret = new int[] { 32, 0b1000000000, 0b1000000000, 0 };
-
+    System.out.println(path);
         File directory = new File(path);
         File[] files = directory.listFiles();
         try
         {
-            FileInputStream fis = new FileInputStream(files[0]);
+            FileInputStream fis = new FileInputStream(path + "/1.txt");//new FileInputStream(files[0]);
             byte[] buffer = new byte[4];
             if(fis.read(buffer) == 4)
             {

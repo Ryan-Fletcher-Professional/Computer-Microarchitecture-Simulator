@@ -77,6 +77,7 @@ public class Assembler
             }
             catch(IOException e)
             {
+                e.printStackTrace();
                 throw new RuntimeException(e);
             }
         }
