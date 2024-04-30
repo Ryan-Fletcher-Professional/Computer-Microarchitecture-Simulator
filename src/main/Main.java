@@ -24,6 +24,7 @@ public class Main
             }
             catch(AssemblyError e)
             {
+                e.printStackTrace();
                 System.out.println("\n!!!!!!!!    FAILED to run assembler    !!!!!!!!\n");
             }
         }
@@ -80,7 +81,7 @@ public class Main
         File[] files = directory.listFiles();
         try
         {
-            FileInputStream fis = new FileInputStream(files[0]);
+            FileInputStream fis = new FileInputStream(path + "/1.txt");//new FileInputStream(files[0]);
             byte[] buffer = new byte[4];
             if(fis.read(buffer) == 4)
             {
