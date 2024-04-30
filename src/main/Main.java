@@ -28,7 +28,7 @@ public class Main
             indexableLengths[i] = Integer.SIZE;
             indexableNames[i] = "R" + i;
         }
-        int[] internalLengths = new int[] { 1, 25, 25, 16, 64, 64 };
+        int[] internalLengths = new int[] { 1, 25, 25, 16, 32, 32 };
         String[] internalNames = INTERNAL_REGISTER_NAMES;
         int[] callStackLengths = new int[startingParams[1] * indexableLengths.length];  // Will be pushed/popped in groups of 17; 1 for return pointer and 16 for snapshot of indexable register file
         String[] callStackNames = new String[callStackLengths.length];
