@@ -20,6 +20,15 @@ public class GLOBALS
     public static int WORD_SIZE_SHORT = 32;
     public static int WORD_SIZE_LONG = 64;
 
+    public static final int[][][] START_MEM_100RAM9192 = new int[][][] {
+        new int[][] {
+            new int[] {100, 9192, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+        },
+        new int[][] {
+        }
+    };
     public static final int[][][] START_MEM_1RAM9192 = new int[][][] {
         new int[][] {
             new int[] {1, 9192, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
