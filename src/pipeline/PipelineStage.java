@@ -89,8 +89,13 @@ public class PipelineStage
 
     protected Instruction passBlocking()
     {
+        return passBlocking(true);
+    }
+
+    protected Instruction passBlocking(boolean activePipeline)
+    {
         blocking = true;
-        return STALL(wordSize);
+        return activePipeline ? STALL(wordSize) : QUASH_NO_PIPELINE(wordSize);
     }
 
     protected Instruction pass(boolean obstructed) throws MRAException

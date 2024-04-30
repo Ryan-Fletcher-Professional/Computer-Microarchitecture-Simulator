@@ -156,11 +156,11 @@ public class DecodeStage extends PipelineStage
             if(AUX_EQUALS(heldInstruction.getAuxBits(AUX_SOURCE(i) + READ), AUX_FALSE))
             {
                 if(activePipeline) { previousStage.execute(true, true); }
-                return passBlocking();
+                return passBlocking(activePipeline);
             }
         }
 
-        Instruction next = activePipeline ? previousStage.execute(nextIsBlocked && !DISPOSABLE_INSTRUCTIONS.contains(heldInstruction.getHeader()), true) : NOOP(wordSize);
+        Instruction next = activePipeline ? previousStage.execute(nextIsBlocked && !DISPOSABLE_INSTRUCTIONS.contains(heldInstruction.getHeader()), true) : QUASH_NO_PIPELINE(wordSize);
 
         if(!(nextIsBlocked && !DISPOSABLE_INSTRUCTIONS.contains(heldInstruction.getHeader())))
         {

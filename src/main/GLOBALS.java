@@ -17,8 +17,8 @@ public class GLOBALS
 
     public static final int DEFAULT_LINE_SIZE = 8;
     public static final int INDEXABLE_BANK_SIZE = 16;
-    public static int WORD_SIZE_SHORT = 32;
-    public static int WORD_SIZE_LONG = 64;
+    public static final int WORD_SIZE_SHORT = 32;
+    public static final int WORD_SIZE_LONG = 64;
 
     public static final int[][][] START_MEM_100RAM9192 = new int[][][] {
         new int[][] {
@@ -66,6 +66,17 @@ public class GLOBALS
             new int[] {1, 4, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
         }
     };
+    public static final int[][][] START_MEM_100RAM1024_2DATA8_1INST2LONG = new int[][][] {
+        new int[][] {
+            new int[] {100, 1024, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+            new int[] {2, 8, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+            new int[] {1, 2, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
+        }
+    };
     public static final int[][][] START_MEM_5RAM32_2DATA8_1INST4LONG = new int[][][] {
             new int[][] {
                     new int[] {5, 32, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
@@ -76,6 +87,17 @@ public class GLOBALS
             new int[][] {
                     new int[] {1, 8, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
             }
+    };
+    public static final int[][][] START_MEM_100RAM1024_2DATA16_1INST4LONG = new int[][][] {
+        new int[][] {
+            new int[] {100, 1024, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+            new int[] {2, 16, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+            new int[] {1, 4, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
+        }
     };
     public static final int[][][] START_MEM_100RAM1024_10DATA256_2DATA128_1INST32LONG = new int[][][] {
         new int[][] {
@@ -202,7 +224,7 @@ public class GLOBALS
     public static final int DIRTY_INDEX = 1;
     public static final int ADDRESS_INDEX = 2;
     public static final int FIRST_WORD_INDEX = 3;
-    public static int[] WORD_INDECES = new int[] { VALID_INDEX, DIRTY_INDEX, ADDRESS_INDEX, FIRST_WORD_INDEX };
+    public static final int[] WORD_INDECES = new int[] { VALID_INDEX, DIRTY_INDEX, ADDRESS_INDEX, FIRST_WORD_INDEX };
     public static final String ADDRESS_FILLER = " ";
     public static int GET_ACTUAL_MAX_SIZE(MEMORY_TYPE type)
     {

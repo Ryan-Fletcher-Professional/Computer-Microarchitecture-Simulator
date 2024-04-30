@@ -105,20 +105,20 @@ public class Simulator extends JFrame
             catch(NumberFormatException _ignored_) {}
             for(int i = 0; i < numTicks; i++)
             {
-                if((i > 0) && ((i % PRINT_CHECKPOINT_INDEX) == 0))
-                {
-                    System.out.println("CYCLE: " + i);
-                    for(String line : registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(10).split("\n"))
-                    {
-                        System.out.println("\t" + line);
-                    }
-                }
                 output = null;
                 boolean aboutToHalt = false;
                 boolean doneOnce = false;
                 while((output == null) || !(AUX_EQUALS(output.getAuxBits(AUX_FETCHED), AUX_TRUE)))
                 {
                     CURRENT_TICK += 1;
+                    if((CURRENT_TICK % PRINT_CHECKPOINT_INDEX) == 0)
+                    {
+                        System.out.println("CYCLE: " + String.format("%,d", CURRENT_TICK));
+                        for(String line : registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(10).split("\n"))
+                        {
+                            System.out.println("\t" + line);
+                        }
+                    }
                     aboutToHalt = pipeline.preExecute();  // Happens before memory cycled, so memory cycling can be "in-line" with pipeline cycling
                     for(JList<MemoryModule> list : memoryLists)
                     {
@@ -225,6 +225,8 @@ public class Simulator extends JFrame
 //            }
 //            registerBanks[INTERNAL_BANK_INDEX].store(PC_INDEX, startingPC);
 //            pipeline.reset();
+            currentId = 0;
+            CURRENT_TICK = 0;
             Main.main(null);  // Not a word!
         });
         Component[] toolBarComponents = new Component[] { stallsLabel, noopsLabel, countLabel, tickButton, tickField, Box.createHorizontalStrut(30),

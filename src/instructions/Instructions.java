@@ -81,6 +81,7 @@ public class Instructions
         STALL,
         QUASH_SIZE,
         QUASH_BRANCH,
+        QUASH_NO_PIPELINE,
         LOAD_PC,
         EXECUTION_ERR
     }
@@ -125,7 +126,8 @@ public class Instructions
         put(OPCODE.STALL, "001");
         put(OPCODE.QUASH_SIZE, "010");
         put(OPCODE.QUASH_BRANCH, "011");
-        put(OPCODE.LOAD_PC, "100");
+        put(OPCODE.QUASH_NO_PIPELINE, "100");
+        put(OPCODE.LOAD_PC, "101");
         //
         put(OPCODE.EXECUTION_ERR, "111");
 
@@ -178,6 +180,7 @@ public class Instructions
         STALL,
         QUASH_SIZE,
         QUASH_BRANCH,
+        QUASH_NO_PIPELINE,
         LOAD_PC,
         EXECUTION_ERR
     }
@@ -223,6 +226,7 @@ public class Instructions
         put(HEADER.STALL,                   MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.STALL                ));
         put(HEADER.QUASH_SIZE,              MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.QUASH_SIZE           ));
         put(HEADER.QUASH_BRANCH,            MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.QUASH_BRANCH         ));
+        put(HEADER.QUASH_NO_PIPELINE,       MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.QUASH_NO_PIPELINE    ));
         put(HEADER.LOAD_PC,                 MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.LOAD_PC              ));
         put(HEADER.EXECUTION_ERR,           MAKE_HEADER_STRING( TYPECODE.INTERNAL,          OPCODE.EXECUTION_ERR        ));
 
@@ -280,6 +284,7 @@ public class Instructions
         put(HEADER.STALL,                   "_STALL_");
         put(HEADER.QUASH_SIZE,              "_QUASH_SIZE_");
         put(HEADER.QUASH_BRANCH,            "_QUASH_BR_");
+        put(HEADER.QUASH_NO_PIPELINE,       "_QUASH_NO_PIPELINE_");
         put(HEADER.LOAD_PC,                 "_LOAD_PC_");
         put(HEADER.EXECUTION_ERR,           "_EXEC_ERR_");
     }};
@@ -331,7 +336,8 @@ public class Instructions
     public static final List<HEADER> QUASH_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {  // TODO : Add new appropriate instructions here
         HEADER.QUASH_SIZE,
-        HEADER.QUASH_BRANCH
+        HEADER.QUASH_BRANCH,
+        HEADER.QUASH_NO_PIPELINE
     }));
     public static final List<HEADER> ERROR_INSTRUCTIONS = new ArrayList<>(List.of(new HEADER[]
     {  // TODO : Add new appropriate instructions here
@@ -342,7 +348,8 @@ public class Instructions
         HEADER.NOOP,
         HEADER.STALL,
         HEADER.QUASH_SIZE,
-        HEADER.QUASH_BRANCH
+        HEADER.QUASH_BRANCH,
+        HEADER.QUASH_NO_PIPELINE
     }));
 
     /*
@@ -525,6 +532,7 @@ public class Instructions
     public static Instruction STALL             (int size) { return GET_INSTRUCTION(size, HEADER.STALL, "", ""); }
     public static Instruction QUASH_SIZE_ERR    (int size) { return GET_INSTRUCTION(size, HEADER.QUASH_SIZE, "", ""); }
     public static Instruction QUASH_BRANCH      (int size) { return GET_INSTRUCTION(size, HEADER.QUASH_BRANCH,"", ""); }
+    public static Instruction QUASH_NO_PIPELINE (int size) { return GET_INSTRUCTION(size, HEADER.QUASH_NO_PIPELINE,"", ""); }
     public static Instruction LOAD_PC           (int size) { return GET_INSTRUCTION(size, HEADER.LOAD_PC, "", ""); }
     public static Instruction HALT              (int size) { return GET_INSTRUCTION(size, HEADER.HALT, "", ""); }
     public static Instruction ERR               (int size, long errType)
