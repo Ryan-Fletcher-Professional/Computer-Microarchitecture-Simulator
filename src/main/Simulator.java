@@ -1,4 +1,4 @@
-package simulator;
+package main;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -7,8 +7,6 @@ import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.io.File;
-import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -21,7 +19,6 @@ import static main.GLOBALS.*;
 import static instructions.Instructions.*;
 
 import instructions.Instruction;
-import main.Main;
 import memory.MemoryModule;
 import memory.MemoryRequest;
 import memory.RegisterFileModule;
@@ -246,7 +243,7 @@ public class Simulator extends JFrame
 
         // Top left for control, top right for cache configuration view, bottom for state view
         topBottomPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        topBottomPane.setDividerLocation(height / 2);
+        topBottomPane.setDividerLocation((height / 2) - 100);
         JSplitPane leftRightPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         leftRightPane.setDividerLocation(width / 2);
 
@@ -483,11 +480,11 @@ public class Simulator extends JFrame
 
         indexableBankDisplayText = new JTextArea();
         indexableBankDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        indexableBankDisplayText.setMinimumSize(new Dimension(0, 90));
-        indexableBankDisplayText.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+        indexableBankDisplayText.setMinimumSize(new Dimension(0, 150));
+        indexableBankDisplayText.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
         indexableBankDisplayText.setEditable(false);
         JScrollPane indexableDisplayPane = new JScrollPane(indexableBankDisplayText);
-        indexableDisplayPane.setPreferredSize(new Dimension(frameWidth, 90));
+        indexableDisplayPane.setPreferredSize(new Dimension(frameWidth, 150));
         internalBankDisplayText = new JTextArea();
         internalBankDisplayText.setFont(new Font("Monospaced", Font.PLAIN, 12));
         internalBankDisplayText.setMinimumSize(new Dimension(0, 90));
@@ -496,7 +493,7 @@ public class Simulator extends JFrame
         JScrollPane internalDisplayPane = new JScrollPane(internalBankDisplayText);
         internalDisplayPane.setPreferredSize(new Dimension(frameWidth, 90));
         bankPanel.add(indexableDisplayPane);
-        bankPanel.setPreferredSize(new Dimension(width, 125));
+        bankPanel.setPreferredSize(new Dimension(width, 150));
         currentlyVisibleBank = indexableDisplayPane;
         currentlyInvisibleBank = internalDisplayPane;
 
@@ -603,8 +600,8 @@ public class Simulator extends JFrame
         callStackDisplayText.setText(registerBanks[CALL_STACK_INDEX].getDisplayText(1, radix));
         reversalStackDisplayText.setText(registerBanks[REVERSAL_STACK_INDEX].getDisplayText(1, radix));
         pipelineDisplayText.setText(pipeline.getDisplayText((radix != 10) ? radix : 2));
-        indexableBankDisplayText.setText(registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(16, radix) +
-                                             "\n\n" + registerBanks[INTERNAL_BANK_INDEX].getDisplayText(16, radix));
+        indexableBankDisplayText.setText(registerBanks[INDEXABLE_BANK_INDEX].getDisplayText(8, radix) +
+                                             "\n\n" + registerBanks[INTERNAL_BANK_INDEX].getDisplayText(8, radix));
         //internalBankDisplayText.setText(registerBanks[INTERNAL_BANK_INDEX].getDisplayText(8, radix));
         if(currentlySelectedMemory != null)
             { memoryDisplayText.setText(currentlySelectedMemory.getMemoryDisplay(getRadices()[0], radix)); }

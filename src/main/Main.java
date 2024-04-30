@@ -2,10 +2,10 @@ package main;
 
 import memory.RegisterFileModule;
 import pipeline.Pipeline;
-import simulator.Simulator;
+
 import javax.swing.*;
 import java.io.*;
-import java.util.List;
+
 import static main.GLOBALS.*;
 
 public class Main

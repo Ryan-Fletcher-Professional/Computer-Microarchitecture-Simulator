@@ -3,7 +3,7 @@ package pipeline;
 import instructions.Instruction;
 import memory.MemoryModule;
 import memory.RegisterFileModule;
-import simulator.Simulator;
+import main.Simulator;
 
 import static main.GLOBALS.*;
 import static instructions.Instructions.*;

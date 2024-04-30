@@ -2,7 +2,7 @@ package pipeline;
 
 import instructions.Instruction;
 import memory.RegisterFileModule;
-import simulator.Simulator;
+import main.Simulator;
 
 import java.util.Arrays;
 
