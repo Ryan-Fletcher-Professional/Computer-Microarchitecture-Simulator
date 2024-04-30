@@ -13,9 +13,21 @@ public class Main
     // Each int[][] corresponds to the unified, data, or instruction memories (in that order)
     // Each int[] is one module in the form of [ delay, number of lines, number of words per line, word size ]
     private static final int[][][] STARTING_MEMORIES = START_MEM_100RAM9192_20DATA1024_10DATA256_2DATA128_1INST32LONG;
+    private static final boolean RUN_ASSEMBLER = true;
 
     public static void main(String[] args)
     {
+        if(RUN_ASSEMBLER) {
+            try
+            {
+                Assembler.main(null);
+            }
+            catch(AssemblyError e)
+            {
+                System.out.println("\n!!!!!!!!    FAILED to run assembler    !!!!!!!!\n");
+            }
+        }
+
         System.out.println("\n!!!!!!!!    Running simulator    !!!!!!!!\n");
 
         int[] startingParams = FIND_START_PARAMS(PATH_TO_BINARIES);
