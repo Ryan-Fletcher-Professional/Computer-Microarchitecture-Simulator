@@ -1,0 +1,102 @@
+SET WORD SIZE 64
+SET STACK SIZE 1000000000
+SET BUFFER SIZE 1000000000
+
+@ Row-major order for matrices
+
+LOAD #2, R0             @ Address of C
+LOAD #0, R1             @ Address of A
+LOAD #3, R3             @ n
+LOAD #4, R4             @ m
+LOAD #5, R5             @ p
+MUL R3, R5, R2          @ n*p
+ADD R2, R0              @ (n*p) + Address of C
+ADD R2, #8              @ Word after C, plus a line = Address of Bᵀ
+LOAD #1, R10            @ Address of B
+MUL R4, R5, R11         @ m*p (size of B)
+  COPY 0, R12             @ Counter for transpose
+=transpose
+    DIV R12, R5, R13        @ i // p = Row in B = Column in Bᵀ
+    MOD R12, R5, R14        @ i % p = Column in B = Row in Bᵀ
+    MUL R14, R4             @ Row in Bᵀ * m = First index in row in Bᵀ
+    ADD R14, R13            @ Add the column in Bᵀ to get the final index
+    ADD R14, R2             @ Add address of Bᵀ to get final address in Bᵀ
+    ADD R10, R12, R15       @ Address of index in B
+    LOAD R15, R15           @ Value from B
+    STR R15, R14            @ Value into Bᵀ
+  ADD R12, 1
+  CMP R12, R11
+  BRN %transpose
+COPY 0, R10
+COPY 0, R11
+COPY 0, R12
+COPY 0, R13
+COPY 0, R14
+COPY 0, R15
+  COPY 0, R6              @ Counter for n_loop
+=n_loop
+      COPY 0, R7              @ Counter for p_loop
+    =p_loop
+        COPY #0, R9             @ Sum for this bridge
+          COPY 0, R8              @ Counter for m_loop
+        =m_loop
+            MUL R6, R4, R10         @ Row in A * m = First index in row of A
+            ADD R10, R8             @ Add column in A to get the final index
+            ADD R10, R1             @ Add address of A to get final address in A
+            LOAD R10, R10           @ Value from A
+            MUL R7, R4, R11         @ Row in Bᵀ * m = First index in row of Bᵀ
+            ADD R11, R8             @ Add column in Bᵀ to get the final index
+            ADD R11, R2             @ Add address of Bᵀ to get final address in Bᵀ
+            LOAD R11, R11           @ Value from Bᵀ
+            MUL R10, R11, R12       @ Multiply
+            ADD R9, R12             @ Add to sum for this bridge
+          ADD R8, 1
+          CMP R8, R4
+          BRN %m_loop
+        MUL R6, R5, R13         @ Row in C * p = First index in row of C
+        ADD R13, R7             @ Add column in C to get the final index
+        ADD R13, R0             @ Add address of C to get final address in C
+        STR R9, R13             @ Store sum for this bridge into C
+      ADD R7, 1
+      CMP R5, R7
+      BR0 %p_loop_exit
+    @ p_loop_reverse
+      COPY #0, R9
+     COPY R6, R6
+     COPY R13, R13
+    UNDO #2, #5                 @ i
+        =m_loop_reverse
+             COPY R6, R6
+             COPY R7, R7
+             COPY R9, R9
+             COPY R13, R13
+            UNDO #4, #4         @ ii : R8 decremented, final address in Bᵀ in R11
+            ADD R11, R4         @ Add m to address in Bᵀ for item in next row
+            LOAD R11, R11       @ Value from Bᵀ in R11
+             COPY R6, R6
+             COPY R7, R7
+             COPY R9, R9
+             COPY R13, R13
+            UNDO #4, #5         @ iii : Value from A in R10
+            MUL R10, R11, R12   @ Multiply
+            ADD R9, R12         @ Add to sum for this bridge
+             COPY R6, R6
+             COPY R7, R7
+             COPY R13, R13
+            UNDO #5, #4         @ iv : Sum maintained, reset reversal stack to same position before m_loop
+          CMP 0, R8
+          BRN %m_loop_reverse
+        ADD R13, 1
+        STR R9, R13
+      ADD R7, 1
+      CMP R7, R5
+       COPY R6, R6
+       COPY R13, R13
+      UNDO #3, #3               @ v : Avoids memory leak in reversal stack
+      BRN %p_loop
+  =p_loop_exit
+  ADD R6, 1
+  CMP R6, R3
+   COPY R13, R13
+  UNDO #1, #2                   @ vi : Avoids memory leak in reversal stack
+  BRN %n_loop

@@ -1245,15 +1245,6 @@ public class DecodeStage extends PipelineStage
             type = AUX_SD_TYPE_REGISTER;
             heldInstruction.addDest(0, start, start + 4, AUX_REG_BANK_INDEXABLES);
         }
-
-        if(((length == WORD_SIZE_SHORT) || AUX_EQUALS(heldInstruction.getAuxBits(FLAG(0)), 0)) &&
-            (AUX_EQUALS(heldInstruction.getAuxBits(AUX_SOURCE(0)), heldInstruction.getAuxBits(AUX_DEST(0)).toInt())))
-        {
-            (new MRAException("COPY writes to same register it reads")).printStackTrace();
-            heldInstruction = ERR(length, ERR_TYPE_INVALID_ARGS);
-            heldInstruction.addAuxBits(new Term(ERR_TYPE_INVALID_ARGS, false, length - HEADER_SIZE).toString(),
-                                       new Term(HEADER_STRINGS.get(heldInstruction.getHeader()), false));
-        }
     }
 
     public void decodeSwap()

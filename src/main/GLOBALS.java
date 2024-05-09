@@ -20,6 +20,14 @@ public class GLOBALS
     public static final int WORD_SIZE_SHORT = 32;
     public static final int WORD_SIZE_LONG = 64;
 
+    public static final int[][][] START_MEM_EMPTY = new int[][][] {
+        new int[][] {
+        },
+        new int[][] {
+        },
+        new int[][] {
+        }
+    };
     public static final int[][][] START_MEM_100RAM9192 = new int[][][] {
         new int[][] {
             new int[] {100, 9192, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
@@ -121,6 +129,30 @@ public class GLOBALS
         },
         new int[][] {
             new int[] {1, 32, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        }
+    };
+    public static final int[][][] START_MEM_100RAM1024_10DATA16_2DATA8_1INST4LONG = new int[][][] {
+        new int[][] {
+            new int[] {100, 1024, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+            new int[] {10, 16, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT},
+            new int[] {2, 8, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+            new int[] {1, 4, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
+        }
+    };
+    public static final int[][][] START_MEM_100RAM9192_10DATA64_2DATA32_1INST8LONG = new int[][][] {
+        new int[][] {
+            new int[] {100, 9192, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+            new int[] {10, 64, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT},
+            new int[] {2, 32, DEFAULT_LINE_SIZE, WORD_SIZE_SHORT}
+        },
+        new int[][] {
+            new int[] {1, 8, DEFAULT_LINE_SIZE, WORD_SIZE_LONG}
         }
     };
     public static final int[][][] START_MEM_100RAM9192_20DATA1024_10DATA256_2DATA128_1INST32LONG = new int[][][] {
