@@ -12,7 +12,7 @@ public class Main
 {
     // Each int[][] corresponds to the unified, data, or instruction memories (in that order)
     // Each int[] is one module in the form of [ delay, number of lines, number of words per line, word size ]
-    private static final int[][][] STARTING_MEMORIES = START_MEM_100RAM9192_10DATA64_2DATA32_1INST8LONG;
+    private static final int[][][] STARTING_MEMORIES = START_MEM_EMPTY;
     private static final boolean RUN_ASSEMBLER = true;
 
     public static void main(String[] args)
